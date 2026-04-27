@@ -1,0 +1,19 @@
+# Dependencies
+**/node_modules/
+**/dist/
+**/.next/
+**/.expo/
+
+# Environment Variables
+**/.env
+**/.env.local
+**/.env.production
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Misc
+**/npm-debug.log*
+**/yarn-error.log*
+**/.vercel

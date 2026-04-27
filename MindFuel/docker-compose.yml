@@ -1,0 +1,115 @@
+services:
+  postgres:
+    image: ghcr.io/supabase/postgres:15.2.1
+    container_name: mindfuel_postgres
+    restart: unless-stopped
+    command: postgres -c 'max_connections=100' -c 'shared_buffers=256MB'
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - '54322:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mindfuel-network
+
+  pgvector:
+    image: pgvector/pgvector:pg16
+    container_name: mindfuel_pgvector
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: postgres
+    command: postgres -c 'shared_preload_libraries=vector'
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+    ports:
+      - '54323:5432'
+    networks:
+      - mindfuel-network
+
+  postgrest:
+    image: ghcr.io/supabase/postgrest:latest
+    container_name: mindfuel_postgrest
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: postgresql://postgres:postgres@postgres:5432/postgres
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: 'super-secret-jwt-token-key-change-in-production'
+      PGRST_JWT_AUD: 'mindfuel-app'
+    ports:
+      - "54321:3000"
+    depends_on:
+      - postgres
+    networks:
+      - mindfuel-network
+
+  gotrue:
+    image: ghcr.io/supabase/gotrue:latest
+    container_name: mindfuel_gotrue
+    restart: unless-stopped
+    environment:
+      GOTRUE_JWT_SECRET: 'super-secret-jwt-token-key-change-in-production'
+      GOTRUE_JWT_AUD: 'mindfuel-app'
+      GOTRUE_DB_DRIVER: "postgres"
+      GOTRUE_DB_DRIVER_VER: "pgx"
+      GOTRUE_DB_DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/postgres"
+      GOTRUE_DB_EXTRA_SEARCH_PATH: "public,extensions"
+      GOTRUE_SITE_URL: "http://localhost:19006"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_MAILER_HOST: "localhost"
+    ports:
+      - "54325:9999"
+    depends_on:
+      - postgres
+    networks:
+      - mindfuel-network
+
+  realtime:
+    image: ghcr.io/supabase/realtime:latest
+    container_name: mindfuel_realtime
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DATABASE: postgres
+      POSTGRES_PORT: 5432
+    ports:
+      - "54324:4000"
+    depends_on:
+      - postgres
+    networks:
+      - mindfuel-network
+
+  studio:
+    image: ghcr.io/supabase/studio:latest
+    container_name: mindfuel_studio
+    restart: unless-stopped
+    environment:
+      SUPABASE_URL: "http://localhost:54321"
+      SUPABASE_PUBLIC_URL: "http://localhost:54321"
+      SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WEO3k1TNKXq9nX2G1xL3j1e0fQ3R2r5A6v8c"
+    ports:
+      - "54326:3000"
+    depends_on:
+      - postgres
+      - postgrest
+      - gotrue
+      - realtime
+    networks:
+      - mindfuel-network
+
+networks:
+  mindfuel-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  pgvector_data:

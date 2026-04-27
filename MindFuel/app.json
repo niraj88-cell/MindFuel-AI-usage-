@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "MindFuel",
+    "slug": "MindFuel",
+    "version": "1.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#05070a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mindfuel.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "MindFuel needs access to your microphone for voice-to-text logging and AI coaching.",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#05070a"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.mindfuel.app",
+      "versionCode": 1,
+      "permissions": [
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#6366f1"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "362f7bcc-b73f-4146-8de1-7044eb951fbc"
+      },
+      "router": {}
+    }
+  }
+}

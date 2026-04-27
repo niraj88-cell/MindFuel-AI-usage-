@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom NativeWind styles */
+:root {
+  --primary: #22c55e;
+  --primary-dark: #16a34a;
+  --mental-educational: #3b82f6;
+  --mental-productive: #10b981;
+  --mental-creative: #f59e0b;
+  --mental-social: #ec4899;
+  --mental-entertainment: #8b5cf6;
+  --mental-doomscroll: #ef4444;
+  --mental-neutral: #6b7280;
+}
+
+/* Smooth animations */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Custom progress ring styles */
+.progress-ring {
+  transform: rotate(-90deg);
+}
+
+.progress-ring__circle {
+  transition: stroke-dashoffset 0.35s;
+  transform-origin: 50% 50%;
+}

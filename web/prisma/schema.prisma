@@ -1,0 +1,176 @@
+// prisma/schema.prisma — MindFuel Database Schema
+// Maps to existing Supabase tables + new AI feature tables
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+model Profile {
+  id               String   @id @db.Uuid
+  email            String   @unique
+  fullName         String?  @map("full_name")
+  avatarUrl        String?  @map("avatar_url")
+  subscriptionTier String   @default("free") @map("subscription_tier")
+  dailyLogLimit    Int      @default(3) @map("daily_log_limit")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  mentalLogs       MentalLog[]
+  dailySummaries   DailySummary[]
+  weeklyReports    WeeklyReport[]
+  moodLogs         MoodLog[]
+  aiInsights       AIInsight[]
+  habitChallenges  HabitChallenge[]
+  notifications    Notification[]
+
+  @@map("profiles")
+}
+
+model MentalLog {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  content         String
+  category        String   // educational | productive | creative | social | entertainment | doomscroll | neutral
+  mentalScore     Int      @map("mental_score")
+  durationMinutes Int      @map("duration_minutes")
+  moodBefore      Int?     @map("mood_before")
+  moodAfter       Int?     @map("mood_after")
+  source          String   @default("manual") // manual | auto_tracking | url_submission
+  metadata        Json?    @default("{}")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  profile         Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([category])
+  @@map("mental_logs")
+}
+
+model DailySummary {
+  id                String   @id @default(uuid()) @db.Uuid
+  userId            String   @map("user_id") @db.Uuid
+  date              DateTime @db.Date
+  totalScore        Int      @default(0) @map("total_score")
+  averageScore      Decimal  @default(0) @map("average_score") @db.Decimal(5, 2)
+  totalLogs         Int      @default(0) @map("total_logs")
+  categoryBreakdown Json     @default("{}") @map("category_breakdown")
+  streakDays        Int      @default(0) @map("streak_days")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  profile           Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+  @@map("daily_summaries")
+}
+
+model WeeklyReport {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  weekStartDate DateTime @map("week_start_date") @db.Date
+  weekData      Json     @map("week_data")
+  generatedAt   DateTime @default(now()) @map("generated_at")
+
+  profile       Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, weekStartDate])
+  @@index([userId])
+  @@map("weekly_reports")
+}
+
+model MoodLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  mood      Int      // 1-10
+  energy    Int?     // 1-10
+  anxiety   Int?     // 1-10 (10 = high anxiety)
+  notes     String?
+  context   String?  // what triggered this mood entry
+  createdAt DateTime @default(now()) @map("created_at")
+
+  profile   Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("mood_logs")
+}
+
+model AIInsight {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  type        String   // daily_coach | content_swap | mood_correlation | recipe | challenge
+  title       String
+  body        String
+  actionItems Json?    @default("[]") @map("action_items")
+  metadata    Json?    @default("{}")
+  isRead      Boolean  @default(false) @map("is_read")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  profile     Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("ai_insights")
+}
+
+model HabitChallenge {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  title         String
+  description   String
+  targetDays    Int      @default(7) @map("target_days")
+  completedDays Int      @default(0) @map("completed_days")
+  difficulty    String   @default("medium") // easy | medium | hard
+  category      String   // what to swap away from
+  targetCategory String  @map("target_category") // what to swap to
+  isActive      Boolean  @default(true) @map("is_active")
+  startedAt     DateTime @default(now()) @map("started_at")
+  completedAt   DateTime? @map("completed_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  profile       Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isActive])
+  @@map("habit_challenges")
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String
+  body      String
+  type      String   // daily_coach | swap_suggestion | challenge | streak
+  isRead    Boolean  @default(false) @map("is_read")
+  metadata  Json?    @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  profile   Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+model CoachingSession {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  state     Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  profile   Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("coaching_sessions")
+}
+
