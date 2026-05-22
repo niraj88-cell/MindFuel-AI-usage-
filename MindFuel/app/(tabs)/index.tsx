@@ -185,23 +185,21 @@ export default function DashboardScreen() {
       <View className="px-6 pt-12 pb-6">
         <View className="flex-row justify-between items-center">
           <View>
-            <Text className="text-slate-400 text-sm font-medium uppercase tracking-widest">Welcome Back</Text>
+            <Text className="text-zinc-500 text-sm font-medium uppercase tracking-widest">Welcome Back</Text>
             <Text className="text-white text-3xl font-bold mt-1">
-              {user?.user_metadata?.full_name?.split(' ')[0] || 'Explorer'}! 🚀
+              {user?.user_metadata?.full_name?.split(' ')[0] || 'Explorer'}
             </Text>
           </View>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/profile')} className="w-12 h-12 rounded-full overflow-hidden border-2 border-indigo-500/30">
-            <Image source={{ uri: `https://ui-avatars.com/api/?name=${user?.email}&background=6366f1&color=fff` }} className="w-full h-full" />
+          <TouchableOpacity onPress={() => router.push('/(tabs)/profile')} className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20">
+            <Image source={{ uri: `https://ui-avatars.com/api/?name=${user?.email}&background=18181b&color=fff` }} className="w-full h-full" />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Hero Score Section */}
-      <View className="mx-6 bg-slate-800/50 rounded-[40px] p-8 border border-white/5 items-center relative overflow-hidden">
-        {/* Background Accent */}
-        <View className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl" />
+      <View className="mx-6 bg-zinc-900 rounded-[32px] p-8 border border-white/10 items-center relative overflow-hidden">
         
-        <Text className="text-indigo-400 text-xs font-bold uppercase tracking-widest mb-6">Current Mental Nutrition</Text>
+        <Text className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-6">Mental Nutrition Score</Text>
         
         <ProgressRing percentage={safeAvgScore} />
         
@@ -211,23 +209,23 @@ export default function DashboardScreen() {
               <Flame size={14} color={Theme.colors.warning} fill={Theme.colors.warning} />
               <Text className="text-white text-lg font-bold">{streakDays}</Text>
             </View>
-            <Text className="text-slate-400 text-[10px] font-bold uppercase">STREAK</Text>
+            <Text className="text-zinc-500 text-[10px] font-bold uppercase">STREAK</Text>
           </View>
           
           <View className="items-center">
             <View className="flex-row items-center space-x-1 mb-1">
-              <Zap size={14} color={Theme.colors.primaryLight} fill={Theme.colors.primaryLight} />
+              <Zap size={14} color="#ffffff" />
               <Text className="text-white text-lg font-bold">{todaySummary?.total_logs || 0}</Text>
             </View>
-            <Text className="text-slate-400 text-[10px] font-bold uppercase">LOGS</Text>
+            <Text className="text-zinc-500 text-[10px] font-bold uppercase">LOGS</Text>
           </View>
 
           <TouchableOpacity onPress={() => router.push('/subscription')} className="items-center">
             <View className="flex-row items-center space-x-1 mb-1">
-              <Trophy size={14} color={Theme.colors.creative} fill={Theme.colors.creative} />
+              <Trophy size={14} color="#ffffff" />
               <Text className="text-white text-lg font-bold">{profile?.subscription_tier === 'premium' ? 'MAX' : limitInfo?.remaining}</Text>
             </View>
-            <Text className="text-slate-400 text-[10px] font-bold uppercase">LIMIT</Text>
+            <Text className="text-zinc-500 text-[10px] font-bold uppercase">LIMIT</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -280,10 +278,10 @@ export default function DashboardScreen() {
         <View className="flex-row justify-between items-end mb-6">
           <View>
             <Text className="text-white text-xl font-bold">Insights</Text>
-            <Text className="text-slate-400 text-sm mt-1">Today's consumption mix</Text>
+            <Text className="text-zinc-500 text-sm mt-1">Today's consumption mix</Text>
           </View>
           <TouchableOpacity onPress={() => router.push('/(tabs)/reports')} className="flex-row items-center space-x-1">
-            <Text className="text-indigo-400 font-bold text-sm">Full Report</Text>
+            <Text className="text-white font-bold text-sm">Full Report</Text>
             <ChevronRight size={16} color={Theme.colors.primary} />
           </TouchableOpacity>
         </View>
@@ -293,12 +291,12 @@ export default function DashboardScreen() {
             const breakdown = todaySummary?.category_breakdown as Record<string, number> | null;
             const count = breakdown?.[cat] || 0;
             return (
-              <View key={cat} style={{ width: (width - 64) / 2 }} className="bg-slate-800/40 border border-white/5 p-4 rounded-3xl mb-4">
+              <View key={cat} style={{ width: (width - 64) / 2 }} className="bg-zinc-900 border border-white/10 p-4 rounded-2xl mb-4">
                 <View className="flex-row justify-between items-center mb-2">
                   <CategoryIcon category={cat} />
                   <Text className="text-white font-bold">{count}</Text>
                 </View>
-                <Text className="text-slate-300 text-xs font-bold capitalize">{cat}</Text>
+                <Text className="text-zinc-400 text-xs font-bold capitalize">{cat}</Text>
               </View>
             );
           })}
@@ -310,29 +308,29 @@ export default function DashboardScreen() {
         <Text className="text-white text-xl font-bold mb-6">Recent Feed</Text>
         {recentLogs && recentLogs.length > 0 ? (
           recentLogs.map((log) => (
-            <TouchableOpacity key={log.id} className="bg-slate-800/40 border border-white/5 p-5 rounded-3xl mb-4 flex-row items-center space-x-4">
-              <View className="w-12 h-12 bg-slate-700/50 rounded-2xl items-center justify-center border border-white/5">
-                <Brain size={24} color={Theme.colors.primaryLight} />
+            <TouchableOpacity key={log.id} className="bg-zinc-900 border border-white/10 p-5 rounded-2xl mb-4 flex-row items-center space-x-4">
+              <View className="w-12 h-12 bg-white/5 rounded-2xl items-center justify-center border border-white/10">
+                <Brain size={24} color="#ffffff" />
               </View>
               <View className="flex-1">
                 <View className="flex-row justify-between">
-                  <Text className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{log.category}</Text>
-                  <Text className="text-slate-500 text-[10px]">{format(new Date(log.created_at), 'h:mm a')}</Text>
+                  <Text className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">{log.category}</Text>
+                  <Text className="text-zinc-600 text-[10px]">{format(new Date(log.created_at), 'h:mm a')}</Text>
                 </View>
                 <Text className="text-white font-bold mt-1" numberOfLines={1}>{log.content}</Text>
               </View>
               <View className="items-center">
-                <Text className={`font-black text-lg ${log.mental_score >= 70 ? 'text-emerald-400' : log.mental_score >= 40 ? 'text-amber-400' : 'text-rose-400'}`}>
+                <Text className="font-black text-lg text-white">
                   {log.mental_score}
                 </Text>
               </View>
             </TouchableOpacity>
           ))
         ) : (
-          <View className="bg-slate-800/20 border-2 border-dashed border-slate-700 rounded-3xl p-10 items-center justify-center">
+          <View className="bg-zinc-900/50 border-2 border-dashed border-zinc-800 rounded-2xl p-10 items-center justify-center">
              <AlertCircle size={40} color={Theme.colors.textMuted} />
-             <Text className="text-slate-400 font-bold mt-4">Your log is empty</Text>
-             <Text className="text-slate-500 text-xs mt-1">Start feeding your brain! 🧠</Text>
+             <Text className="text-zinc-500 font-bold mt-4">Your log is empty</Text>
+             <Text className="text-zinc-600 text-xs mt-1">Start logging your content!</Text>
           </View>
         )}
       </View>
