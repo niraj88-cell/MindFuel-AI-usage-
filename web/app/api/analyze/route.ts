@@ -7,6 +7,7 @@ import { scanContent } from '@/lib/agents/tools/contentScanner'
 import { findAlternatives } from '@/lib/agents/tools/alternativeFinder'
 import { createClient } from '@/lib/supabase/server'
 import { checkAnalyzeRateLimit } from '@/lib/rate-limit'
+import { sanitizeText, inspectPayload } from '@/lib/security'
 import { format } from 'date-fns'
 
 export const runtime = 'nodejs'
@@ -15,7 +16,16 @@ const MAX_CONTENT_LENGTH = 5000
 
 export async function POST(req: NextRequest) {
   try {
-    const { content } = await req.json()
+    const body = await req.json()
+    
+    // ── WAF Payload Inspection ──
+    const inspection = inspectPayload(body)
+    if (!inspection.safe) {
+      console.warn(`[WAF] Blocked malicious payload: ${inspection.threats.join(', ')}`)
+      return NextResponse.json({ error: 'Forbidden: Malicious payload detected' }, { status: 403 })
+    }
+
+    const { content } = body
 
     // ── Input validation ──
     if (!content || typeof content !== 'string') {

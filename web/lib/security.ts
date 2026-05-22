@@ -224,3 +224,63 @@ export const CONTENT_LENGTH_LIMITS = {
   notes: MAX_NOTES_LENGTH,
   short: MAX_SHORT_TEXT,
 }
+
+// ── WAF-lite Payload Inspection ────────────────────────────────────────────
+
+const SQLI_PATTERNS = [
+  /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|EXEC|EXECUTE)\b.*(;|\/\*|--))/i,
+  /(['"]\s*OR\s+['"]?\d['"]?\s*=\s*['"]?\d)/i,
+  /(--|\/\*|\*\/|;.*$)/i
+]
+
+const NOSQLI_PATTERNS = [
+  /(\$where|\$ne|\$gt|\$lt|\$gte|\$lte|\$in|\$nin|\$regex)/i
+]
+
+/**
+ * Deep scan an incoming JSON payload for malicious injection signatures.
+ * Blocks Prototype Pollution, SQLi, and NoSQLi.
+ */
+export function inspectPayload(payload: unknown): { safe: boolean; threats: string[] } {
+  const threats: string[] = []
+
+  function scan(node: unknown) {
+    if (typeof node === 'string') {
+      // Check SQLi
+      for (const p of SQLI_PATTERNS) {
+        if (p.test(node)) {
+          threats.push(`sqli_signature: ${p.source}`)
+        }
+      }
+      // Check NoSQLi in strings
+      for (const p of NOSQLI_PATTERNS) {
+        if (p.test(node)) {
+          threats.push(`nosqli_signature: ${p.source}`)
+        }
+      }
+    } else if (typeof node === 'object' && node !== null) {
+      // Prevent Prototype Pollution
+      if ('__proto__' in node || 'constructor' in node) {
+        threats.push('prototype_pollution')
+      }
+      
+      // Check NoSQLi in object keys
+      for (const key of Object.keys(node)) {
+        if (key.startsWith('$')) {
+          threats.push(`nosqli_key: ${key}`)
+        }
+        scan((node as Record<string, unknown>)[key])
+      }
+    } else if (Array.isArray(node)) {
+      node.forEach(scan)
+    }
+  }
+
+  scan(payload)
+
+  return {
+    safe: threats.length === 0,
+    threats: [...new Set(threats)]
+  }
+}
+
