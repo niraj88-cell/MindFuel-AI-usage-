@@ -117,7 +117,7 @@ export default function ChallengesPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Trophy className="w-6 h-6 text-amber-400" /> Habit Challenges
+          <Trophy className="w-6 h-6 text-white" /> Habit Challenges
         </h1>
         <p className="text-sm text-[var(--muted-foreground)] mt-1">
           Build healthier digital habits with guided progressive challenges.
@@ -133,10 +133,10 @@ export default function ChallengesPage() {
               const progressPercentage = (challenge.completed_days / challenge.target_days) * 100
 
               return (
-                <Card key={challenge.id} className="border-emerald-500/20 relative overflow-hidden">
+                <Card key={challenge.id} className="border-white/10 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-1 bg-[var(--muted)]">
                     <div 
-                      className="h-full bg-emerald-500 transition-all duration-500" 
+                      className="h-full bg-white transition-all duration-500" 
                       style={{ width: `${progressPercentage}%` }}
                     />
                   </div>
@@ -148,7 +148,7 @@ export default function ChallengesPage() {
                         </Badge>
                         <CardTitle className="text-base">{challenge.title}</CardTitle>
                       </div>
-                      <div className="flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full">
+                      <div className="flex items-center gap-1 text-xs font-medium text-white bg-white/5 px-2 py-1 rounded-full">
                         <Flame className="w-3.5 h-3.5" />
                         {challenge.completed_days} / {challenge.target_days} days
                       </div>
@@ -188,18 +188,18 @@ export default function ChallengesPage() {
             const isActive = activeChallenges.some(c => c.title === template.title)
             
             return (
-              <Card key={template.title} className="hover:border-indigo-500/30 transition-colors group">
+              <Card key={template.title} className="hover:border-white/10 transition-colors group">
                 <CardContent className="p-5">
                   <div className="flex justify-between items-start mb-3">
                     <Badge variant="outline" className="capitalize text-xs">
                       {template.difficulty}
                     </Badge>
                     <div className="text-xs text-[var(--muted-foreground)] font-medium flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5 text-amber-400" />
+                      <Star className="w-3.5 h-3.5 text-white" />
                       {template.target_days} days
                     </div>
                   </div>
-                  <h3 className="font-semibold mb-2 group-hover:text-indigo-400 transition-colors">
+                  <h3 className="font-semibold mb-2 group-hover:text-white transition-colors">
                     {template.title}
                   </h3>
                   <p className="text-sm text-[var(--muted-foreground)] line-clamp-3 mb-5 min-h-[60px]">

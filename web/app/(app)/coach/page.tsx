@@ -27,7 +27,7 @@ function renderContent(text: string) {
       const content = line.replace(/^[-*]\s/, '')
       return (
         <div key={i} className="flex gap-2 my-0.5">
-          <span className="text-indigo-400 shrink-0 mt-0.5">•</span>
+          <span className="text-white shrink-0 mt-0.5">•</span>
           <span>{inlineMd(content)}</span>
         </div>
       )
@@ -42,9 +42,9 @@ function inlineMd(text: string) {
     if (p.startsWith('**') && p.endsWith('**'))
       return <strong key={i} className="text-white font-semibold">{p.slice(2, -2)}</strong>
     if (p.startsWith('*') && p.endsWith('*'))
-      return <em key={i} className="text-slate-300 italic">{p.slice(1, -1)}</em>
+      return <em key={i} className="text-zinc-300 italic">{p.slice(1, -1)}</em>
     if (p.startsWith('`') && p.endsWith('`'))
-      return <code key={i} className="bg-slate-700 text-emerald-400 px-1.5 py-0.5 rounded text-xs font-mono">{p.slice(1, -1)}</code>
+      return <code key={i} className="bg-zinc-700 text-white px-1.5 py-0.5 rounded text-xs font-mono">{p.slice(1, -1)}</code>
     return p
   })
 }
@@ -228,15 +228,15 @@ export default function CoachPage() {
   if (initialLoading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="w-16 h-16 rounded-3xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-          <Brain className="w-8 h-8 text-indigo-400" />
+        <div className="w-16 h-16 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center">
+          <Brain className="w-8 h-8 text-white" />
         </div>
         <div className="flex gap-1.5">
           {[0, 150, 300].map(d => (
             <div key={d} className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: `${d}ms` }} />
           ))}
         </div>
-        <p className="text-sm text-slate-500">Loading session history…</p>
+        <p className="text-sm text-zinc-500">Loading session history…</p>
       </div>
     )
   }
@@ -249,24 +249,24 @@ export default function CoachPage() {
       <div className="flex items-center justify-between mb-6 shrink-0">
         <div>
           <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-            <Sparkles className="w-6 h-6 text-indigo-400" />
-            Cognitive <span className="text-indigo-400">Assistant</span>
+            <Sparkles className="w-6 h-6 text-white" />
+            Cognitive <span className="text-white">Assistant</span>
           </h1>
-          <p className="text-slate-400 text-sm mt-1">Real-time AI mental wellness coaching.</p>
+          <p className="text-zinc-400 text-sm mt-1">Real-time AI mental wellness coaching.</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Online</span>
+        <div className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full">
+          <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+          <span className="text-[10px] font-black text-white uppercase tracking-widest">Online</span>
         </div>
       </div>
 
       {/* Rate limit banner */}
       {rateLimited && (
-        <div className="flex items-center gap-3 p-4 mb-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-sm text-amber-400 shrink-0 animate-fade-in-up">
+        <div className="flex items-center gap-3 p-4 mb-4 bg-white/5 border border-white/10 rounded-2xl text-sm text-white shrink-0 animate-fade-in-up">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span className="flex-1">{rateLimited.message}</span>
           {countdown && (
-            <span className="font-mono font-black text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full text-xs">
+            <span className="font-mono font-black text-zinc-300 bg-white/10 px-2 py-0.5 rounded-full text-xs">
               {countdown}
             </span>
           )}
@@ -274,7 +274,7 @@ export default function CoachPage() {
       )}
 
       {/* Chat card */}
-      <Card className="flex-1 flex flex-col min-h-0 bg-slate-900/50 border-white/5 rounded-[40px] overflow-hidden shadow-2xl">
+      <Card className="flex-1 flex flex-col min-h-0 bg-zinc-900/50 border-white/10 rounded-[40px] overflow-hidden shadow-2xl">
         {/* Messages */}
         <CardContent className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
           {messages.map(msg => (
@@ -282,10 +282,10 @@ export default function CoachPage() {
               {/* Avatar */}
               <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border ${
                 msg.role === 'user'
-                  ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
+                  ? 'bg-white/10 text-white border-white/10'
                   : msg.role === 'system'
                   ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
-                  : 'bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-400 border-indigo-500/20'
+                  : 'bg-white/5 text-white border-white/10'
               }`}>
                 {msg.role === 'user' ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
               </div>
@@ -293,10 +293,10 @@ export default function CoachPage() {
               {/* Bubble */}
               <div className={`max-w-[72%] px-6 py-4 rounded-[28px] shadow-lg text-sm ${
                 msg.role === 'user'
-                  ? 'bg-indigo-600 text-white rounded-br-md'
+                  ? 'bg-white text-black text-white rounded-br-md'
                   : msg.role === 'system'
                   ? 'bg-rose-500/10 text-rose-300 rounded-bl-md border border-rose-500/20 italic text-xs'
-                  : 'bg-slate-800/80 text-slate-200 border border-white/5 rounded-bl-md'
+                  : 'bg-zinc-800/80 text-zinc-200 border border-white/10 rounded-bl-md'
               }`}>
                 <div className="space-y-0.5">
                   {renderContent(msg.content)}
@@ -305,7 +305,7 @@ export default function CoachPage() {
                   )}
                 </div>
                 {msg.ts && (
-                  <div className={`text-[10px] mt-2 ${msg.role === 'user' ? 'text-white/40' : 'text-slate-600'}`}>
+                  <div className={`text-[10px] mt-2 ${msg.role === 'user' ? 'text-white/40' : 'text-zinc-600'}`}>
                     {new Date(msg.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 )}
@@ -316,10 +316,10 @@ export default function CoachPage() {
           {/* Thinking indicator */}
           {loading && messages[messages.length - 1]?.role !== 'assistant' && (
             <div className="flex items-end gap-4">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-400 border border-indigo-500/20 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-white/5 text-white border border-white/10 flex items-center justify-center shrink-0">
                 <Sparkles className="w-5 h-5 animate-spin" />
               </div>
-              <div className="px-6 py-5 rounded-[28px] bg-slate-800/80 border border-white/5 rounded-bl-md flex items-center gap-1.5">
+              <div className="px-6 py-5 rounded-[28px] bg-zinc-800/80 border border-white/10 rounded-bl-md flex items-center gap-1.5">
                 {[0, 150, 300].map(d => (
                   <div key={d} className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: `${d}ms` }} />
                 ))}
@@ -336,7 +336,7 @@ export default function CoachPage() {
               <button
                 key={p}
                 onClick={() => handleSend(p)}
-                className="text-xs px-4 py-2 rounded-full border border-white/10 text-slate-400 hover:bg-indigo-500/10 hover:border-indigo-500/30 hover:text-indigo-400 transition-all cursor-pointer"
+                className="text-xs px-4 py-2 rounded-full border border-white/10 text-zinc-400 hover:bg-white/5 hover:border-white/10 hover:text-white transition-all cursor-pointer"
               >
                 {p}
               </button>
@@ -345,8 +345,8 @@ export default function CoachPage() {
         )}
 
         {/* Input */}
-        <div className="p-6 border-t border-white/5 bg-slate-900/80 backdrop-blur-md shrink-0">
-          <div className="flex gap-4 items-end bg-slate-800/50 rounded-[28px] p-3 pl-6 border border-white/5 focus-within:border-indigo-500/30 transition-colors">
+        <div className="p-6 border-t border-white/10 bg-zinc-900/80 backdrop-blur-md shrink-0">
+          <div className="flex gap-4 items-end bg-zinc-800/50 rounded-[28px] p-3 pl-6 border border-white/10 focus-within:border-white/10 transition-colors">
             <textarea
               ref={inputRef}
               value={input}
@@ -355,18 +355,18 @@ export default function CoachPage() {
               placeholder={rateLimited ? `Rate limited — retry in ${countdown || '...'}` : 'Talk to your coach… (Enter to send, Shift+Enter for newline)'}
               rows={1}
               disabled={loading || !!rateLimited}
-              className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-slate-500 text-sm resize-none max-h-[120px] overflow-y-auto disabled:opacity-50 disabled:cursor-not-allowed outline-none"
+              className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-zinc-500 text-sm resize-none max-h-[120px] overflow-y-auto disabled:opacity-50 disabled:cursor-not-allowed outline-none"
             />
             <Button
               type="button"
               onClick={() => handleSend()}
               disabled={!input.trim() || loading || !!rateLimited}
-              className="w-12 h-12 rounded-2xl bg-indigo-600 hover:bg-indigo-500 shrink-0 shadow-lg shadow-indigo-600/20 p-0 transition-all disabled:opacity-50"
+              className="w-12 h-12 rounded-2xl bg-white hover:bg-zinc-200 text-black shrink-0 shadow-lg shadow-white/5 p-0 transition-all disabled:opacity-50"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </Button>
           </div>
-          <p className="text-[10px] text-slate-600 mt-2 text-center">
+          <p className="text-[10px] text-zinc-600 mt-2 text-center">
             MindFuel AI Coach · Not a substitute for professional mental health care
           </p>
         </div>

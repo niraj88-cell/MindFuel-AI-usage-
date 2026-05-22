@@ -19,23 +19,23 @@ interface Notification {
 const TYPE_CONFIG = {
   daily_coach: {
     icon: BrainCircuit,
-    color: 'text-indigo-400',
-    bg: 'bg-indigo-500/10',
-    border: 'border-indigo-500/20',
+    color: 'text-white',
+    bg: 'bg-white/5',
+    border: 'border-white/10',
     label: 'Daily Coach',
   },
   swap_suggestion: {
     icon: RefreshCw,
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/10',
-    border: 'border-emerald-500/20',
+    color: 'text-white',
+    bg: 'bg-white/5',
+    border: 'border-white/10',
     label: 'Content Swap',
   },
   challenge: {
     icon: Trophy,
-    color: 'text-amber-400',
-    bg: 'bg-amber-500/10',
-    border: 'border-amber-500/20',
+    color: 'text-white',
+    bg: 'bg-white/5',
+    border: 'border-white/10',
     label: 'Challenge',
   },
   streak: {
@@ -112,10 +112,10 @@ export default function NotificationsPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-            <Bell className="w-7 h-7 text-indigo-400" />
+            <Bell className="w-7 h-7 text-white" />
             Notifications
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-zinc-400 text-sm mt-1">
             {notifications.length === 0
               ? 'All caught up!'
               : `${notifications.length} notification${notifications.length !== 1 ? 's' : ''}`}
@@ -125,7 +125,7 @@ export default function NotificationsPage() {
         {notifications.length > 0 && (
           <button
             onClick={clearAll}
-            className="text-xs text-slate-500 hover:text-rose-400 transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/50 border border-white/5 hover:border-rose-500/20 cursor-pointer"
+            className="text-xs text-zinc-500 hover:text-rose-400 transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-800/50 border border-white/10 hover:border-rose-500/20 cursor-pointer"
           >
             <X className="w-3 h-3" />
             Clear All
@@ -142,8 +142,8 @@ export default function NotificationsPage() {
               onClick={() => setFilter(f)}
               className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all cursor-pointer ${
                 filter === f
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                  : 'bg-slate-800/50 text-slate-400 border border-white/5 hover:text-white'
+                  ? 'bg-white text-black text-white shadow-lg shadow-none'
+                  : 'bg-zinc-800/50 text-zinc-400 border border-white/10 hover:text-white'
               }`}
             >
               {f}
@@ -159,7 +159,7 @@ export default function NotificationsPage() {
       {loading && (
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-24 rounded-3xl bg-slate-800/30 animate-shimmer" />
+            <div key={i} className="h-24 rounded-3xl bg-zinc-800/30 animate-shimmer" />
           ))}
         </div>
       )}
@@ -167,13 +167,13 @@ export default function NotificationsPage() {
       {/* Empty state */}
       {!loading && filtered.length === 0 && (
         <div className="text-center py-20">
-          <div className="w-20 h-20 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mx-auto mb-6">
-            <Bell className="w-10 h-10 text-indigo-400 opacity-50" />
+          <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6">
+            <Bell className="w-10 h-10 text-white opacity-50" />
           </div>
-          <h3 className="text-xl font-black text-slate-300 mb-2">
+          <h3 className="text-xl font-black text-zinc-300 mb-2">
             {filter === 'unread' ? 'All caught up!' : 'No notifications yet'}
           </h3>
-          <p className="text-slate-500 text-sm">
+          <p className="text-zinc-500 text-sm">
             {filter === 'unread'
               ? 'You have no unread notifications.'
               : 'Your daily coach updates and insights will appear here.'}
@@ -198,7 +198,7 @@ export default function NotificationsPage() {
                 className={`relative group flex gap-4 p-5 rounded-3xl border transition-all duration-300 animate-fade-in-up ${
                   !notif.is_read
                     ? `${config.bg} ${config.border}`
-                    : 'bg-slate-900/40 border-white/5'
+                    : 'bg-zinc-900/40 border-white/10'
                 }`}
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
@@ -218,16 +218,16 @@ export default function NotificationsPage() {
                         <span className="inline-block w-1.5 h-1.5 rounded-full bg-indigo-400 align-middle" />
                       )}
                     </div>
-                    <span className="text-[10px] text-slate-600 shrink-0">{timeAgo}</span>
+                    <span className="text-[10px] text-zinc-600 shrink-0">{timeAgo}</span>
                   </div>
                   <p className="text-sm font-bold text-white mb-1">{notif.title}</p>
-                  <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">{notif.body}</p>
+                  <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3">{notif.body}</p>
                 </div>
 
                 {/* Delete button */}
                 <button
                   onClick={() => deleteNotification(notif.id)}
-                  className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 rounded-lg bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:bg-rose-500/50 cursor-pointer"
+                  className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 rounded-lg bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-rose-500/50 cursor-pointer"
                 >
                   <X className="w-3 h-3" />
                 </button>

@@ -58,7 +58,7 @@ export default function SubscriptionPage() {
 
       <div className="grid md:grid-cols-2 gap-8 pt-8">
         {/* Free Plan */}
-        <Card className="bg-slate-900/50 border-white/5 relative overflow-hidden">
+        <Card className="bg-zinc-900/50 border-white/10 relative overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Standard</span>
@@ -75,7 +75,7 @@ export default function SubscriptionPage() {
               <FeatureItem label="Unlimited AI Coach" />
             </ul>
             {tier === 'free' && (
-               <Button className="w-full bg-slate-800 hover:bg-slate-700 text-white cursor-default" disabled>
+               <Button className="w-full bg-zinc-800 hover:bg-zinc-700 text-white cursor-default" disabled>
                  Current Plan
                </Button>
             )}
@@ -83,18 +83,18 @@ export default function SubscriptionPage() {
         </Card>
 
         {/* Premium Plan */}
-        <Card className="bg-indigo-600/10 border-indigo-500/30 relative overflow-hidden">
+        <Card className="bg-white text-black/10 border-white/10 relative overflow-hidden">
           <div className="absolute top-0 right-0 px-3 py-1 bg-indigo-500 text-[10px] font-black uppercase tracking-widest text-white rounded-bl-lg">
             Recommended
           </div>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Platinum</span>
-              <Sparkles className="w-5 h-5 text-indigo-400" />
+              <Sparkles className="w-5 h-5 text-white" />
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="text-3xl font-black">$9.99 <span className="text-sm font-normal text-slate-500">/mo</span></div>
+            <div className="text-3xl font-black">$9.99 <span className="text-sm font-normal text-zinc-500">/mo</span></div>
             <ul className="space-y-3">
               <FeatureItem label="Unlimited Daily Logs" active />
               <FeatureItem label="Advanced AI Insights" active />
@@ -105,7 +105,7 @@ export default function SubscriptionPage() {
             </ul>
             
             {tier === 'premium' ? (
-               <Button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white cursor-default" disabled>
+               <Button className="w-full bg-white hover:bg-emerald-600 text-white cursor-default" disabled>
                  <ShieldCheck className="w-4 h-4 mr-2" />
                  Active Platinum
                </Button>
@@ -113,7 +113,7 @@ export default function SubscriptionPage() {
               <Button 
                 onClick={handleUpgrade} 
                 disabled={loading}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white h-12 text-lg font-bold"
+                className="w-full bg-white hover:bg-zinc-200 text-black text-white h-12 text-lg font-bold"
               >
                 {loading ? 'Preparing Checkout...' : 'Start Platinum Subscription'}
               </Button>
@@ -134,8 +134,8 @@ export default function SubscriptionPage() {
 
 function FeatureItem({ label, active }: { label: string; active?: boolean }) {
   return (
-    <li className={`flex items-center gap-3 text-sm ${active ? 'text-slate-200' : 'text-slate-600'}`}>
-      <Check className={`w-4 h-4 ${active ? 'text-indigo-400' : 'text-slate-700'}`} />
+    <li className={`flex items-center gap-3 text-sm ${active ? 'text-zinc-200' : 'text-zinc-600'}`}>
+      <Check className={`w-4 h-4 ${active ? 'text-white' : 'text-slate-700'}`} />
       {label}
     </li>
   )
@@ -143,12 +143,12 @@ function FeatureItem({ label, active }: { label: string; active?: boolean }) {
 
 function InfoBox({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) {
   return (
-    <div className="text-center space-y-2 p-6 bg-slate-900/30 border border-white/5 rounded-3xl">
-      <div className="w-10 h-10 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 mx-auto">
+    <div className="text-center space-y-2 p-6 bg-zinc-900/30 border border-white/10 rounded-3xl">
+      <div className="w-10 h-10 bg-white/5 rounded-2xl flex items-center justify-center text-white mx-auto">
         <Icon className="w-5 h-5" />
       </div>
       <h3 className="font-bold text-sm">{title}</h3>
-      <p className="text-xs text-slate-500 leading-relaxed">{desc}</p>
+      <p className="text-xs text-zinc-500 leading-relaxed">{desc}</p>
     </div>
   )
 }
