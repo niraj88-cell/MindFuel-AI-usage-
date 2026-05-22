@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         consumption_risk: analysis.consumption_risk,
         mood_verdict: analysis.mood_verdict,
         recommended_action: analysis.recommended_action,
-      })
+      } as any)
     } catch (dbErr) {
       console.warn('[mood-scan] Failed to persist scan (table may not exist yet):', dbErr)
     }

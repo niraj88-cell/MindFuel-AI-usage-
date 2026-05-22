@@ -307,9 +307,14 @@ export interface Database {
           user_id: string
           url: string | null
           content: string
-          mood_score: number
-          detected_emotions: string[]
-          analysis: string
+          platform: string | null
+          emotional_valence: number
+          energy_signature: string
+          psychological_themes: string[]
+          mood_trajectory: string
+          consumption_risk: string
+          mood_verdict: string
+          recommended_action: string
           created_at: string
         }
         Insert: Omit<Database['public']['Tables']['mood_scans']['Row'], 'id' | 'created_at'> & {
