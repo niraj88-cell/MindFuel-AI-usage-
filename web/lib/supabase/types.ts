@@ -301,6 +301,24 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['intercept_logs']['Insert']>
         Relationships: []
       }
+      mood_scans: {
+        Row: {
+          id: string
+          user_id: string
+          url: string | null
+          content: string
+          mood_score: number
+          detected_emotions: string[]
+          analysis: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['mood_scans']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['mood_scans']['Insert']>
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
