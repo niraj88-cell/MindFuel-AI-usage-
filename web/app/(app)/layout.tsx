@@ -6,13 +6,14 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Brain, LayoutDashboard, PenLine, BarChart3,
-  MessageCircle, Trophy, User, LogOut, Menu, X, Bell, CreditCard, Sparkles
+  MessageCircle, Trophy, User, LogOut, Menu, X, Bell, CreditCard, Sparkles, ScanLine
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/log', label: 'Log Content', icon: PenLine },
+  { href: '/mood-scan', label: 'Mood Scan', icon: ScanLine },
   { href: '/insights', label: 'Insights', icon: BarChart3 },
   { href: '/coach', label: 'AI Coach', icon: MessageCircle },
   { href: '/challenges', label: 'Challenges', icon: Trophy },
