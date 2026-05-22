@@ -10,7 +10,9 @@ import {
   MessageCircle, 
   Trophy, 
   UserCircle,
-  ShieldAlert
+  ShieldAlert,
+  Timer,
+  Heart
 } from 'lucide-react-native';
 
 function TabIcon({ Icon, focused, color, size = 22 }: { Icon: any; focused: boolean; color: string; size?: number }) {
@@ -44,7 +46,7 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: '#475569',
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: 'rgba(10, 15, 29, 0.95)',
+          backgroundColor: 'rgba(0, 0, 0, 0.95)',
           borderTopWidth: 0,
           position: 'absolute',
           bottom: Platform.OS === 'ios' ? 32 : 20,
@@ -53,7 +55,7 @@ export default function TabsLayout() {
           height: 72,
           borderRadius: 32,
           borderWidth: 1,
-          borderColor: 'rgba(255, 255, 255, 0.05)',
+          borderColor: 'rgba(255, 255, 255, 0.1)',
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 20 },
           shadowOpacity: 0.5,
@@ -80,10 +82,26 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="focus"
+        options={{
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon Icon={Timer} focused={focused} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="intercept"
         options={{
           tabBarIcon: ({ color, focused }) => (
             <TabIcon Icon={ShieldAlert} focused={focused} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="pulse"
+        options={{
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon Icon={Heart} focused={focused} color={color} />
           ),
         }}
       />
