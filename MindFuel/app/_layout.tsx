@@ -8,6 +8,7 @@ import '../globals.css';
 import { useAuth } from '../lib/hooks/useAuth';
 import { useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
+import * as Notifications from 'expo-notifications';
 
 import { initSubscription } from '../lib/services/subscription';
 
@@ -41,6 +42,20 @@ function RootLayoutNav() {
       router.replace('/(tabs)');
     }
   }, [session, user, isLoading, segments, router]);
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      const data = response.notification.request.content.data;
+      if (data?.route) {
+        // e.g. data.route === '/(tabs)/intercept'
+        // Pass any extra data as params
+        const params = data.appName ? `?appName=${data.appName}` : '';
+        router.push(`${data.route}${params}` as any);
+      }
+    });
+
+    return () => subscription.remove();
+  }, [router]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Animated, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ShieldAlert, ArrowRight, X, Check } from 'lucide-react-native';
 import { Theme } from '../../theme';
 import { supabase } from '../../lib/supabase/client';
@@ -16,6 +16,7 @@ interface InterceptLog {
 
 export default function InterceptScreen() {
   const router = useRouter();
+  const { appName } = useLocalSearchParams<{ appName?: string }>();
   const { user } = useAuth();
   const [step, setStep] = useState<'breathe' | 'intent'>('breathe');
   const [timeLeft, setTimeLeft] = useState(5);
@@ -93,7 +94,9 @@ export default function InterceptScreen() {
       {step === 'breathe' ? (
         <View style={{ alignItems: 'center' }}>
           <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#ffffff', marginBottom: 8 }}>Pause.</Text>
-          <Text style={{ fontSize: 14, color: '#71717a', marginBottom: 48 }}>Take a deep breath before proceeding.</Text>
+          <Text style={{ fontSize: 14, color: '#71717a', marginBottom: 48, textAlign: 'center' }}>
+            {appName ? `You've been using ${appName} for a while. ` : ''}Take a deep breath before proceeding.
+          </Text>
           <Animated.View style={{
             width: 120, height: 120, borderRadius: 60,
             borderWidth: 1, borderColor: '#27272a',

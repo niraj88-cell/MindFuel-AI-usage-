@@ -40,6 +40,10 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
+    "notification": {
+      "vapidPublicKey": "BBMxV5N-86J4VvBxxBw4Q67vG_3t_H4H2Q-HwA3YnZzBv1O6Z2aH2hA3-XyZ1v_7M-R2Fz9R9h1_H7A6qE0EwHw",
+      "serviceWorkerPath": "/dummy-sw.js"
+    },
     "plugins": [
       "expo-router",
       [

@@ -30,6 +30,7 @@ import {
   Heart
 } from 'lucide-react-native';
 import { QuickLogSheet } from '../../components/QuickLogSheet';
+import { ScreenTimeManager } from '../../lib/ScreenTimeManager';
 
 const { width } = Dimensions.get('window');
 
@@ -247,6 +248,14 @@ export default function DashboardScreen() {
           refetchSummary();
         }} 
       />
+
+      <TouchableOpacity
+        onPress={() => ScreenTimeManager.simulateAppUsageIntercept('Instagram', 3000)}
+        className="mx-6 mt-3 bg-zinc-900 border border-zinc-800 h-16 rounded-2xl flex-row items-center justify-center space-x-3"
+      >
+        <AlertCircle size={24} color={Theme.colors.warning} />
+        <Text className="text-zinc-300 text-lg font-bold">Simulate App Intercept</Text>
+      </TouchableOpacity>
 
       {/* Focus + Pulse Quick Access */}
       <View className="px-6 mt-6 flex-row space-x-3">
