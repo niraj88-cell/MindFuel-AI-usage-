@@ -271,6 +271,27 @@ export default function DashboardPage() {
       {/* Daily Check-In (evening hours) */}
       <DailyCheckIn onComplete={() => loadDashboard()} />
 
+      {/* Web Simulation of App Intercept */}
+      <Card className="bg-zinc-900 border-white/10 rounded-2xl overflow-hidden p-6 border-dashed">
+        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div>
+            <h3 className="font-bold text-white mb-1">Simulate Mindful Intercept</h3>
+            <p className="text-sm text-zinc-400">Experience the breathing exercise that triggers when you open a distracting app.</p>
+          </div>
+          <button 
+            onClick={() => {
+              alert("Wait 3 seconds! Simulating you opening Instagram...");
+              setTimeout(() => {
+                router.push('/intercept?appName=Instagram');
+              }, 3000);
+            }}
+            className="whitespace-nowrap px-6 py-3 bg-white text-black rounded-xl font-bold hover:bg-zinc-200 transition-colors cursor-pointer"
+          >
+            Simulate Now
+          </button>
+        </div>
+      </Card>
+
       {/* Score + Breakdown Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Score Card */}
