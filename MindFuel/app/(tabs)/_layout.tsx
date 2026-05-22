@@ -9,7 +9,8 @@ import {
   BarChart3, 
   MessageCircle, 
   Trophy, 
-  UserCircle 
+  UserCircle,
+  ShieldAlert
 } from 'lucide-react-native';
 
 function TabIcon({ Icon, focused, color, size = 22 }: { Icon: any; focused: boolean; color: string; size?: number }) {
@@ -18,9 +19,9 @@ function TabIcon({ Icon, focused, color, size = 22 }: { Icon: any; focused: bool
       <Icon size={size} color={color} strokeWidth={focused ? 3 : 2} />
       {focused && (
         <View 
-          className="absolute -bottom-3 w-1 h-1 rounded-full bg-indigo-400" 
+          className="absolute -bottom-3 w-1 h-1 rounded-full bg-white" 
           style={{ 
-            shadowColor: '#818cf8', 
+            shadowColor: '#ffffff', 
             shadowOffset: { width: 0, height: 0 },
             shadowRadius: 10, 
             shadowOpacity: 1, 
@@ -75,6 +76,14 @@ export default function TabsLayout() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <TabIcon Icon={PlusCircle} focused={focused} color={color} size={26} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="intercept"
+        options={{
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon Icon={ShieldAlert} focused={focused} color={color} />
           ),
         }}
       />

@@ -4,15 +4,15 @@
 
 /* Custom NativeWind styles */
 :root {
-  --primary: #22c55e;
-  --primary-dark: #16a34a;
-  --mental-educational: #3b82f6;
-  --mental-productive: #10b981;
-  --mental-creative: #f59e0b;
-  --mental-social: #ec4899;
-  --mental-entertainment: #8b5cf6;
+  --primary: #71717a;
+  --primary-dark: #52525b;
+  --mental-educational: #ffffff;
+  --mental-productive: #e4e4e7;
+  --mental-creative: #d4d4d8;
+  --mental-social: #a1a1aa;
+  --mental-entertainment: #71717a;
   --mental-doomscroll: #ef4444;
-  --mental-neutral: #6b7280;
+  --mental-neutral: #52525b;
 }
 
 /* Smooth animations */

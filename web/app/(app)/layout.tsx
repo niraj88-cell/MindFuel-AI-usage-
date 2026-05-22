@@ -6,13 +6,14 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Brain, LayoutDashboard, PenLine, BarChart3,
-  MessageCircle, Trophy, User, LogOut, Menu, X, Bell, CreditCard, Sparkles, ScanLine
+  MessageCircle, Trophy, User, LogOut, Menu, X, Bell, CreditCard, Sparkles, ScanLine, ShieldAlert
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/log', label: 'Log Content', icon: PenLine },
+  { href: '/intercept', label: 'Mindful Intercept', icon: ShieldAlert },
   { href: '/mood-scan', label: 'Mood Scan', icon: ScanLine },
   { href: '/insights', label: 'Insights', icon: BarChart3 },
   { href: '/coach', label: 'AI Coach', icon: MessageCircle },
@@ -101,13 +102,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <div className="min-h-screen bg-[#0b0f1a] text-slate-200 flex overflow-hidden">
-      {/* Background Mesh */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/8 blur-[140px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/5 blur-[140px] rounded-full" />
-        <div className="absolute top-[40%] right-[20%] w-[20%] h-[20%] bg-blue-500/3 blur-[100px] rounded-full" />
-      </div>
+    <div className="min-h-screen bg-black text-zinc-200 flex overflow-hidden">
 
       {/* Sidebar — Desktop */}
       <aside className="hidden lg:flex flex-col w-72 border-r border-white/5 bg-slate-900/40 backdrop-blur-2xl z-20 shrink-0">

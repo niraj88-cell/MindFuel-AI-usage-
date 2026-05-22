@@ -1,30 +1,30 @@
 // theme/index.ts
 export const Theme = {
   colors: {
-    background: '#05070a',
-    surface: '#0f172a',
-    card: '#0a0f1d',
-    primary: '#6366f1',
-    primaryLight: '#818cf8',
-    secondary: '#1e293b',
-    text: '#f8fafc',
-    textMuted: '#64748b',
-    border: 'rgba(255, 255, 255, 0.05)',
+    background: '#000000',
+    surface: '#18181b', // zinc-900
+    card: '#09090b',    // zinc-950
+    primary: '#ffffff',
+    primaryLight: '#f4f4f5',
+    secondary: '#27272a',
+    text: '#ffffff',
+    textMuted: '#a1a1aa',
+    border: 'rgba(255, 255, 255, 0.1)',
     
     // Category colors
-    educational: '#818cf8',
-    productive: '#34d399',
-    creative: '#f472b6',
-    social: '#60a5fa',
-    entertainment: '#fbbf24',
-    doomscroll: '#f87171',
-    neutral: '#94a3b8',
+    educational: '#ffffff',
+    productive: '#e4e4e7',
+    creative: '#d4d4d8',
+    social: '#a1a1aa',
+    entertainment: '#71717a',
+    doomscroll: '#ef4444',
+    neutral: '#52525b',
     
     // Semantic
-    success: '#10b981',
-    warning: '#f59e0b',
+    success: '#ffffff',
+    warning: '#d4d4d8',
     danger: '#ef4444',
-    info: '#3b82f6',
+    info: '#71717a',
   },
   spacing: {
     xs: 4,
