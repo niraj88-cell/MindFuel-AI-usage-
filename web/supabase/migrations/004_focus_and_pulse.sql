@@ -43,3 +43,22 @@ CREATE POLICY "Users can insert own pulses"
 
 CREATE POLICY "Users can update own pulses"
   ON daily_pulses FOR UPDATE USING (auth.uid() = user_id);
+
+-- Intercept logs (for Mindful Intercept feature)
+CREATE TABLE IF NOT EXISTS intercept_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  intent TEXT NOT NULL,
+  action TEXT NOT NULL CHECK (action IN ('continued', 'disconnected')),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_intercept_logs_user ON intercept_logs(user_id, created_at DESC);
+
+ALTER TABLE intercept_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own intercept logs"
+  ON intercept_logs FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own intercept logs"
+  ON intercept_logs FOR INSERT WITH CHECK (auth.uid() = user_id);

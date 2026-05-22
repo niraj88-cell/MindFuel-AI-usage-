@@ -6,13 +6,9 @@ import { Theme } from '../../theme';
 import { 
   LayoutDashboard, 
   PlusCircle, 
-  BarChart3, 
-  MessageCircle, 
-  Trophy, 
-  UserCircle,
-  ShieldAlert,
   Timer,
-  Heart
+  MessageCircle, 
+  UserCircle,
 } from 'lucide-react-native';
 
 function TabIcon({ Icon, focused, color, size = 22 }: { Icon: any; focused: boolean; color: string; size?: number }) {
@@ -25,8 +21,8 @@ function TabIcon({ Icon, focused, color, size = 22 }: { Icon: any; focused: bool
           style={{ 
             shadowColor: '#ffffff', 
             shadowOffset: { width: 0, height: 0 },
-            shadowRadius: 10, 
-            shadowOpacity: 1, 
+            shadowRadius: 6, 
+            shadowOpacity: 0.8, 
             elevation: 10 
           }} 
         />
@@ -43,7 +39,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#fff',
-        tabBarInactiveTintColor: '#475569',
+        tabBarInactiveTintColor: '#52525b',
         tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: 'rgba(0, 0, 0, 0.95)',
@@ -52,7 +48,7 @@ export default function TabsLayout() {
           bottom: Platform.OS === 'ios' ? 32 : 20,
           left: 20,
           right: 20,
-          height: 72,
+          height: 64,
           borderRadius: 32,
           borderWidth: 1,
           borderColor: 'rgba(255, 255, 255, 0.1)',
@@ -90,42 +86,10 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="intercept"
-        options={{
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon Icon={ShieldAlert} focused={focused} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="pulse"
-        options={{
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon Icon={Heart} focused={focused} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="reports"
-        options={{
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon Icon={BarChart3} focused={focused} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="coach"
         options={{
           tabBarIcon: ({ color, focused }) => (
             <TabIcon Icon={MessageCircle} focused={focused} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="challenges"
-        options={{
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon Icon={Trophy} focused={focused} color={color} />
           ),
         }}
       />
@@ -137,6 +101,11 @@ export default function TabsLayout() {
           ),
         }}
       />
+      {/* Hidden tabs — accessible via navigation but not shown in tab bar */}
+      <Tabs.Screen name="intercept" options={{ href: null }} />
+      <Tabs.Screen name="pulse" options={{ href: null }} />
+      <Tabs.Screen name="reports" options={{ href: null }} />
+      <Tabs.Screen name="challenges" options={{ href: null }} />
     </Tabs>
   );
 }

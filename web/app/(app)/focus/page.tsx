@@ -2,10 +2,18 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Timer, Play, X, Check } from 'lucide-react'
+import { Timer, Play, X, Check, Clock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { format } from 'date-fns'
 
 const DURATIONS = [15, 30, 45, 60]
+
+interface FocusSession {
+  id: string
+  duration_minutes: number
+  completed: boolean
+  created_at: string
+}
 
 export default function FocusPage() {
   const router = useRouter()
@@ -13,7 +21,25 @@ export default function FocusPage() {
   const [phase, setPhase] = useState<'select' | 'running' | 'done'>('select')
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [totalSeconds, setTotalSeconds] = useState(0)
+  const [history, setHistory] = useState<FocusSession[]>([])
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  const loadHistory = useCallback(async () => {
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase
+        .from('focus_sessions')
+        .select('id, duration_minutes, completed, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20)
+      setHistory(data || [])
+    } catch {}
+  }, [])
+
+  useEffect(() => { loadHistory() }, [loadHistory])
 
   const startTimer = useCallback(() => {
     const total = selectedMinutes * 60
@@ -48,6 +74,7 @@ export default function FocusPage() {
         duration_minutes: selectedMinutes,
         completed,
       })
+      loadHistory()
     } catch {}
   }
 
@@ -55,22 +82,44 @@ export default function FocusPage() {
   const ss = String(secondsLeft % 60).padStart(2, '0')
   const progress = totalSeconds > 0 ? (totalSeconds - secondsLeft) / totalSeconds : 0
 
-  // SVG ring
   const size = 240
   const strokeWidth = 2
   const radius = (size - strokeWidth * 2) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference - progress * circumference
 
+  // Stats
+  const completed = history.filter(s => s.completed)
+  const totalHours = Math.round(completed.reduce((a, s) => a + s.duration_minutes, 0) / 60 * 10) / 10
+  const completionRate = history.length > 0 ? Math.round((completed.length / history.length) * 100) : 0
+
   return (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center text-center px-6">
+    <div className="max-w-lg mx-auto">
       {phase === 'select' && (
-        <div className="space-y-12 animate-fade-in-up max-w-md w-full">
-          <div>
+        <div className="space-y-10 py-8 animate-fade-in-up">
+          <div className="text-center">
             <Timer className="w-10 h-10 text-zinc-500 mx-auto mb-6" />
             <h1 className="text-4xl font-bold tracking-tight text-white">Focus Timer</h1>
             <p className="text-zinc-500 mt-3 text-sm">Commit to phone-free time. Build your focus muscle.</p>
           </div>
+
+          {/* Stats row */}
+          {history.length > 0 && (
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 text-center">
+                <p className="text-2xl font-black text-white">{totalHours}h</p>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Total Focus</p>
+              </div>
+              <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 text-center">
+                <p className="text-2xl font-black text-white">{completed.length}</p>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Completed</p>
+              </div>
+              <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 text-center">
+                <p className="text-2xl font-black text-white">{completionRate}%</p>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Success</p>
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-center gap-3">
             {DURATIONS.map(d => (
@@ -94,22 +143,33 @@ export default function FocusPage() {
           >
             <Play className="w-5 h-5" /> Begin Focus
           </button>
+
+          {/* History */}
+          {history.length > 0 && (
+            <div className="space-y-3 pt-4">
+              <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Recent Sessions</p>
+              {history.slice(0, 7).map(s => (
+                <div key={s.id} className="flex items-center gap-3 text-sm">
+                  {s.completed
+                    ? <Check className="w-4 h-4 text-white shrink-0" />
+                    : <X className="w-4 h-4 text-zinc-700 shrink-0" />
+                  }
+                  <span className="text-zinc-400 flex-1">{s.duration_minutes} min</span>
+                  <span className="text-zinc-700 text-xs">{format(new Date(s.created_at), 'MMM d, h:mm a')}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {phase === 'running' && (
-        <div className="space-y-10 animate-fade-in-up">
+        <div className="min-h-[80vh] flex flex-col items-center justify-center space-y-10 animate-fade-in-up">
           <div className="relative inline-flex items-center justify-center">
             <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-              <circle
-                cx={size / 2} cy={size / 2} r={radius}
-                fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={strokeWidth}
-              />
-              <circle
-                cx={size / 2} cy={size / 2} r={radius}
-                fill="none" stroke="#ffffff" strokeWidth={strokeWidth}
-                strokeDasharray={circumference} strokeDashoffset={offset}
-                strokeLinecap="round"
+              <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={strokeWidth} />
+              <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#ffffff" strokeWidth={strokeWidth}
+                strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round"
                 style={{ transition: 'stroke-dashoffset 1s linear' }}
               />
             </svg>
@@ -118,30 +178,25 @@ export default function FocusPage() {
               <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mt-2">Remaining</p>
             </div>
           </div>
-
           <p className="text-zinc-600 text-sm">Stay present. Your future self will thank you.</p>
-
-          <button
-            onClick={giveUp}
-            className="text-zinc-600 hover:text-zinc-400 text-sm font-medium flex items-center gap-2 mx-auto transition-colors cursor-pointer"
-          >
+          <button onClick={giveUp} className="text-zinc-600 hover:text-zinc-400 text-sm font-medium flex items-center gap-2 mx-auto transition-colors cursor-pointer">
             <X className="w-4 h-4" /> Give Up
           </button>
         </div>
       )}
 
       {phase === 'done' && (
-        <div className="space-y-10 animate-fade-in-up max-w-md w-full">
+        <div className="min-h-[80vh] flex flex-col items-center justify-center space-y-10 animate-fade-in-up">
           <div className="w-20 h-20 rounded-full border-2 border-white flex items-center justify-center mx-auto">
             <Check className="w-10 h-10 text-white" />
           </div>
-          <div>
+          <div className="text-center">
             <h1 className="text-4xl font-bold text-white">Focus Complete</h1>
             <p className="text-zinc-400 mt-3">{selectedMinutes} minutes of undistracted time. Well done.</p>
           </div>
           <button
-            onClick={() => router.push('/dashboard')}
-            className="w-full py-4 bg-white text-black rounded-2xl font-bold text-lg hover:bg-zinc-100 transition-colors cursor-pointer"
+            onClick={() => { setPhase('select'); loadHistory() }}
+            className="w-full max-w-md py-4 bg-white text-black rounded-2xl font-bold text-lg hover:bg-zinc-100 transition-colors cursor-pointer"
           >
             Done
           </button>

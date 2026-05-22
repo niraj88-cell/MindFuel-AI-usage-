@@ -25,7 +25,9 @@ import {
   Plus, 
   ChevronRight, 
   TrendingUp, 
-  AlertCircle 
+  AlertCircle,
+  Timer,
+  Heart
 } from 'lucide-react-native';
 import { QuickLogSheet } from '../../components/QuickLogSheet';
 
@@ -230,13 +232,13 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-      {/* Floating Action Button - Integrated into Design */}
+      {/* Quick Log */}
       <TouchableOpacity
         onPress={() => setShowQuickLog(true)}
-        className="mx-6 mt-6 bg-indigo-600 h-16 rounded-2xl flex-row items-center justify-center space-x-3 shadow-xl shadow-indigo-600/40"
+        className="mx-6 mt-6 bg-white h-16 rounded-2xl flex-row items-center justify-center space-x-3"
       >
-        <Plus size={24} color="white" strokeWidth={3} />
-        <Text className="text-white text-lg font-bold">Quick Log Meal</Text>
+        <Plus size={24} color="#000000" strokeWidth={3} />
+        <Text className="text-black text-lg font-bold">Quick Log</Text>
       </TouchableOpacity>
 
       <QuickLogSheet 
@@ -247,6 +249,31 @@ export default function DashboardScreen() {
           refetchSummary();
         }} 
       />
+
+      {/* Focus + Pulse Quick Access */}
+      <View className="px-6 mt-6 flex-row space-x-3">
+        <TouchableOpacity
+          onPress={() => router.push('/(tabs)/focus')}
+          className="flex-1 bg-zinc-900 border border-white/10 rounded-2xl p-4 flex-row items-center space-x-3"
+        >
+          <Timer size={20} color="#ffffff" />
+          <View>
+            <Text className="text-white font-bold">Focus</Text>
+            <Text className="text-zinc-500 text-[10px] font-bold uppercase">Start timer</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => router.push('/(tabs)/pulse')}
+          className="flex-1 bg-zinc-900 border border-white/10 rounded-2xl p-4 flex-row items-center space-x-3"
+        >
+          <Heart size={20} color="#ffffff" />
+          <View>
+            <Text className="text-white font-bold">Pulse</Text>
+            <Text className="text-zinc-500 text-[10px] font-bold uppercase">Check in</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
 
       {/* Category Grid Section */}
       <View className="px-6 mt-10">
