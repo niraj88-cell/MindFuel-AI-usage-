@@ -255,6 +255,52 @@ export interface Database {
           }
         ]
       }
+      focus_sessions: {
+        Row: {
+          id: string
+          user_id: string
+          duration_minutes: number
+          completed: boolean
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['focus_sessions']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['focus_sessions']['Insert']>
+        Relationships: []
+      }
+      daily_pulses: {
+        Row: {
+          id: string
+          user_id: string
+          date: string
+          rating: number
+          note: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['daily_pulses']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['daily_pulses']['Insert']>
+        Relationships: []
+      }
+      intercept_logs: {
+        Row: {
+          id: string
+          user_id: string
+          intent: string
+          action: 'continued' | 'disconnected'
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['intercept_logs']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['intercept_logs']['Insert']>
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
