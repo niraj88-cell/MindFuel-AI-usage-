@@ -229,8 +229,7 @@ export const CONTENT_LENGTH_LIMITS = {
 
 const SQLI_PATTERNS = [
   /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|EXEC|EXECUTE)\b.*(;|\/\*|--))/i,
-  /(['"]\s*OR\s+['"]?\d['"]?\s*=\s*['"]?\d)/i,
-  /(--|\/\*|\*\/|;.*$)/i
+  /(['"]\s*OR\s+['"]?\d['"]?\s*=\s*['"]?\d)/i
 ]
 
 const NOSQLI_PATTERNS = [

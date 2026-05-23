@@ -293,7 +293,7 @@ export default function CoachPage() {
               {/* Bubble */}
               <div className={`max-w-[72%] px-6 py-4 rounded-[28px] shadow-lg text-sm ${
                 msg.role === 'user'
-                  ? 'bg-white text-black text-white rounded-br-md'
+                  ? 'bg-white text-black rounded-br-md'
                   : msg.role === 'system'
                   ? 'bg-rose-500/10 text-rose-300 rounded-bl-md border border-rose-500/20 italic text-xs'
                   : 'bg-zinc-800/80 text-zinc-200 border border-white/10 rounded-bl-md'
