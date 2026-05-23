@@ -259,7 +259,8 @@ export function inspectPayload(payload: unknown): { safe: boolean; threats: stri
       }
     } else if (typeof node === 'object' && node !== null) {
       // Prevent Prototype Pollution
-      if ('__proto__' in node || 'constructor' in node) {
+      const keys = Object.keys(node)
+      if (keys.includes('__proto__') || keys.includes('constructor')) {
         threats.push('prototype_pollution')
       }
       

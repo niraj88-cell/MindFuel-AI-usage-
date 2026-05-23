@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { href: '/focus', label: 'Focus Timer', icon: Timer },
   { href: '/pulse', label: 'Daily Pulse', icon: Heart },
   { href: '/intercept', label: 'Mindful Intercept', icon: ShieldAlert },
+  { href: '/mood-scan', label: 'Mood Scan', icon: ScanLine },
   { href: '/insights', label: 'Insights', icon: BarChart3 },
   { href: '/coach', label: 'AI Coach', icon: MessageCircle },
   { href: '/challenges', label: 'Challenges', icon: Trophy },
