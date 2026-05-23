@@ -44,9 +44,13 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createClient()
 
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
+    const host = req.headers.get('host')
+    const origin = `${protocol}://${host}`
+
     // Supabase sends the password reset email
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/reset-password`,
+      redirectTo: `${origin}/reset-password`,
     })
 
     // Log the attempt (not the result — we don't want to reveal if email exists)
