@@ -26,9 +26,9 @@ export async function findAlternatives(
   category: string,
   userContext?: { top_interests?: string[]; avg_score?: number }
 ): Promise<AlternativesResponse> {
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || ''
+  const apiKey = process.env.GROQ_API_KEY || ''
   
-  if (!apiKey || apiKey === 'your_free_gemini_key_here') {
+  if (!apiKey || apiKey === 'your_free_groq_key_here') {
     return {
       alternatives: [
         {
