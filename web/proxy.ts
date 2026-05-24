@@ -38,6 +38,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isPublicRoute = ['/', '/login', '/signup', '/forgot-password'].includes(pathname)
   const isApiRoute = pathname.startsWith('/api/')
+  const isAuthCallback = pathname.startsWith('/api/auth/callback')
   const isStatic = pathname.startsWith('/_next') || /\.(ico|png|jpg|jpeg|svg|css|js)$/.test(pathname)
 
   if (!user && !isPublicRoute && !isApiRoute && !isStatic) {

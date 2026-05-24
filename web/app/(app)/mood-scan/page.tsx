@@ -107,9 +107,9 @@ export default function MoodScanPage() {
             Paste any content link to get a deep 5-dimension psychological analysis of how it shapes your mood.
           </p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-white text-black/10 border border-white/10 rounded-full">
+        <div className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-white/10 rounded-full">
           <Brain className="w-4 h-4 text-white" />
-          <span className="text-[10px] font-black text-white uppercase tracking-widest">AI-Powered</span>
+          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">AI-Powered</span>
         </div>
       </div>
 
