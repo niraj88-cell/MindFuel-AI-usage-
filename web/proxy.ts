@@ -8,6 +8,20 @@ export async function proxy(request: NextRequest) {
     },
   })
 
+  // Basic API Origin Security for mutating requests
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
+  if (isApiRoute && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
+    const origin = request.headers.get('origin')
+    const host = request.headers.get('host')
+    // Ensure the origin matches our host (protect against CSRF from malicious sites)
+    if (origin && host) {
+      const originUrl = new URL(origin)
+      if (originUrl.host !== host) {
+        return NextResponse.json({ error: 'Forbidden: Origin mismatch' }, { status: 403 })
+      }
+    }
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -37,7 +51,6 @@ export async function proxy(request: NextRequest) {
   // Basic route protection
   const { pathname } = request.nextUrl
   const isPublicRoute = ['/', '/login', '/signup', '/forgot-password'].includes(pathname)
-  const isApiRoute = pathname.startsWith('/api/')
   const isAuthCallback = pathname.startsWith('/api/auth/callback')
   const isStatic = pathname.startsWith('/_next') || /\.(ico|png|jpg|jpeg|svg|css|js)$/.test(pathname)
 
@@ -46,6 +59,12 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
+  }
+
+  // Inject additional safety headers into the response
+  supabaseResponse.headers.set('X-Content-Type-Options', 'nosniff')
+  if (process.env.NODE_ENV === 'production') {
+    supabaseResponse.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
   }
 
   return supabaseResponse

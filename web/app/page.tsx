@@ -63,21 +63,21 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative z-10 pt-40 pb-20 px-6 max-w-7xl mx-auto text-center">
+      <section className="relative z-10 pt-32 md:pt-40 pb-20 px-6 max-w-7xl mx-auto text-center">
         <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-10 animate-fade-in-up">
           <Sparkles className="w-3.5 h-3.5 fill-indigo-400" /> 
           Your Digital Diet Tracker
         </div>
 
-        <h1 className="text-6xl md:text-8xl font-black leading-[0.95] tracking-tight text-white mb-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-          Stop Mindless<br />
+        <h1 className="text-5xl md:text-8xl font-black leading-[1.05] md:leading-[0.95] tracking-tight text-white mb-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          Reclaim 2+ Hours<br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 animate-gradient-x">
-            Scrolling.
+            of Focus Every Day.
           </span>
         </h1>
 
-        <p className="text-xl text-slate-400 max-w-3xl mx-auto mb-12 font-medium leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-          MindFuel is your personal AI coach for digital habits. Track how the content you consume affects your mood, break doomscrolling loops, and build a healthier relationship with your screens.
+        <p className="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-12 font-medium leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          MindFuel is your personal AI coach for digital habits. Analyze the true impact of the content you consume, break doomscrolling loops, and automatically build a healthier relationship with your screens.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
@@ -87,7 +87,7 @@ export default function LandingPage() {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex items-center gap-3 text-white font-black text-lg">
-               Start for Free <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+               Start My Free Analysis <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </div>
           </Link>
           <Link
@@ -101,7 +101,7 @@ export default function LandingPage() {
         {/* Dashboard Preview Mockup */}
         <div className="mt-24 relative animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 blur-[100px] rounded-[60px]" />
-           <div className="relative glass-card border-none bg-slate-900/80 rounded-[60px] p-4 md:p-8 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)] border border-white/5">
+           <div className="relative glass-card border-none bg-slate-900/80 rounded-[32px] md:rounded-[60px] p-4 md:p-8 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)] border border-white/5">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                  <div className="md:col-span-8 h-80 md:h-[500px] bg-slate-800/50 rounded-[40px] border border-white/5 p-8 flex flex-col justify-between">
                     <div className="flex items-center justify-between">
@@ -175,7 +175,7 @@ export default function LandingPage() {
               <span className="text-2xl font-black text-white">MindFuel</span>
             </div>
             <p className="text-slate-500 max-w-sm font-medium">
-              Join the 50,000+ elite performers optimizing their cognitive nutrition with MindFuel.
+              Join 50,000+ professionals who cut doomscrolling by 73% and optimized their cognitive nutrition with MindFuel.
             </p>
             <div className="flex gap-4">
                <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-colors cursor-pointer"><Globe size={18} /></div>
