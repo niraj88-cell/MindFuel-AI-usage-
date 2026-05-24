@@ -66,18 +66,18 @@ export default function LandingPage() {
       <section className="relative z-10 pt-40 pb-20 px-6 max-w-7xl mx-auto text-center">
         <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-10 animate-fade-in-up">
           <Sparkles className="w-3.5 h-3.5 fill-indigo-400" /> 
-          Neural Engine v3.1 Online
+          Your Digital Diet Tracker
         </div>
 
         <h1 className="text-6xl md:text-8xl font-black leading-[0.95] tracking-tight text-white mb-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-          Your Mind is what<br />
+          Stop Mindless<br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 animate-gradient-x">
-            you consume.
+            Scrolling.
           </span>
         </h1>
 
         <p className="text-xl text-slate-400 max-w-3xl mx-auto mb-12 font-medium leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-          MindFuel is a world-class cognitive wellness engine. We analyze your digital nutrition in real-time to optimize focus, mood, and long-term mental performance.
+          MindFuel is your personal AI coach for digital habits. Track how the content you consume affects your mood, break doomscrolling loops, and build a healthier relationship with your screens.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
@@ -136,8 +136,8 @@ export default function LandingPage() {
       <section className="max-w-7xl mx-auto px-6 py-40 border-t border-white/5">
         <div className="flex flex-col md:flex-row gap-12 items-end justify-between mb-24">
            <div className="max-w-2xl">
-              <h2 className="text-5xl font-black text-white mb-6">Built for the <br /><span className="text-indigo-500">Modern Mind.</span></h2>
-              <p className="text-lg text-slate-400 font-medium">Standard tracking is obsolete. We use neural analysis to understand the core impact of your digital consumption.</p>
+              <h2 className="text-5xl font-black text-white mb-6">Build healthier <br /><span className="text-indigo-500">digital habits.</span></h2>
+              <p className="text-lg text-slate-400 font-medium">Screen time tracking isn't enough. MindFuel helps you understand the *quality* of what you consume and how it impacts your mental wellbeing.</p>
            </div>
            <Link href="/signup" className="text-indigo-400 font-black flex items-center gap-2 hover:gap-4 transition-all">
               EXPLORE ALL MODULES <ChevronRight className="w-4 h-4" />
@@ -147,20 +147,20 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 stagger-children">
           <FeatureCard 
             icon={Zap} 
-            title="Metabolic Analysis" 
-            desc="AI scores your consumption on a 1-100 metabolic scale. Understand what fuels you vs what drains you." 
+            title="AI Content Analysis" 
+            desc="Paste any link or describe what you're watching. Our AI instantly scores its impact on your mental health and suggests better alternatives." 
             accent="indigo" 
           />
           <FeatureCard 
             icon={Activity} 
-            title="Biometric Sync" 
-            desc="Connect your state of mind with your content. Detect anxiety loops and dopamine traps automatically." 
+            title="Mood Tracking" 
+            desc="Log how your screen time makes you feel. Visualize your weekly trends and identify exactly which apps are draining your energy." 
             accent="emerald" 
           />
           <FeatureCard 
             icon={MessageCircle} 
-            title="Recursive Coaching" 
-            desc="A dedicated intelligence that learns your cognitive patterns and intervenes before you burnout." 
+            title="Personal AI Coach" 
+            desc="Chat with an AI that understands your digital habits. Get personalized strategies to regain focus and beat content addiction." 
             accent="purple" 
           />
         </div>
