@@ -4,7 +4,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Brain, Loader2, Eye, EyeOff, Check, X } from 'lucide-react'
+import { Brain, Loader2, Eye, EyeOff, Check, X, ArrowRight, Zap, BarChart3, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -26,7 +26,7 @@ const STR_COLORS = ['', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-emer
 
 function Rule({ met, label }: { met: boolean; label: string }) {
   return (
-    <li className={`flex items-center gap-2 text-xs ${met ? 'text-emerald-400' : 'text-slate-500'}`}>
+    <li className={`flex items-center gap-2 text-xs ${met ? 'text-emerald-400' : 'text-zinc-600'}`}>
       {met ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
       {label}
     </li>
@@ -94,19 +94,20 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-mesh flex items-center justify-center px-4">
-        <div className="text-center glass-card p-10 max-w-md animate-fade-in-up">
-          <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-            <Brain className="w-8 h-8 text-emerald-400" />
+      <div className="min-h-screen bg-black flex items-center justify-center px-4">
+        <div className="text-center p-10 max-w-md rounded-3xl bg-zinc-900/50 border border-white/10">
+          <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-6">
+            <Check className="w-8 h-8 text-emerald-400" />
           </div>
-          <h2 className="text-xl font-bold mb-2">Check your email! 📧</h2>
-          <p className="text-sm text-[var(--muted-foreground)]">
-            We sent a confirmation link to your email address. Please click the link to activate your account.
+          <h2 className="text-2xl font-black text-white mb-3">Check your email! 📧</h2>
+          <p className="text-sm text-zinc-400 leading-relaxed">
+            We sent a confirmation link to <span className="text-white font-bold">{email}</span>. Click the link to activate your account and start your journey.
           </p>
-          <div className="mt-6">
-            <Button variant="outline" onClick={() => router.push('/login')} className="w-full">
+          <div className="mt-8 space-y-3">
+            <Button onClick={() => router.push('/login')} className="w-full h-11 bg-white text-black hover:bg-zinc-200 rounded-xl font-bold">
               Back to Login
             </Button>
+            <p className="text-xs text-zinc-600">Didn&apos;t receive it? Check your spam folder.</p>
           </div>
         </div>
       </div>
@@ -114,27 +115,90 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-mesh flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <Brain className="w-8 h-8 text-indigo-400" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-              MindFuel
-            </span>
-          </Link>
-          <h1 className="text-2xl font-bold mt-4">Start your journey</h1>
-          <p className="text-sm text-[var(--muted-foreground)] mt-1">
-            Create an account to track your mental nutrition
-          </p>
-        </div>
+    <div className="min-h-screen bg-black flex">
+      {/* Left Panel - Value Proposition */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-black to-zinc-900" />
+        <div className="absolute top-[30%] left-[15%] w-[350px] h-[350px] bg-white/[0.03] blur-[100px] rounded-full" />
+        
+        <div className="relative z-10 flex flex-col justify-center px-16 py-20">
+          <div className="mb-12">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center">
+                <Brain className="w-7 h-7 text-black" />
+              </div>
+              <span className="text-2xl font-black tracking-tight text-white">MindFuel</span>
+            </div>
+            
+            <h2 className="text-4xl font-black text-white leading-tight mb-4">
+              Start optimizing your<br />
+              <span className="text-zinc-500">digital nutrition today.</span>
+            </h2>
+            <p className="text-zinc-500 text-lg max-w-md leading-relaxed">
+              It takes 30 seconds to create an account. No credit card required.
+            </p>
+          </div>
 
-        {/* Form */}
-        <div className="glass-card p-8">
+          {/* What you get */}
+          <div className="space-y-4 mb-12">
+            <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">Free account includes</p>
+            <div className="space-y-3">
+              {[
+                { icon: <Zap className="w-4 h-4" />, text: '3 AI content analyses per day' },
+                { icon: <BarChart3 className="w-4 h-4" />, text: 'Daily mental nutrition dashboard' },
+                { icon: <MessageCircle className="w-4 h-4" />, text: 'AI wellness coach access' },
+                { icon: <Brain className="w-4 h-4" />, text: 'Mood scan & insights' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white">
+                    {item.icon}
+                  </div>
+                  <span className="text-sm text-zinc-400">{item.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Testimonial */}
+          <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5">
+            <p className="text-sm text-zinc-400 italic leading-relaxed mb-4">
+              &ldquo;MindFuel helped me realize I was spending 4 hours daily on content that drained my energy. Now I&apos;m more intentional about what I consume.&rdquo;
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-400">S</div>
+              <div>
+                <p className="text-xs font-bold text-white">Sarah K.</p>
+                <p className="text-[10px] text-zinc-600">Product Designer</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel - Signup Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-[420px]">
+          {/* Mobile logo */}
+          <div className="lg:hidden text-center mb-10">
+            <Link href="/" className="inline-flex items-center gap-2">
+              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
+                <Brain className="w-6 h-6 text-black" />
+              </div>
+              <span className="text-xl font-black text-white">MindFuel</span>
+            </Link>
+          </div>
+
+          <div className="mb-8">
+            <h1 className="text-3xl font-black text-white mb-2">Create your account</h1>
+            <p className="text-zinc-500">
+              Free forever. No credit card needed.
+            </p>
+          </div>
+
+          {/* Form */}
           <form onSubmit={handleSignup} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name" className="text-sm font-bold text-zinc-400">Full Name</Label>
               <Input
                 id="name"
                 type="text"
@@ -143,11 +207,12 @@ export default function SignupPage() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 autoComplete="name"
+                className="h-12 bg-zinc-900/50 border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-white/10"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="signup-email">Email</Label>
+              <Label htmlFor="signup-email" className="text-sm font-bold text-zinc-400">Email</Label>
               <Input
                 id="signup-email"
                 type="email"
@@ -156,11 +221,12 @@ export default function SignupPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
+                className="h-12 bg-zinc-900/50 border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-white/10"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="signup-password">Password</Label>
+              <Label htmlFor="signup-password" className="text-sm font-bold text-zinc-400">Password</Label>
               <div className="relative">
                 <Input
                   id="signup-password"
@@ -171,11 +237,12 @@ export default function SignupPage() {
                   required
                   autoComplete="new-password"
                   minLength={8}
+                  className="h-12 bg-zinc-900/50 border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-white/10 pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -185,7 +252,7 @@ export default function SignupPage() {
               {password.length > 0 && (
                 <div className="space-y-3 pt-2">
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden flex gap-0.5">
+                    <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden flex gap-0.5">
                       {[1, 2, 3, 4, 5].map((i) => (
                         <div
                           key={i}
@@ -196,7 +263,7 @@ export default function SignupPage() {
                       ))}
                     </div>
                     <span className={`text-[10px] font-black uppercase tracking-widest ${
-                      strength >= 4 ? 'text-emerald-400' : strength >= 3 ? 'text-yellow-400' : 'text-slate-500'
+                      strength >= 4 ? 'text-emerald-400' : strength >= 3 ? 'text-yellow-400' : 'text-zinc-600'
                     }`}>
                       {STR_LABELS[strength]}
                     </span>
@@ -213,23 +280,40 @@ export default function SignupPage() {
             </div>
 
             {error && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400">
                 {error}
               </div>
             )}
 
-            <Button id="signup-button" type="submit" className="w-full h-11" disabled={loading}>
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Account'}
+            <Button
+              id="signup-button"
+              type="submit"
+              className="w-full h-12 bg-white text-black hover:bg-zinc-200 rounded-xl font-black text-sm transition-all active:scale-[0.98]"
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <span className="flex items-center gap-2">
+                  Create Free Account <ArrowRight className="w-4 h-4" />
+                </span>
+              )}
             </Button>
-          </form>
-        </div>
 
-        <p className="text-center text-sm text-[var(--muted-foreground)] mt-6">
-          Already have an account?{' '}
-          <Link href="/login" className="text-indigo-400 hover:text-indigo-300 font-medium">
-            Sign in
-          </Link>
-        </p>
+            <p className="text-[10px] text-zinc-700 text-center leading-relaxed">
+              By signing up, you agree to our Terms of Service and Privacy Policy.
+            </p>
+          </form>
+
+          <div className="mt-8 text-center">
+            <p className="text-sm text-zinc-600">
+              Already have an account?{' '}
+              <Link href="/login" className="text-white hover:underline font-bold">
+                Sign in →
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )

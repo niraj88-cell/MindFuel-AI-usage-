@@ -24,8 +24,20 @@ async function extractMetadataFromUrl(url: string): Promise<string> {
       result: `Link Content Detected:\nURL: ${url}\nTitle: Instagram Reels/Stories\nDescription: Short-form vertical video content designed for infinite scrolling and dopamine-loop engagement.`
     },
     {
+      match: (u) => u.includes('instagram.com'),
+      result: `Link Content Detected:\nURL: ${url}\nTitle: Instagram Content\nDescription: Visual social media content from Instagram — posts, photos, or profile browsing. Designed for visual comparison and social validation loops.`
+    },
+    {
       match: (u) => u.includes('youtube.com/shorts'),
       result: `Link Content Detected:\nURL: ${url}\nTitle: YouTube Shorts\nDescription: Sub-60-second vertical video content designed for rapid consumption and infinite scrolling.`
+    },
+    {
+      match: (u) => u.includes('youtube.com/watch') || u.includes('youtu.be/'),
+      result: `Link Content Detected:\nURL: ${url}\nTitle: YouTube Video\nDescription: Long-form video content from YouTube. Quality varies widely — could be educational, entertainment, or commentary content.`
+    },
+    {
+      match: (u) => u.includes('youtube.com'),
+      result: `Link Content Detected:\nURL: ${url}\nTitle: YouTube Browsing\nDescription: YouTube platform browsing — homepage feed, search results, or channel exploration.`
     },
     {
       match: (u) => u.includes('tiktok.com'),
@@ -38,6 +50,18 @@ async function extractMetadataFromUrl(url: string): Promise<string> {
     {
       match: (u) => u.includes('reddit.com'),
       result: `Link Content Detected:\nURL: ${url}\nTitle: Reddit Thread\nDescription: Community discussion thread. Quality varies significantly by subreddit — could be educational, social, or doomscrolling.`
+    },
+    {
+      match: (u) => u.includes('facebook.com') || u.includes('fb.com'),
+      result: `Link Content Detected:\nURL: ${url}\nTitle: Facebook Content\nDescription: Social media content from Facebook — posts, groups, or news feed browsing. Mix of social connection and algorithmic engagement.`
+    },
+    {
+      match: (u) => u.includes('snapchat.com'),
+      result: `Link Content Detected:\nURL: ${url}\nTitle: Snapchat Content\nDescription: Ephemeral social media content from Snapchat — stories, snaps, or discover feed. Designed for FOMO-driven engagement.`
+    },
+    {
+      match: (u) => u.includes('threads.net'),
+      result: `Link Content Detected:\nURL: ${url}\nTitle: Threads Post\nDescription: Text-based social media content from Threads (Meta). Microblogging format similar to Twitter/X.`
     },
     {
       match: (u) => u.includes('coursera.org') || u.includes('udemy.com') || u.includes('edx.org') || u.includes('khanacademy.org'),
@@ -54,6 +78,14 @@ async function extractMetadataFromUrl(url: string): Promise<string> {
     {
       match: (u) => u.includes('spotify.com') || u.includes('podcasts.apple.com'),
       result: `Link Content Detected:\nURL: ${url}\nTitle: Audio Content (Podcast/Music)\nDescription: Audio streaming content — could be educational podcast or leisure music.`
+    },
+    {
+      match: (u) => u.includes('linkedin.com'),
+      result: `Link Content Detected:\nURL: ${url}\nTitle: LinkedIn Content\nDescription: Professional networking content — job posts, industry articles, or professional discussions.`
+    },
+    {
+      match: (u) => u.includes('pinterest.com'),
+      result: `Link Content Detected:\nURL: ${url}\nTitle: Pinterest Browsing\nDescription: Visual discovery and inspiration platform — pins, boards, and curated visual content.`
     },
   ]
 
