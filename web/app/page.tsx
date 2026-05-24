@@ -48,13 +48,13 @@ export default function LandingPage() {
           <div className="flex items-center gap-4">
             <Link
               href="/login"
-              className="text-sm font-bold text-slate-400 hover:text-white transition-colors"
+              className="px-4 py-2 text-sm font-bold text-white bg-white/5 rounded-xl hover:bg-white/10 transition-colors border border-white/10"
             >
               Log in
             </Link>
             <Link
               href="/signup"
-              className="px-6 py-3 bg-white text-[#0b0f1a] rounded-2xl font-black text-sm hover:scale-105 transition-all shadow-xl shadow-white/10 active:scale-95"
+              className="px-6 py-2.5 bg-white text-[#0b0f1a] rounded-xl font-black text-sm hover:scale-105 transition-all shadow-xl shadow-white/10 active:scale-95"
             >
               Get Access
             </Link>
@@ -87,14 +87,14 @@ export default function LandingPage() {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex items-center gap-3 text-white font-black text-lg">
-               Initialize Protocol <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+               Start for Free <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </div>
           </Link>
           <Link
-            href="/demo"
+            href="/dashboard"
             className="flex items-center gap-3 px-10 py-5 bg-slate-800/40 border border-white/5 rounded-[28px] font-black text-lg hover:bg-slate-800/60 transition-all text-white"
           >
-            <Play className="w-4 h-4 fill-white" /> View System Demo
+            Go to Dashboard <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
 
