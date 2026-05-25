@@ -45,12 +45,12 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-mesh flex items-center justify-center px-4">
+      <div className="min-h-screen bg-black flex items-center justify-center px-4">
         <div className="w-full max-w-md">
-          <div className="text-center glass-card p-10 animate-fade-in-up">
+          <div className="text-center bg-zinc-900/50 border border-white/10 rounded-3xl p-8 sm:p-10 animate-fade-in-up">
             {/* Success icon */}
-            <div className="w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+            <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="w-10 h-10 text-white" />
             </div>
 
             <h2 className="text-2xl font-black mb-3">Check your inbox</h2>
@@ -83,13 +83,13 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-mesh flex items-center justify-center px-4">
+    <div className="min-h-screen bg-black flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <Brain className="w-8 h-8 text-indigo-400" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+            <Brain className="w-8 h-8 text-white" />
+            <span className="text-2xl font-bold text-white">
               MindFuel
             </span>
           </Link>
@@ -100,15 +100,15 @@ export default function ForgotPasswordPage() {
         </div>
 
         {/* Security note */}
-        <div className="flex items-start gap-3 p-4 bg-indigo-500/5 border border-indigo-500/15 rounded-2xl mb-6">
-          <Shield className="w-4 h-4 text-indigo-400 mt-0.5 shrink-0" />
+        <div className="flex items-start gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl mb-6">
+          <Shield className="w-4 h-4 text-zinc-400 mt-0.5 shrink-0" />
           <p className="text-xs text-slate-400 leading-relaxed">
             For your security, we won&apos;t confirm whether an email is registered. The reset link expires in 1 hour.
           </p>
         </div>
 
         {/* Form */}
-        <div className="glass-card p-8">
+        <div className="bg-zinc-900/50 border border-white/10 rounded-2xl p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="reset-email">Email address</Label>
@@ -142,7 +142,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         <p className="text-center text-sm text-slate-500 mt-6">
-          <Link href="/login" className="text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center gap-1">
+          <Link href="/login" className="text-white hover:text-zinc-300 font-medium inline-flex items-center gap-1">
             <ArrowLeft className="w-3 h-3" />
             Back to Sign In
           </Link>

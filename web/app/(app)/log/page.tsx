@@ -10,7 +10,7 @@ import { ContentAnalyzer } from '@/components/log/ContentAnalyzer'
 import { MoodSlider } from '@/components/log/MoodSlider'
 import { QuickLogFAB } from '@/components/dashboard/QuickLogFAB'
 import { createClient } from '@/lib/supabase/client'
-import { format } from 'date-fns'
+import { format, subDays } from 'date-fns'
 import { trackEvent } from '@/lib/mixpanel'
 import { getScoreColor, getScoreLabel } from '@/lib/utils'
 
@@ -114,6 +114,16 @@ export default function LogPage() {
           })
           .eq('id', existing.id)
       } else {
+        const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd')
+        const { data: yesterdaySummary } = await supabase
+          .from('daily_summaries')
+          .select('streak_days')
+          .eq('user_id', user.id)
+          .eq('date', yesterday)
+          .single()
+          
+        const newStreak = yesterdaySummary ? (yesterdaySummary.streak_days || 0) + 1 : 1
+
         await supabase.from('daily_summaries').insert({
           user_id: user.id,
           date: today,
@@ -121,7 +131,7 @@ export default function LogPage() {
           average_score: lastAnalysis.mental_score,
           total_logs: 1,
           category_breakdown: { [lastAnalysis.category]: 1 },
-          streak_days: 1,
+          streak_days: newStreak,
         })
       }
 
@@ -186,7 +196,7 @@ export default function LogPage() {
       {/* Content Analyzer Section */}
       <div className="relative group">
          <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[32px] blur opacity-10"></div>
-         <Card className="relative bg-zinc-900 border-white/10 rounded-[32px] p-8">
+         <Card className="relative bg-zinc-900 border-white/10 rounded-[32px] p-4 sm:p-6 md:p-8">
             <div className="flex items-center gap-3 mb-8">
                <Sparkles className="w-5 h-5 text-white" />
                <h2 className="text-lg font-bold">AI Content Scanner</h2>
@@ -200,7 +210,7 @@ export default function LogPage() {
 
       {/* Save log section — appears after analysis */}
       {lastAnalysis && !saved && (
-        <Card className="animate-fade-in-up bg-zinc-900/50 border-white/10 rounded-[32px] overflow-hidden p-8 shadow-2xl">
+        <Card className="animate-fade-in-up bg-zinc-900/50 border-white/10 rounded-[32px] overflow-hidden p-4 sm:p-6 md:p-8 shadow-2xl">
            <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl font-bold flex items-center gap-3">
                  <CheckCircle2 className="w-6 h-6 text-white" />
@@ -250,7 +260,7 @@ export default function LogPage() {
             <Button 
               onClick={handleSaveLog} 
               disabled={saving} 
-              className="w-full h-16 bg-white hover:bg-zinc-200 text-black text-white rounded-2xl font-black text-lg shadow-xl shadow-none transition-all"
+              className="w-full h-16 bg-white hover:bg-zinc-200 text-black rounded-2xl font-black text-lg shadow-none transition-all"
             >
               {saving ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Plus className="w-5 h-5 mr-3" />}
               Save Log Entry
@@ -262,7 +272,7 @@ export default function LogPage() {
       {/* Success state with instant insight */}
       {saved && (
         <div className="animate-fade-in-up space-y-4">
-          <div className="bg-white/5 border border-white/10 p-8 rounded-[32px] text-center">
+          <div className="bg-white/5 border border-white/10 p-4 md:p-8 rounded-[32px] text-center">
             <p className="text-xl font-bold text-white flex items-center justify-center gap-3">
                <CheckCircle2 className="w-6 h-6" />
                Saved Successfully!
@@ -301,7 +311,7 @@ export default function LogPage() {
               <div className="mt-4 flex gap-3">
                 <button
                   onClick={() => { setSaved(false); setLastAnalysis(null); setLastContent('') }}
-                  className="flex-1 py-3 bg-white text-black/10 text-white rounded-xl font-bold text-sm hover:bg-white text-black/20 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 py-3 bg-white/10 text-white rounded-xl font-bold text-sm hover:bg-white/20 transition-all flex items-center justify-center gap-2"
                 >
                   <Plus className="w-4 h-4" /> Log Another
                 </button>
@@ -318,7 +328,7 @@ export default function LogPage() {
       )}
 
       {/* Quick Mood Check-in */}
-      <Card className="bg-zinc-900/30 border-white/10 rounded-[32px] p-8">
+      <Card className="bg-zinc-900/30 border-white/10 rounded-[32px] p-4 md:p-8">
          <div className="flex items-center gap-3 mb-6">
             <Heart className="w-5 h-5 text-rose-400" />
             <h2 className="text-lg font-bold">Quick Mood Check</h2>

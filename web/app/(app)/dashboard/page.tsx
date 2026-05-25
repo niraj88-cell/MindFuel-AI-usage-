@@ -25,6 +25,7 @@ import { CoachBanner } from '@/components/dashboard/CoachBanner'
 import { QuickLogFAB } from '@/components/dashboard/QuickLogFAB'
 import { DailyCheckIn } from '@/components/dashboard/DailyCheckIn'
 import { OnboardingDemo } from '@/components/dashboard/OnboardingDemo'
+import { OnboardingFlow } from '@/components/dashboard/OnboardingFlow'
 import { createClient } from '@/lib/supabase/client'
 import { formatRelativeTime, getCategoryEmoji, getScoreColor } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -41,12 +42,17 @@ interface DashboardData {
   focusHours: number
   focusSessions: number
   todayPulse: number | null
+  onboardingCompleted: boolean
+  contentLove: string | null
+  contentRegret: string | null
 }
 
 export default function DashboardPage() {
   const router = useRouter()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
 
   const loadDashboard = useCallback(async () => {
     const supabase = createClient()
@@ -55,12 +61,17 @@ export default function DashboardPage() {
 
     const today = format(new Date(), 'yyyy-MM-dd')
 
-    // Fetch profile for subscription status
+    // Fetch profile for subscription status and onboarding
     const { data: profile } = await supabase
       .from('profiles')
-      .select('subscription_tier')
+      .select('subscription_tier, onboarding_completed, content_love, content_regret')
       .eq('id', user.id)
       .maybeSingle()
+      
+    if (profile && profile.onboarding_completed === false) {
+      setShowOnboarding(true)
+      setUserId(user.id)
+    }
 
     // Fetch today's summary
     const { data: summary } = await supabase
@@ -149,6 +160,9 @@ export default function DashboardPage() {
       focusHours,
       focusSessions,
       todayPulse,
+      onboardingCompleted: profile?.onboarding_completed || false,
+      contentLove: profile?.content_love || null,
+      contentRegret: profile?.content_regret || null,
     })
     setLoading(false)
   }, [])
@@ -172,6 +186,22 @@ export default function DashboardPage() {
   return (
     <div className="space-y-10 pb-20 stagger-children">
       {/* First-time onboarding */}
+      {showOnboarding && userId && (
+        <OnboardingFlow 
+          userId={userId} 
+          onComplete={(love, regret) => {
+            setShowOnboarding(false)
+            if (data) {
+              setData({
+                ...data,
+                onboardingCompleted: true,
+                contentLove: love,
+                contentRegret: regret,
+              })
+            }
+          }} 
+        />
+      )}
       <OnboardingDemo />
       {/* Premium Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -180,7 +210,13 @@ export default function DashboardPage() {
             <Zap className="w-3 h-3" />
             System Status: Online
           </div>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight">Dashboard</h1>
+          {data?.contentLove ? (
+            <h1 className="text-3xl md:text-5xl font-black tracking-tight">
+              Fuel your mind with <span className="text-zinc-400 italic">{data.contentLove.toLowerCase()}</span>.
+            </h1>
+          ) : (
+            <h1 className="text-3xl md:text-5xl font-black tracking-tight">Dashboard</h1>
+          )}
           <p className="text-zinc-500 mt-2 flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             {format(new Date(), 'EEEE, MMMM do, yyyy')}
@@ -242,8 +278,8 @@ export default function DashboardPage() {
 
       {/* Coach Alert (Premium Style) */}
       {data?.coachInsight && (
-        <Card className="bg-zinc-900 border-white/10 rounded-2xl overflow-hidden p-8">
-          <div className="flex gap-6 items-start">
+        <Card className="bg-zinc-900 border-white/10 rounded-2xl overflow-hidden p-4 md:p-8">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start">
             <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center shrink-0 border border-white/10">
               <Brain className="w-7 h-7 text-white" />
             </div>
@@ -295,7 +331,7 @@ export default function DashboardPage() {
       {/* Score + Breakdown Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Score Card */}
-        <Card className="lg:col-span-4 glass-card border-none bg-zinc-900/50 p-10 flex flex-col items-center justify-center text-center">
+        <Card className="lg:col-span-4 glass-card border-none bg-zinc-900/50 p-6 md:p-10 flex flex-col items-center justify-center text-center">
            <div className="relative mb-8">
               <ScoreRing score={data?.todayScore || 0} subtitle="System Score" />
            </div>
@@ -320,8 +356,8 @@ export default function DashboardPage() {
         </Card>
 
         {/* Nutrition Breakdown */}
-        <Card className="lg:col-span-8 glass-card border-none bg-zinc-900/50 p-10">
-           <div className="flex items-center justify-between mb-10">
+        <Card className="lg:col-span-8 glass-card border-none bg-zinc-900/50 p-6 md:p-10">
+           <div className="flex items-center justify-between mb-6 md:mb-10">
               <h2 className="text-2xl font-bold flex items-center gap-3">
                  <Trophy className="w-6 h-6 text-white" />
                  Category Breakdown
@@ -355,9 +391,9 @@ export default function DashboardPage() {
          
          <div className="grid gap-4">
             {data?.recentLogs.map((log) => (
-              <div key={log.id} className="group bg-zinc-900/40 hover:bg-zinc-800/40 border border-white/10 p-6 rounded-2xl flex items-center gap-6 transition-all">
+              <div key={log.id} className="group bg-zinc-900/40 hover:bg-zinc-800/40 border border-white/10 p-4 md:p-6 rounded-2xl flex items-center gap-3 md:gap-6 transition-all">
                  <div 
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black bg-white/5 text-white"
+                  className="w-10 h-10 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-xl font-black bg-white/5 text-white shrink-0"
                  >
                     {log.mental_score}
                  </div>
@@ -372,10 +408,10 @@ export default function DashboardPage() {
                           {formatRelativeTime(log.created_at)}
                        </span>
                     </div>
-                    <p className="text-zinc-300 font-medium text-lg group-hover:text-white transition-colors truncate">{log.content}</p>
+                    <p className="text-zinc-300 font-medium text-sm md:text-lg group-hover:text-white transition-colors truncate">{log.content}</p>
                  </div>
                  
-                 <button className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                 <button className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                     <ArrowRight className="w-4 h-4 text-zinc-400" />
                  </button>
               </div>

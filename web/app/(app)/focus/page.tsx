@@ -99,34 +99,34 @@ export default function FocusPage() {
         <div className="space-y-10 py-8 animate-fade-in-up">
           <div className="text-center">
             <Timer className="w-10 h-10 text-zinc-500 mx-auto mb-6" />
-            <h1 className="text-4xl font-bold tracking-tight text-white">Focus Timer</h1>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white">Focus Timer</h1>
             <p className="text-zinc-500 mt-3 text-sm">Commit to phone-free time. Build your focus muscle.</p>
           </div>
 
           {/* Stats row */}
           {history.length > 0 && (
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 text-center">
-                <p className="text-2xl font-black text-white">{totalHours}h</p>
+              <div className="bg-zinc-900 border border-white/10 rounded-xl p-3 sm:p-4 text-center">
+                <p className="text-xl sm:text-2xl font-black text-white">{totalHours}h</p>
                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Total Focus</p>
               </div>
-              <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 text-center">
-                <p className="text-2xl font-black text-white">{completed.length}</p>
+              <div className="bg-zinc-900 border border-white/10 rounded-xl p-3 sm:p-4 text-center">
+                <p className="text-xl sm:text-2xl font-black text-white">{completed.length}</p>
                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Completed</p>
               </div>
-              <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 text-center">
-                <p className="text-2xl font-black text-white">{completionRate}%</p>
+              <div className="bg-zinc-900 border border-white/10 rounded-xl p-3 sm:p-4 text-center">
+                <p className="text-xl sm:text-2xl font-black text-white">{completionRate}%</p>
                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Success</p>
               </div>
             </div>
           )}
 
-          <div className="flex justify-center gap-3">
+          <div className="flex justify-center flex-wrap gap-2 sm:gap-3">
             {DURATIONS.map(d => (
               <button
                 key={d}
                 onClick={() => setSelectedMinutes(d)}
-                className={`px-6 py-3 rounded-2xl text-sm font-bold transition-all cursor-pointer ${
+                className={`px-4 sm:px-6 py-3 min-w-[70px] rounded-2xl text-sm font-bold transition-all cursor-pointer ${
                   selectedMinutes === d
                     ? 'bg-white text-black'
                     : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-zinc-800'
@@ -174,7 +174,7 @@ export default function FocusPage() {
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <p className="text-6xl font-black text-white tracking-tight font-mono">{mm}:{ss}</p>
+              <p className="text-5xl sm:text-6xl font-black text-white tracking-tight font-mono">{mm}:{ss}</p>
               <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mt-2">Remaining</p>
             </div>
           </div>
@@ -191,7 +191,7 @@ export default function FocusPage() {
             <Check className="w-10 h-10 text-white" />
           </div>
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-white">Focus Complete</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold text-white">Focus Complete</h1>
             <p className="text-zinc-400 mt-3">{selectedMinutes} minutes of undistracted time. Well done.</p>
           </div>
           <button

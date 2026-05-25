@@ -192,13 +192,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setSidebarOpen(false)} />
-          <aside className="absolute left-0 top-0 bottom-0 w-80 bg-zinc-950 border-r border-white/10 flex flex-col animate-fade-in-up">
+          <aside className="absolute left-0 top-0 bottom-0 w-[85vw] max-w-[320px] bg-zinc-950 border-r border-white/10 flex flex-col animate-fade-in-up">
             <div className="flex items-center justify-between px-8 py-8 border-b border-white/10">
               <div className="flex items-center gap-3">
                 <Brain className="w-8 h-8 text-white" />
                 <span className="text-xl font-black text-white">MindFuel</span>
               </div>
-              <button onClick={() => setSidebarOpen(false)} className="text-zinc-400 cursor-pointer">
+              <button onClick={() => setSidebarOpen(false)} className="text-zinc-400 cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -234,7 +234,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col min-h-screen relative z-10 overflow-hidden">
         {/* Mobile header */}
         <header className="lg:hidden flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/80 backdrop-blur-xl sticky top-0 z-40">
-          <button onClick={() => setSidebarOpen(true)} className="text-white cursor-pointer">
+          <button onClick={() => setSidebarOpen(true)} className="text-white cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center -ml-2">
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center gap-2">
@@ -245,7 +245,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-6 lg:p-12 max-w-7xl w-full mx-auto overflow-y-auto custom-scrollbar">
+        <main className="flex-1 p-4 sm:p-6 lg:p-12 max-w-7xl w-full mx-auto overflow-y-auto custom-scrollbar scroll-smooth">
           {children}
         </main>
       </div>

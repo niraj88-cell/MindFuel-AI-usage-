@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { scanContent } from '@/lib/agents/tools/contentScanner'
 import { checkAnalyzeRateLimit } from '@/lib/rate-limit'
 import { sanitizeText } from '@/lib/security'
-import { format } from 'date-fns'
+import { format, subDays } from 'date-fns'
 
 export const runtime = 'nodejs'
 
@@ -262,6 +262,16 @@ export async function POST(req: NextRequest) {
         category_breakdown: breakdown,
       }).eq('id', existing.id)
     } else {
+      const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd')
+      const { data: yesterdaySummary } = await supabase
+        .from('daily_summaries')
+        .select('streak_days')
+        .eq('user_id', user.id)
+        .eq('date', yesterday)
+        .single()
+
+      const newStreak = yesterdaySummary ? (yesterdaySummary.streak_days || 0) + 1 : 1
+
       await supabase.from('daily_summaries').insert({
         user_id: user.id,
         date: today,
@@ -269,7 +279,7 @@ export async function POST(req: NextRequest) {
         average_score: logData.mental_score,
         total_logs: 1,
         category_breakdown: { [logData.category]: 1 },
-        streak_days: 1,
+        streak_days: newStreak,
       })
     }
 

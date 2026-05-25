@@ -99,7 +99,7 @@ export default function MoodScanPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black tracking-tighter flex items-center gap-3">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tighter flex items-center gap-3">
             <ScanLine className="w-8 h-8 text-white" />
             Mood <span className="text-white">Scan</span>
           </h1>
@@ -118,14 +118,14 @@ export default function MoodScanPage() {
         <div className="relative group">
           <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[36px] blur opacity-15 group-hover:opacity-25 transition-opacity" />
           <Card className="relative bg-zinc-900 border-white/10 rounded-[32px] overflow-hidden">
-            <CardContent className="p-8 space-y-6">
+            <CardContent className="p-4 sm:p-6 md:p-8 space-y-6">
               {/* URL Input */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2 mb-3">
                   <Link2 className="w-4 h-4 text-white" />
                   <span className="text-xs font-black text-zinc-500 uppercase tracking-widest">Paste a URL or describe content</span>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <div className="relative flex-1">
                     <Input
                       id="mood-scan-input"
@@ -141,7 +141,7 @@ export default function MoodScanPage() {
                     id="scan-button"
                     onClick={() => handleScan()}
                     disabled={loading || !url.trim()}
-                    className="h-14 px-8 bg-white hover:bg-zinc-200 text-black rounded-2xl font-black text-sm shadow-lg shadow-none"
+                    className="w-full sm:w-auto h-14 px-8 bg-white hover:bg-zinc-200 text-black rounded-2xl font-black text-sm shadow-none"
                   >
                     {loading ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -167,7 +167,7 @@ export default function MoodScanPage() {
                       key={p.id}
                       onClick={() => handlePreset(p.placeholder)}
                       disabled={loading}
-                      className="group/btn flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-800/30 border border-white/10 hover:border-white/10 transition-all text-sm disabled:opacity-50"
+                      className="group/btn flex items-center gap-2 px-4 py-3 min-h-[44px] rounded-xl bg-zinc-800/30 border border-white/10 hover:border-white/10 transition-all text-sm disabled:opacity-50"
                     >
                       <span style={{ color: p.color }} className="group-hover/btn:scale-110 transition-transform">
                         {p.icon}
@@ -228,14 +228,14 @@ export default function MoodScanPage() {
 
       {/* Scan History */}
       {!loading && (
-        <Card className="bg-zinc-900/30 border-white/10 rounded-[32px]">
-          <CardHeader className="p-6 pb-2">
+        <Card className="bg-zinc-900/30 border-white/10 rounded-[20px] md:rounded-[32px]">
+          <CardHeader className="p-4 md:p-6 pb-2 md:pb-2">
             <CardTitle className="text-sm font-black text-zinc-400 flex items-center gap-2">
               <History className="w-4 h-4" />
               Recent Scans
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6 pt-2">
+          <CardContent className="p-4 md:p-6 pt-2 md:pt-2">
             <ScanHistory />
           </CardContent>
         </Card>

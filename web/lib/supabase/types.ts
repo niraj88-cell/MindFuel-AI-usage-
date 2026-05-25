@@ -31,6 +31,9 @@ export interface Database {
           daily_log_limit: number
           created_at: string
           updated_at: string
+          onboarding_completed: boolean
+          content_love: string | null
+          content_regret: string | null
         }
         Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'updated_at'> & {
           created_at?: string
@@ -248,6 +251,30 @@ export interface Database {
         Relationships: [
           {
             foreignKeyName: "coaching_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['push_subscriptions']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['push_subscriptions']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"

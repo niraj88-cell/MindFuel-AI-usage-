@@ -111,7 +111,7 @@ export default function NotificationsPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-3">
             <Bell className="w-7 h-7 text-white" />
             Notifications
           </h1>
@@ -195,7 +195,7 @@ export default function NotificationsPage() {
             return (
               <div
                 key={notif.id}
-                className={`relative group flex gap-4 p-5 rounded-3xl border transition-all duration-300 animate-fade-in-up ${
+                className={`relative group flex gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all duration-300 animate-fade-in-up ${
                   !notif.is_read
                     ? `${config.bg} ${config.border}`
                     : 'bg-zinc-900/40 border-white/10'
@@ -203,7 +203,7 @@ export default function NotificationsPage() {
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
                 {/* Icon */}
-                <div className={`w-11 h-11 rounded-2xl ${config.bg} border ${config.border} flex items-center justify-center shrink-0`}>
+                <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl ${config.bg} border ${config.border} flex items-center justify-center shrink-0`}>
                   <Icon className={`w-5 h-5 ${config.color}`} />
                 </div>
 
@@ -215,7 +215,7 @@ export default function NotificationsPage() {
                         {config.label}
                       </span>
                       {!notif.is_read && (
-                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-indigo-400 align-middle" />
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle" />
                       )}
                     </div>
                     <span className="text-[10px] text-zinc-600 shrink-0">{timeAgo}</span>
@@ -227,7 +227,7 @@ export default function NotificationsPage() {
                 {/* Delete button */}
                 <button
                   onClick={() => deleteNotification(notif.id)}
-                  className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 rounded-lg bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-rose-500/50 cursor-pointer"
+                  className="absolute top-3 right-3 sm:top-4 sm:right-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity w-7 h-7 sm:w-6 sm:h-6 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 rounded-lg bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-rose-500/50 cursor-pointer"
                 >
                   <X className="w-3 h-3" />
                 </button>

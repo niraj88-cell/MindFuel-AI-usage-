@@ -244,7 +244,7 @@ export default function CoachPage() {
   const showQuickPrompts = messages.length <= 1
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-5xl mx-auto">
+    <div className="flex flex-col h-[calc(100dvh-7rem)] lg:h-[calc(100dvh-8rem)] max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 shrink-0">
         <div>
@@ -274,9 +274,9 @@ export default function CoachPage() {
       )}
 
       {/* Chat card */}
-      <Card className="flex-1 flex flex-col min-h-0 bg-zinc-900/50 border-white/10 rounded-[40px] overflow-hidden shadow-2xl">
+      <Card className="flex-1 flex flex-col min-h-0 bg-zinc-900/50 border-white/10 rounded-[20px] md:rounded-[40px] overflow-hidden shadow-2xl">
         {/* Messages */}
-        <CardContent className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+        <CardContent className="flex-1 overflow-y-auto p-3 sm:p-5 md:p-8 space-y-6 custom-scrollbar">
           {messages.map(msg => (
             <div key={msg.id} className={`flex items-end gap-4 animate-fade-in-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
               {/* Avatar */}
@@ -291,7 +291,7 @@ export default function CoachPage() {
               </div>
 
               {/* Bubble */}
-              <div className={`max-w-[72%] px-6 py-4 rounded-[28px] shadow-lg text-sm ${
+              <div className={`max-w-[85%] md:max-w-[72%] px-4 py-3 md:px-6 md:py-4 rounded-[28px] shadow-lg text-sm ${
                 msg.role === 'user'
                   ? 'bg-white text-black rounded-br-md'
                   : msg.role === 'system'
@@ -331,12 +331,12 @@ export default function CoachPage() {
 
         {/* Quick prompts */}
         {showQuickPrompts && (
-          <div className="flex flex-wrap gap-2 px-8 pb-4 shrink-0">
+          <div className="flex flex-wrap gap-2 px-3 sm:px-5 md:px-8 pb-4 shrink-0">
             {QUICK_PROMPTS.map(p => (
               <button
                 key={p}
                 onClick={() => handleSend(p)}
-                className="text-xs px-4 py-2 rounded-full border border-white/10 text-zinc-400 hover:bg-white/5 hover:border-white/10 hover:text-white transition-all cursor-pointer"
+                className="text-xs px-4 py-3 min-h-[44px] rounded-full border border-white/10 text-zinc-400 hover:bg-white/5 hover:border-white/10 hover:text-white transition-all cursor-pointer"
               >
                 {p}
               </button>
@@ -345,7 +345,7 @@ export default function CoachPage() {
         )}
 
         {/* Input */}
-        <div className="p-6 border-t border-white/10 bg-zinc-900/80 backdrop-blur-md shrink-0">
+        <div className="p-3 md:p-6 border-t border-white/10 bg-zinc-900/80 backdrop-blur-md shrink-0">
           <div className="flex gap-4 items-end bg-zinc-800/50 rounded-[28px] p-3 pl-6 border border-white/10 focus-within:border-white/10 transition-colors">
             <textarea
               ref={inputRef}

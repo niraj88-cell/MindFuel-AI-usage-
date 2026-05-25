@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 }
 
 import { Analytics } from '@vercel/analytics/react'
+import { PWARegister } from '@/components/PWARegister'
 
 export default function RootLayout({
   children,
@@ -38,6 +39,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
         {children}
         <Analytics />
+        <PWARegister />
       </body>
     </html>
   )

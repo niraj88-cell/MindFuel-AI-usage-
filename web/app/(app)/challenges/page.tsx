@@ -116,7 +116,7 @@ export default function ChallengesPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
           <Trophy className="w-6 h-6 text-white" /> Habit Challenges
         </h1>
         <p className="text-sm text-[var(--muted-foreground)] mt-1">
@@ -170,7 +170,7 @@ export default function ChallengesPage() {
             })}
           </div>
         ) : (
-          <div className="glass-card p-8 text-center border-dashed">
+          <div className="glass-card p-6 sm:p-8 text-center border-dashed">
             <AlertCircle className="w-8 h-8 text-[var(--muted-foreground)] mx-auto mb-3" />
             <h3 className="font-medium">No active challenges</h3>
             <p className="text-sm text-[var(--muted-foreground)] mt-1 mb-4">
@@ -189,7 +189,7 @@ export default function ChallengesPage() {
             
             return (
               <Card key={template.title} className="hover:border-white/10 transition-colors group">
-                <CardContent className="p-5">
+                <CardContent className="p-4 sm:p-5">
                   <div className="flex justify-between items-start mb-3">
                     <Badge variant="outline" className="capitalize text-xs">
                       {template.difficulty}

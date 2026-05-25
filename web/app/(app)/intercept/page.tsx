@@ -89,7 +89,7 @@ export default function InterceptPage() {
         <div className="py-8 space-y-8 animate-fade-in-up">
           <div className="text-center space-y-3">
             <ShieldAlert className="w-10 h-10 text-zinc-500 mx-auto" />
-            <h1 className="text-3xl font-bold tracking-tight text-white">Why are you opening this?</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">Why are you opening this?</h1>
             <p className="text-zinc-500 text-sm">Mindless scrolling steals your time. State your intent.</p>
           </div>
 
@@ -123,12 +123,12 @@ export default function InterceptPage() {
           {recentLogs.length > 0 && (
             <div className="pt-6 space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 text-center">
-                  <p className="text-2xl font-black text-white">{todayCount}</p>
+                <div className="bg-zinc-900 border border-white/10 rounded-xl p-3 sm:p-4 text-center">
+                  <p className="text-xl sm:text-2xl font-black text-white">{todayCount}</p>
                   <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Today's Intercepts</p>
                 </div>
-                <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 text-center">
-                  <p className="text-2xl font-black text-white">{disconnectRate}%</p>
+                <div className="bg-zinc-900 border border-white/10 rounded-xl p-3 sm:p-4 text-center">
+                  <p className="text-xl sm:text-2xl font-black text-white">{disconnectRate}%</p>
                   <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Disconnect Rate</p>
                 </div>
               </div>

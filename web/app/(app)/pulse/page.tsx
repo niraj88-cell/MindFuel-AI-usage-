@@ -93,12 +93,12 @@ export default function PulsePage() {
       </div>
 
       {/* Rating buttons */}
-      <div className="flex justify-center gap-2">
+      <div className="flex justify-center flex-wrap gap-1.5 sm:gap-2">
         {RATINGS.map(r => (
           <button
             key={r.value}
             onClick={() => setSelected(r.value)}
-            className={`flex flex-col items-center gap-1.5 px-4 py-4 rounded-2xl transition-all cursor-pointer ${
+            className={`flex flex-col items-center justify-center gap-1.5 w-[60px] sm:w-[72px] h-[72px] sm:h-[84px] rounded-2xl transition-all cursor-pointer ${
               selected === r.value
                 ? 'bg-white text-black scale-105'
                 : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 border border-zinc-800'

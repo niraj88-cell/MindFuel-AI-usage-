@@ -113,7 +113,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
         <div className="w-full max-w-[420px]">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-10">
@@ -126,7 +126,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-8">
-            <h1 className="text-3xl font-black text-white mb-2">Welcome back</h1>
+            <h1 className="text-2xl sm:text-3xl font-black text-white mb-2">Welcome back</h1>
             <p className="text-zinc-500">
               Sign in to continue your wellness journey
             </p>

@@ -50,7 +50,7 @@ export default function SubscriptionPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="text-center space-y-2">
-        <h1 className="text-4xl font-black tracking-tight">MindFuel Platinum</h1>
+        <h1 className="text-3xl sm:text-4xl font-black tracking-tight">MindFuel Platinum</h1>
         <p className="text-[var(--muted-foreground)] max-w-xl mx-auto">
           Upgrade your mental metabolism with advanced AI coaching and unlimited insights.
         </p>
@@ -83,18 +83,18 @@ export default function SubscriptionPage() {
         </Card>
 
         {/* Premium Plan */}
-        <Card className="bg-white text-black/10 border-white/10 relative overflow-hidden">
-          <div className="absolute top-0 right-0 px-3 py-1 bg-indigo-500 text-[10px] font-black uppercase tracking-widest text-white rounded-bl-lg">
+        <Card className="bg-white border-white/10 relative overflow-hidden">
+          <div className="absolute top-0 right-0 px-3 py-1 bg-black text-[10px] font-black uppercase tracking-widest text-white rounded-bl-lg">
             Recommended
           </div>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Platinum</span>
-              <Sparkles className="w-5 h-5 text-white" />
+              <Sparkles className="w-5 h-5 text-black" />
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="text-3xl font-black">$9.99 <span className="text-sm font-normal text-zinc-500">/mo</span></div>
+            <div className="text-3xl font-black text-black">$9.99 <span className="text-sm font-normal text-zinc-500">/mo</span></div>
             <ul className="space-y-3">
               <FeatureItem label="Unlimited Daily Logs" active />
               <FeatureItem label="Advanced AI Insights" active />
@@ -105,7 +105,7 @@ export default function SubscriptionPage() {
             </ul>
             
             {tier === 'premium' ? (
-               <Button className="w-full bg-white hover:bg-emerald-600 text-white cursor-default" disabled>
+               <Button className="w-full bg-black hover:bg-zinc-800 text-white cursor-default" disabled>
                  <ShieldCheck className="w-4 h-4 mr-2" />
                  Active Platinum
                </Button>
@@ -113,7 +113,7 @@ export default function SubscriptionPage() {
               <Button 
                 onClick={handleUpgrade} 
                 disabled={loading}
-                className="w-full bg-white hover:bg-zinc-200 text-black text-white h-12 text-lg font-bold"
+                className="w-full bg-black hover:bg-zinc-800 text-white h-12 text-lg font-bold"
               >
                 {loading ? 'Preparing Checkout...' : 'Start Platinum Subscription'}
               </Button>
@@ -134,8 +134,8 @@ export default function SubscriptionPage() {
 
 function FeatureItem({ label, active }: { label: string; active?: boolean }) {
   return (
-    <li className={`flex items-center gap-3 text-sm ${active ? 'text-zinc-200' : 'text-zinc-600'}`}>
-      <Check className={`w-4 h-4 ${active ? 'text-white' : 'text-slate-700'}`} />
+    <li className={`flex items-center gap-3 text-sm ${active ? 'text-black' : 'text-zinc-400'}`}>
+      <Check className={`w-4 h-4 ${active ? 'text-black' : 'text-zinc-300'}`} />
       {label}
     </li>
   )
