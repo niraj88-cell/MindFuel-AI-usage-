@@ -83,7 +83,7 @@ export default function SubscriptionPage() {
         </Card>
 
         {/* Premium Plan */}
-        <Card className="!bg-none bg-white border-white/10 relative overflow-hidden flex flex-col justify-between scale-[1.02] md:scale-105 shadow-[0_0_40px_rgba(255,255,255,0.1)] z-10">
+        <Card className="!bg-none !bg-white border-white/10 relative overflow-hidden flex flex-col justify-between scale-[1.02] md:scale-105 shadow-[0_0_40px_rgba(255,255,255,0.1)] z-10">
           <div className="absolute top-0 right-0 px-3 py-1 bg-black text-[10px] font-black uppercase tracking-widest text-white rounded-bl-lg">
             Recommended
           </div>
