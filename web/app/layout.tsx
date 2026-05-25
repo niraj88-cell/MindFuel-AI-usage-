@@ -18,6 +18,9 @@ export const metadata: Metadata = {
     description: 'AI-powered mental wellness tracking for your digital diet',
     type: 'website',
   },
+  verification: {
+    google: 'jbQhKcXinwrOHvVws6RQPrPVZl-UXv1QOqNoHH2L1VY',
+  },
 }
 
 import { Analytics } from '@vercel/analytics/react'
