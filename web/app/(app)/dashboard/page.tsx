@@ -68,7 +68,10 @@ export default function DashboardPage() {
       .eq('id', user.id)
       .maybeSingle()
       
-    if (profile && profile.onboarding_completed === false) {
+    // Check local storage first to prevent Next.js cache staleness
+    const localCompleted = localStorage.getItem(`onboarding_done_${user.id}`)
+
+    if (localCompleted !== 'true' && profile && profile.onboarding_completed === false) {
       setShowOnboarding(true)
       setUserId(user.id)
     }

@@ -34,7 +34,7 @@ export function OnboardingFlow({ userId, onComplete }: OnboardingFlowProps) {
     setLoading(true)
     try {
       const supabase = createClient()
-      await supabase
+      const { error } = await supabase
         .from('profiles')
         .update({
           onboarding_completed: true,
@@ -42,6 +42,12 @@ export function OnboardingFlow({ userId, onComplete }: OnboardingFlowProps) {
           content_regret: regret,
         })
         .eq('id', userId)
+        
+        
+      if (error) throw error
+      
+      // Save locally to instantly bypass any Next.js caching if they navigate away and back
+      localStorage.setItem(`onboarding_done_${userId}`, 'true')
       
       onComplete(love, regret)
     } catch (error) {
