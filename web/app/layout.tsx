@@ -9,6 +9,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://getmindfuel.vercel.app'),
   title: 'MindFuel — Mental Nutrition Tracker',
   description: 'Track your digital content consumption like a nutritionist tracks food. AI-powered insights to build healthier digital habits.',
   keywords: ['mental health', 'digital wellness', 'content tracker', 'AI coach', 'mindfulness'],
