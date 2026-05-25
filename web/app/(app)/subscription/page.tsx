@@ -58,7 +58,7 @@ export default function SubscriptionPage() {
 
       <div className="grid md:grid-cols-2 gap-8 pt-8">
         {/* Free Plan */}
-        <Card className="bg-zinc-900/50 border-white/10 relative overflow-hidden">
+        <Card className="bg-zinc-900/50 border-white/10 relative overflow-hidden flex flex-col justify-between">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Standard</span>
@@ -68,11 +68,11 @@ export default function SubscriptionPage() {
           <CardContent className="space-y-6">
             <div className="text-3xl font-black">$0</div>
             <ul className="space-y-3">
-              <FeatureItem label="3 Daily Logs" active />
-              <FeatureItem label="Basic AI Analysis" active />
-              <FeatureItem label="Public Challenges" active />
-              <FeatureItem label="Weekly Summary" />
-              <FeatureItem label="Unlimited AI Coach" />
+              <FeatureItem label="3 Daily Entries" active variant="dark" />
+              <FeatureItem label="Basic AI Analysis" active variant="dark" />
+              <FeatureItem label="Public Challenges" active variant="dark" />
+              <FeatureItem label="Weekly Summary Trends" variant="dark" />
+              <FeatureItem label="Always-On AI Coach" variant="dark" />
             </ul>
             {tier === 'free' && (
                <Button className="w-full bg-zinc-800 hover:bg-zinc-700 text-white cursor-default" disabled>
@@ -83,7 +83,7 @@ export default function SubscriptionPage() {
         </Card>
 
         {/* Premium Plan */}
-        <Card className="bg-white border-white/10 relative overflow-hidden">
+        <Card className="bg-white border-white/10 relative overflow-hidden flex flex-col justify-between scale-[1.02] md:scale-105 shadow-[0_0_40px_rgba(255,255,255,0.1)] z-10">
           <div className="absolute top-0 right-0 px-3 py-1 bg-black text-[10px] font-black uppercase tracking-widest text-white rounded-bl-lg">
             Recommended
           </div>
@@ -96,12 +96,12 @@ export default function SubscriptionPage() {
           <CardContent className="space-y-6">
             <div className="text-3xl font-black text-black">$9.99 <span className="text-sm font-normal text-zinc-500">/mo</span></div>
             <ul className="space-y-3">
-              <FeatureItem label="Unlimited Daily Logs" active />
-              <FeatureItem label="Advanced AI Insights" active />
-              <FeatureItem label="Personalized Challenges" active />
-              <FeatureItem label="Full Coaching History" active />
-              <FeatureItem label="Export Data (PDF/CSV)" active />
-              <FeatureItem label="Early Access to Tools" active />
+              <FeatureItem label="Unlimited Daily Entries" active variant="light" />
+              <FeatureItem label="Deep Psychological Insights" active variant="light" />
+              <FeatureItem label="Bespoke Habit Challenges" active variant="light" />
+              <FeatureItem label="Never Lose Coaching History" active variant="light" />
+              <FeatureItem label="Export Data (PDF/CSV)" active variant="light" />
+              <FeatureItem label="Beta Access to New Tools" active variant="light" />
             </ul>
             
             {tier === 'premium' ? (
@@ -132,10 +132,15 @@ export default function SubscriptionPage() {
   )
 }
 
-function FeatureItem({ label, active }: { label: string; active?: boolean }) {
+function FeatureItem({ label, active, variant = 'light' }: { label: string; active?: boolean; variant?: 'light' | 'dark' }) {
+  const activeColor = variant === 'light' ? 'text-black' : 'text-white'
+  const inactiveColor = variant === 'light' ? 'text-zinc-400' : 'text-zinc-600'
+  const checkColor = variant === 'light' ? 'text-black' : 'text-white'
+  const inactiveCheckColor = variant === 'light' ? 'text-zinc-300' : 'text-zinc-700'
+
   return (
-    <li className={`flex items-center gap-3 text-sm ${active ? 'text-black' : 'text-zinc-400'}`}>
-      <Check className={`w-4 h-4 ${active ? 'text-black' : 'text-zinc-300'}`} />
+    <li className={`flex items-center gap-3 text-sm ${active ? activeColor : inactiveColor}`}>
+      <Check className={`w-4 h-4 ${active ? checkColor : inactiveCheckColor}`} />
       {label}
     </li>
   )

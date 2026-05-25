@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { Brain, ArrowRight, Shield, Zap, Activity, CheckCircle2 } from 'lucide-react'
+import { InteractiveHero } from '@/components/landing/InteractiveHero'
+import { SocialProofToasts } from '@/components/landing/SocialProofToasts'
 
 export default function LandingPage() {
   return (
@@ -19,7 +21,7 @@ export default function LandingPage() {
               Log in
             </Link>
             <Link href="/signup" className="px-5 py-2 text-sm font-bold text-black bg-white rounded-lg hover:bg-zinc-200 transition-colors shadow-none">
-              Get Started
+              Get Your Focus Score
             </Link>
           </div>
         </div>
@@ -53,22 +55,7 @@ export default function LandingPage() {
         </p>
 
         {/* CTAs */}
-        <div className="w-full max-w-md mx-auto space-y-4 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-          <Link href="/signup" className="flex items-center justify-center gap-2 w-full h-14 bg-white text-black rounded-xl font-black text-lg hover:bg-zinc-200 transition-all active:scale-[0.98]">
-            Start My Free Analysis <ArrowRight className="w-5 h-5" />
-          </Link>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 text-sm text-zinc-500 font-medium mt-4">
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-              <span>No credit card required.</span>
-            </div>
-            <span className="hidden sm:inline">•</span>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-              <span>Setup takes 30 seconds.</span>
-            </div>
-          </div>
-        </div>
+        <InteractiveHero />
       </main>
 
       {/* Trust & Features Section */}
@@ -113,6 +100,8 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      <SocialProofToasts />
     </div>
   )
 }
