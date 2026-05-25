@@ -12,8 +12,10 @@ import {
   Sparkles,
   ArrowUpRight,
   Activity,
-  Calendar
+  Calendar,
+  Lock
 } from 'lucide-react'
+import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { TrendChart } from '@/components/insights/TrendChart'
@@ -32,6 +34,7 @@ interface InsightsData {
     action_items: string[]
   } | null
   stats: { totalLogs: number; avgScore: number; moodEntries: number }
+  subscriptionTier: 'free' | 'premium'
 }
 
 export default function InsightsPage() {
@@ -236,6 +239,31 @@ export default function InsightsPage() {
                 </div>
               </CardContent>
            </Card>
+        </div>
+      )}
+
+      {/* Soft Paywall for Deep Trends (Free Tier) */}
+      {data?.subscriptionTier === 'free' && (
+        <div className="relative mt-8">
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent z-20 flex flex-col items-center justify-center pt-20">
+            <div className="w-16 h-16 bg-white/10 rounded-3xl flex items-center justify-center backdrop-blur-md mb-4 border border-white/20 shadow-2xl shadow-black/50">
+              <Lock className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-2xl font-black text-white mb-2">Advanced Trend Mapping</h3>
+            <p className="text-zinc-400 text-sm max-w-md text-center mb-6">See how your focus correlates with your mood over a 30-day period. Unlock deep psychological insights with Platinum.</p>
+            <Link href="/subscription" className="px-8 py-4 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition-colors">
+              View Premium Insights
+            </Link>
+          </div>
+          <Card className="bg-zinc-900 border-white/10 rounded-[40px] opacity-40 blur-md select-none pointer-events-none overflow-hidden h-[400px]">
+            <CardHeader className="p-8 pb-4">
+              <CardTitle className="text-xl font-black text-white">30-Day Subconscious Patterns</CardTitle>
+            </CardHeader>
+            <CardContent className="p-8 pt-0 grid grid-cols-2 gap-6">
+              <div className="h-48 bg-white/5 rounded-2xl border border-white/5"></div>
+              <div className="h-48 bg-white/5 rounded-2xl border border-white/5"></div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

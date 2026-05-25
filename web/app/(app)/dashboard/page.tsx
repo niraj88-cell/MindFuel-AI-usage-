@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { 
   Calendar, 
   TrendingUp, 
@@ -15,7 +16,8 @@ import {
   Trophy,
   ChevronRight,
   Timer,
-  Heart
+  Heart,
+  Lock
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -384,6 +386,24 @@ export default function DashboardPage() {
             )}
         </Card>
       </div>
+
+      {/* Premium Teaser (Contextual Nudge) */}
+      {data?.subscriptionTier === 'free' && data?.totalLogs > 3 && (
+        <div className="bg-zinc-900 border border-white/10 rounded-3xl p-6 md:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-[0_0_30px_rgba(255,255,255,0.03)] hover:shadow-[0_0_40px_rgba(255,255,255,0.06)] transition-all">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center shrink-0 border border-white/10">
+              <Lock className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">Discover your hidden triggers <Sparkles className="w-4 h-4 text-zinc-400" /></h3>
+              <p className="text-zinc-400 mt-1 max-w-xl">You've logged {data.totalLogs} entries. Upgrade to Platinum to see exactly what's draining your mental energy over time.</p>
+            </div>
+          </div>
+          <Link href="/subscription" className="whitespace-nowrap px-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition-colors">
+            Unlock Deep Insights
+          </Link>
+        </div>
+      )}
 
       {/* Recent Feed */}
       <div className="space-y-6">

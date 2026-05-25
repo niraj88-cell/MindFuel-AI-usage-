@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Brain, ArrowRight, Shield, Zap, Activity, CheckCircle2 } from 'lucide-react'
+import { Brain, ArrowRight, Shield, Zap, Activity, CheckCircle2, Sparkles } from 'lucide-react'
 import { InteractiveHero } from '@/components/landing/InteractiveHero'
 import { SocialProofToasts } from '@/components/landing/SocialProofToasts'
 
@@ -30,6 +30,11 @@ export default function LandingPage() {
       {/* Hero Section */}
       <main className="flex-1 flex flex-col items-center justify-center pt-24 pb-16 px-4 sm:px-6 max-w-4xl mx-auto text-center">
         
+        {/* Platinum Pill Badge */}
+        <Link href="#pricing" className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors mb-6 animate-fade-in-up">
+          <span className="text-xs font-bold text-white">✨ Unlock advanced cognitive coaching with MindFuel Platinum &rarr;</span>
+        </Link>
+        
         {/* Social Proof Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 mb-8 animate-fade-in-up">
           <div className="flex -space-x-1.5">
@@ -56,6 +61,29 @@ export default function LandingPage() {
 
         {/* CTAs */}
         <InteractiveHero />
+        
+        {/* Mockup / Curiosity Gap */}
+        <div className="mt-16 relative max-w-3xl mx-auto animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent z-10 flex flex-col items-center justify-end pb-10">
+            <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-md mb-3 border border-white/20">
+              <Shield className="w-5 h-5 text-white" />
+            </div>
+            <p className="text-white font-bold text-sm">Premium AI Insights Locked</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-zinc-900 overflow-hidden opacity-50 blur-[2px]">
+            {/* Fake Dashboard Mockup */}
+            <div className="h-12 border-b border-white/5 flex items-center px-4 gap-2">
+               <div className="w-3 h-3 rounded-full bg-zinc-700"></div>
+               <div className="w-3 h-3 rounded-full bg-zinc-700"></div>
+               <div className="w-3 h-3 rounded-full bg-zinc-700"></div>
+            </div>
+            <div className="p-6 grid grid-cols-2 gap-4">
+              <div className="h-32 bg-white/5 rounded-xl border border-white/5"></div>
+              <div className="h-32 bg-white/5 rounded-xl border border-white/5"></div>
+              <div className="col-span-2 h-48 bg-white/5 rounded-xl border border-white/5 mt-2"></div>
+            </div>
+          </div>
+        </div>
       </main>
 
       {/* Trust & Features Section */}
@@ -82,6 +110,53 @@ export default function LandingPage() {
               title="Personal AI Coach" 
               desc="Chat with an AI that understands your habits. Get personalized strategies to beat content addiction." 
             />
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Bento Box */}
+      <section id="pricing" className="border-t border-white/5 py-24 px-6 bg-black relative">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-white/[0.02] blur-[100px] rounded-full pointer-events-none"></div>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-5xl font-black text-white mb-4 tracking-tight">Ready to rewire your mind?</h2>
+            <p className="text-lg text-zinc-400">Choose the plan that fits your mental nutrition goals.</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* Free Tier */}
+            <div className="p-8 sm:p-10 bg-zinc-900/40 border border-white/10 rounded-3xl hover:border-white/20 transition-colors flex flex-col h-full">
+              <div className="flex-1">
+                <h3 className="text-2xl font-black text-white mb-2">Free</h3>
+                <p className="text-zinc-400 mb-8 text-sm">Essential tools to track your daily digital diet.</p>
+                <div className="text-4xl font-black text-white mb-8">$0</div>
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-center gap-3 text-sm text-zinc-300 font-medium"><CheckCircle2 className="w-5 h-5 text-white" /> 3 Daily Entries</li>
+                  <li className="flex items-center gap-3 text-sm text-zinc-300 font-medium"><CheckCircle2 className="w-5 h-5 text-white" /> Basic AI Analysis</li>
+                  <li className="flex items-center gap-3 text-sm text-zinc-300 font-medium"><CheckCircle2 className="w-5 h-5 text-white" /> Public Challenges</li>
+                </ul>
+              </div>
+              <Link href="/signup" className="w-full py-4 rounded-xl border border-white/20 text-center font-bold hover:bg-white/5 transition-colors text-white">Start Free</Link>
+            </div>
+            
+            {/* Platinum Tier */}
+            <div className="p-8 sm:p-10 bg-white rounded-3xl relative flex flex-col h-full shadow-[0_0_50px_rgba(255,255,255,0.1)] scale-100 md:scale-105 z-10">
+              <div className="absolute top-0 right-8 -translate-y-1/2 px-4 py-1.5 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-full">
+                Recommended
+              </div>
+              <div className="flex-1">
+                <h3 className="text-2xl font-black text-black mb-2 flex items-center gap-2">Platinum <Sparkles className="w-5 h-5" /></h3>
+                <p className="text-zinc-600 mb-8 text-sm">Transformative insights and unlimited cognitive coaching.</p>
+                <div className="text-4xl font-black text-black mb-8">$9.99<span className="text-lg text-zinc-500 font-medium">/mo</span></div>
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-center gap-3 text-sm text-black font-bold"><CheckCircle2 className="w-5 h-5 text-black" /> Unlimited Daily Entries</li>
+                  <li className="flex items-center gap-3 text-sm text-black font-bold"><CheckCircle2 className="w-5 h-5 text-black" /> Deep Psychological Insights</li>
+                  <li className="flex items-center gap-3 text-sm text-black font-bold"><CheckCircle2 className="w-5 h-5 text-black" /> Bespoke Habit Challenges</li>
+                  <li className="flex items-center gap-3 text-sm text-black font-bold"><CheckCircle2 className="w-5 h-5 text-black" /> Always-On AI Coach</li>
+                </ul>
+              </div>
+              <Link href="/signup" className="w-full py-4 rounded-xl bg-black text-white text-center font-bold hover:bg-zinc-800 transition-colors shadow-xl">Go Platinum</Link>
+            </div>
           </div>
         </div>
       </section>

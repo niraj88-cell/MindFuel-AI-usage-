@@ -193,6 +193,24 @@ export default function ProfilePage() {
         <StatCard icon={Award} color="text-white" bg="bg-amber-500/5" value={data?.totalMoodEntries || 0} label="Mood Checks" />
       </div>
 
+      {/* Premium Upgrade Teaser */}
+      {!isPremium && (
+        <Link href="/subscription" className="group block bg-gradient-to-r from-zinc-900 to-black border border-white/10 hover:border-white/20 rounded-3xl p-6 relative overflow-hidden transition-all shadow-[0_0_30px_rgba(255,255,255,0.03)] hover:shadow-[0_0_40px_rgba(255,255,255,0.06)]">
+          <div className="absolute inset-0 bg-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="flex items-center justify-between gap-4 relative z-10">
+            <div>
+              <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-1">
+                Elevate your MindFuel <Sparkles className="w-4 h-4 text-white" />
+              </h3>
+              <p className="text-sm text-zinc-400">Get unlimited entries, bespoke habit challenges, and deep psychological insights.</p>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <ChevronRight className="w-5 h-5" />
+            </div>
+          </div>
+        </Link>
+      )}
+
       {/* Data Export */}
       <div className="bg-zinc-900/50 border border-white/10 rounded-3xl p-6 space-y-4">
         <div className="flex items-center gap-3 mb-2">

@@ -64,6 +64,13 @@ export async function GET(req: NextRequest) {
       .gte('date', sevenDaysAgo)
       .order('date', { ascending: true })
 
+    // Fetch user profile for subscription status
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('subscription_tier')
+      .eq('id', user.id)
+      .maybeSingle()
+
     // Generate AI mood analysis if we have enough data
     let moodAnalysis = null
     const hasEnoughData = (moodLogs && moodLogs.length >= 2) || (contentLogs && contentLogs.length >= 3)
@@ -119,6 +126,7 @@ export async function GET(req: NextRequest) {
             : 0,
           moodEntries: moodLogs?.length || 0,
         },
+        subscriptionTier: profile?.subscription_tier || 'free',
         remaining: rateCheck.remaining,
       },
       { headers: rlHeaders }
