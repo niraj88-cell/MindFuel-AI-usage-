@@ -87,9 +87,8 @@ export default function SignupPage() {
     // Only redirect if session was created automatically
     if (data.session) {
       setTimeout(() => {
-        router.push('/dashboard')
-        router.refresh()
-      }, 2000)
+        window.location.href = '/dashboard'
+      }, 400)
     }
   }
 

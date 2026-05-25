@@ -26,7 +26,7 @@ export default function LoginPage() {
     setError(null)
 
     const supabase = createClient()
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
     if (authError) {
       setError(authError.message)
@@ -34,14 +34,12 @@ export default function LoginPage() {
       return
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      identifyUser(user.id, { $email: user.email });
+    if (data.user) {
+      identifyUser(data.user.id, { $email: data.user.email });
       trackEvent('User Logged In');
     }
 
-    router.push('/dashboard')
-    router.refresh()
+    window.location.href = '/dashboard'
   }
 
   async function handleGoogleLogin() {
