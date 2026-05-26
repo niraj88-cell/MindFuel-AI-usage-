@@ -114,6 +114,12 @@ const nextConfig: NextConfig = {
   },
 
   serverExternalPackages: ['@langchain/langgraph', '@langchain/anthropic', '@langchain/core'],
+  
+  // ── Performance Optimizations ──
+  reactCompiler: true,
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'recharts', 'date-fns', '@radix-ui/react-icons'],
+  },
 }
 
 export default nextConfig
