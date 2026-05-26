@@ -116,9 +116,7 @@ export default function ProfilePage() {
   async function handleSignOut() {
     setSigningOut(true)
     const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/login')
-    router.refresh()
+    window.location.href = '/login'
   }
 
   if (loading) {

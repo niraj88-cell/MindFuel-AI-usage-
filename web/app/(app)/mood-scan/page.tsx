@@ -47,11 +47,9 @@ export default function MoodScanPage() {
     setError(null)
     setResult(null)
 
-    // Animated scan phases
+    // Animated scan phases (sped up)
     setScanPhase('Detecting platform...')
-    await new Promise(r => setTimeout(r, 400))
     setScanPhase('Extracting content metadata...')
-    await new Promise(r => setTimeout(r, 500))
     setScanPhase('Running mood intelligence analysis...')
 
     try {
@@ -68,7 +66,6 @@ export default function MoodScanPage() {
       }
 
       setScanPhase('Rendering dimensions...')
-      await new Promise(r => setTimeout(r, 300))
       setResult(data.analysis)
 
       trackEvent('Mood Scan Completed', {
