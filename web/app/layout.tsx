@@ -17,6 +17,13 @@ export const metadata: Metadata = {
     title: 'MindFuel — Mental Nutrition Tracker',
     description: 'AI-powered mental wellness tracking for your digital diet',
     type: 'website',
+    images: ['/og-image.png'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MindFuel — Mental Nutrition Tracker',
+    description: 'AI-powered mental wellness tracking for your digital diet',
+    images: ['/og-image.png'],
   },
   verification: {
     google: 'jbQhKcXinwrOHvVws6RQPrPVZl-UXv1QOqNoHH2L1VY',
