@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Instagram, Smartphone, Loader2 } from 'lucide-react'
+import { Camera, Smartphone, Loader2 } from 'lucide-react'
 
 export default function PromoSimulatePage() {
   const router = useRouter()
@@ -90,7 +90,7 @@ export default function PromoSimulatePage() {
           onClick={() => setState('simulating')}
           className="w-full h-14 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 rounded-xl flex items-center justify-center gap-3 font-bold text-white shadow-xl shadow-pink-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
         >
-          <Instagram className="w-6 h-6" />
+          <Camera className="w-6 h-6" />
           Simulate Opening Instagram
         </button>
 
