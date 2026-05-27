@@ -66,7 +66,7 @@ export default function SignupPage() {
       password,
       options: {
         data: { full_name: name },
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}/onboarding`,
       },
     })
 
@@ -87,7 +87,7 @@ export default function SignupPage() {
     // Only redirect if session was created automatically
     if (data.session) {
       setTimeout(() => {
-        window.location.href = '/dashboard'
+        window.location.href = '/onboarding'
       }, 400)
     }
   }

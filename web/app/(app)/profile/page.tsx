@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PushNotificationManager } from '@/components/PushNotificationManager'
+import { Trash2 } from 'lucide-react'
 
 interface ProfileData {
   email: string
@@ -45,6 +46,7 @@ export default function ProfilePage() {
   const [signingOut, setSigningOut] = useState(false)
   const [exporting, setExporting] = useState<'json' | 'csv' | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     loadProfile()
@@ -116,7 +118,22 @@ export default function ProfilePage() {
   async function handleSignOut() {
     setSigningOut(true)
     const supabase = createClient()
+    await supabase.auth.signOut()
     window.location.href = '/login'
+  }
+
+  async function handleDeleteAccount() {
+    if (!window.confirm("WARNING: This will permanently delete your account and all associated data. This action cannot be undone.")) return
+    
+    setDeleting(true)
+    try {
+      const res = await fetch('/api/export/delete', { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete account')
+      window.location.href = '/login'
+    } catch (e: any) {
+      alert(e.message)
+      setDeleting(false)
+    }
   }
 
   if (loading) {
@@ -308,15 +325,27 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Sign Out */}
-      <button
-        onClick={handleSignOut}
-        disabled={signingOut}
-        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-rose-500/5 border border-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all font-black text-sm cursor-pointer disabled:opacity-50"
-      >
-        {signingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
-        {signingOut ? 'Signing out...' : 'Sign Out'}
-      </button>
+      {/* Sign Out & Danger Zone */}
+      <div className="space-y-3 pt-6 border-t border-white/5">
+        <button
+          onClick={handleSignOut}
+          disabled={signingOut}
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10 transition-all font-black text-sm cursor-pointer disabled:opacity-50"
+        >
+          {signingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
+          {signingOut ? 'Signing out...' : 'Sign Out'}
+        </button>
+
+        <button
+          onClick={handleDeleteAccount}
+          disabled={deleting}
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-rose-500/5 border border-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all font-black text-sm cursor-pointer disabled:opacity-50"
+        >
+          {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+          {deleting ? 'Deleting account...' : 'Permanently Delete Account'}
+        </button>
+      </div>
+
     </div>
   )
 }

@@ -106,6 +106,9 @@ export default function InsightsPage() {
           <p className="text-zinc-400 text-sm mt-2 font-medium">See how your screen time affects your mood.</p>
         </div>
         <div className="flex flex-wrap items-center gap-4 bg-zinc-900/50 p-2 rounded-2xl border border-white/10">
+           <Link href="/weekly-report" className="px-4 py-2 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 rounded-xl flex items-center gap-2 font-black uppercase text-xs tracking-widest transition-colors">
+              <Zap className="w-4 h-4" /> Weekly Report
+           </Link>
            <div className="px-4 py-2 bg-white text-black rounded-xl flex items-center gap-2 shadow-lg shadow-none">
               <Calendar className="w-4 h-4 text-black" />
               <span className="text-xs font-black text-black uppercase tracking-widest">Last 7 Days</span>
