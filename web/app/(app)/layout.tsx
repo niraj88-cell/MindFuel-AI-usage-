@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: '/log', label: 'Log', icon: PenLine },
   { href: '/coach', label: 'Coach', icon: MessageCircle },
   { href: '/insights', label: 'Insights', icon: BarChart3 },
+  { href: '/subscription', label: 'Platinum', icon: Sparkles },
   { href: '/profile', label: 'Settings', icon: User },
 ]
 
