@@ -34,6 +34,8 @@ export interface Database {
           onboarding_completed: boolean
           content_love: string | null
           content_regret: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
         }
         Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'updated_at'> & {
           created_at?: string
@@ -318,6 +320,7 @@ export interface Database {
           id: string
           user_id: string
           intent: string
+          emotion: string | null
           action: 'continued' | 'disconnected'
           created_at: string
         }

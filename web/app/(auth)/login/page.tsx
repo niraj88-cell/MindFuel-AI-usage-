@@ -87,7 +87,7 @@ export default function LoginPage() {
 
           {/* Features */}
           <div className="space-y-6">
-            <FeatureRow icon={<Zap className="w-4 h-4" />} title="AI Content Analysis" desc="Get instant mental nutrition scores for anything you consume" />
+            <FeatureRow icon={<Zap className="w-4 h-4" />} title="Pattern Discovery" desc="Gently uncover hidden patterns in your daily thoughts" />
             <FeatureRow icon={<Sparkles className="w-4 h-4" />} title="Mood Intelligence" desc="Understand how your screen time affects your emotional state" />
             <FeatureRow icon={<Shield className="w-4 h-4" />} title="Personal AI Coach" desc="Get guidance to build healthier digital habits" />
           </div>
@@ -237,11 +237,11 @@ export default function LoginPage() {
 
           {/* Trust badges */}
           <div className="mt-10 flex items-center justify-center gap-6 text-[10px] font-bold text-zinc-700 uppercase tracking-widest">
-            <span>🔒 Encrypted</span>
+            <span>🔒 Strictly Private</span>
             <span>•</span>
-            <span>⚡ Free tier</span>
+            <span>🛡️ Encrypted</span>
             <span>•</span>
-            <span>🧠 AI Powered</span>
+            <span>🧠 Thoughtful AI</span>
           </div>
         </div>
       </div>

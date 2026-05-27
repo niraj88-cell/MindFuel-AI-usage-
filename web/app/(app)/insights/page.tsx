@@ -69,7 +69,7 @@ export default function InsightsPage() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] space-y-6">
         <Loader2 className="w-12 h-12 animate-spin text-white" />
-        <p className="text-zinc-500 font-black uppercase tracking-[0.3em] text-xs">Analyzing your data...</p>
+        <p className="text-zinc-500 font-black uppercase tracking-[0.3em] text-xs">Gathering your reflections...</p>
       </div>
     )
   }
@@ -107,8 +107,8 @@ export default function InsightsPage() {
         </div>
         <div className="flex flex-wrap items-center gap-4 bg-zinc-900/50 p-2 rounded-2xl border border-white/10">
            <div className="px-4 py-2 bg-white text-black rounded-xl flex items-center gap-2 shadow-lg shadow-none">
-              <Calendar className="w-4 h-4 text-white" />
-              <span className="text-xs font-black text-white uppercase tracking-widest">Last 7 Days</span>
+              <Calendar className="w-4 h-4 text-black" />
+              <span className="text-xs font-black text-black uppercase tracking-widest">Last 7 Days</span>
            </div>
            <div className="pr-4 py-2 flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
@@ -184,7 +184,7 @@ export default function InsightsPage() {
               <CardHeader className="p-6 md:p-10 pb-4 md:pb-6 border-b border-white/10 bg-white/5 backdrop-blur-md">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-white text-black rounded-2xl flex items-center justify-center shadow-lg shadow-none">
-                     <Brain className="w-7 h-7 text-white" />
+                     <Brain className="w-7 h-7 text-black" />
                   </div>
                   <div>
                     <CardTitle className="text-2xl font-black tracking-tight text-white">AI Wellness Report</CardTitle>
@@ -249,10 +249,10 @@ export default function InsightsPage() {
             <div className="w-16 h-16 bg-white/10 rounded-3xl flex items-center justify-center backdrop-blur-md mb-4 border border-white/20 shadow-2xl shadow-black/50">
               <Lock className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-2xl font-black text-white mb-2">Advanced Trend Mapping</h3>
-            <p className="text-zinc-400 text-sm max-w-md text-center mb-6">See how your focus correlates with your mood over a 30-day period. Unlock deep psychological insights with Platinum.</p>
+            <h3 className="text-2xl font-black text-white mb-2">Discover the full picture</h3>
+            <p className="text-zinc-400 text-sm max-w-md text-center mb-6">Notice a pattern? Plus gently connects the dots across your 30-day timeline to help you understand your habits on a deeper level.</p>
             <Link href="/subscription" className="px-8 py-4 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition-colors">
-              View Premium Insights
+              See what your thoughts reveal
             </Link>
           </div>
           <Card className="bg-zinc-900 border-white/10 rounded-[40px] opacity-40 blur-md select-none pointer-events-none overflow-hidden h-[400px]">

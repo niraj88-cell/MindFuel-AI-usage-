@@ -327,10 +327,14 @@ export function QuickLogFAB({ onLogSaved }: QuickLogFABProps) {
 
         {/* Saving indicator */}
         {saving && (
-          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center rounded-[32px]">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-              <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Analyzing...</span>
+          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center rounded-[32px] transition-opacity duration-500">
+            <div className="flex flex-col items-center gap-6">
+              <div className="relative flex items-center justify-center w-16 h-16">
+                <div className="absolute w-full h-full bg-indigo-500/20 rounded-full animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite]" />
+                <div className="absolute w-12 h-12 bg-indigo-500/40 rounded-full animate-pulse" style={{ animationDuration: '2s' }} />
+                <div className="w-8 h-8 bg-indigo-500 rounded-full shadow-[0_0_20px_rgba(99,102,241,0.5)]" />
+              </div>
+              <span className="text-xs font-black text-indigo-300 uppercase tracking-widest animate-pulse">Gathering your thoughts...</span>
             </div>
           </div>
         )}

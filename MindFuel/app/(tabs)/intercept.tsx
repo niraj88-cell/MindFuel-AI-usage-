@@ -67,6 +67,7 @@ export default function InterceptScreen() {
       await supabase.from('intercept_logs').insert({
         user_id: user.id,
         intent: intent.trim() || 'No intent stated',
+        emotion: null,
         action,
       });
     } catch {}

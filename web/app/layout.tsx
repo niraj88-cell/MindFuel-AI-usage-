@@ -15,15 +15,15 @@ export const metadata: Metadata = {
   keywords: ['mental health', 'digital wellness', 'content tracker', 'AI coach', 'mindfulness'],
   openGraph: {
     title: 'MindFuel — Mental Nutrition Tracker',
-    description: 'AI-powered mental wellness tracking for your digital diet',
+    description: 'Track your digital diet and stop doomscrolling with AI-powered mental wellness tracking.',
     type: 'website',
-    images: ['/og-premium.png'],
+    images: ['https://getmindfuel.vercel.app/og-premium.png'],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'MindFuel — Mental Nutrition Tracker',
-    description: 'AI-powered mental wellness tracking for your digital diet',
-    images: ['/og-premium.png'],
+    description: 'Track your digital diet and stop doomscrolling with AI-powered mental wellness tracking.',
+    images: ['https://getmindfuel.vercel.app/og-premium.png'],
   },
   verification: {
     google: 'jbQhKcXinwrOHvVws6RQPrPVZl-UXv1QOqNoHH2L1VY',

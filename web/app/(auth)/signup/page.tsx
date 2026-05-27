@@ -4,7 +4,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Brain, Loader2, Eye, EyeOff, Check, X, ArrowRight, Zap, BarChart3, MessageCircle } from 'lucide-react'
+import { Brain, Loader2, Eye, EyeOff, Check, X, ArrowRight, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -139,23 +139,19 @@ export default function SignupPage() {
             </p>
           </div>
 
-          {/* What you get */}
-          <div className="space-y-4 mb-12">
-            <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">Free account includes</p>
-            <div className="space-y-3">
-              {[
-                { icon: <Zap className="w-4 h-4" />, text: '3 AI content analyses per day' },
-                { icon: <BarChart3 className="w-4 h-4" />, text: 'Daily mental nutrition dashboard' },
-                { icon: <MessageCircle className="w-4 h-4" />, text: 'AI wellness coach access' },
-                { icon: <Brain className="w-4 h-4" />, text: 'Mood scan & insights' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white">
-                    {item.icon}
-                  </div>
-                  <span className="text-sm text-zinc-400">{item.text}</span>
+          {/* Privacy Promise */}
+          <div className="mb-12">
+            <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 relative overflow-hidden group hover:border-white/10 transition-colors">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                  <Shield className="w-4 h-4 text-emerald-400" />
                 </div>
-              ))}
+                <h3 className="text-white font-bold">Your Privacy Matters</h3>
+              </div>
+              <p className="text-zinc-400 text-sm leading-relaxed">
+                Our thoughtful AI runs quietly in the background strictly to help you uncover your own patterns. Your thoughts are encrypted, private, and always yours.
+              </p>
             </div>
           </div>
 

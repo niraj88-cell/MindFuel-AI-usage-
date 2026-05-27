@@ -214,7 +214,7 @@ export default function LogPage() {
            <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl font-bold flex items-center gap-3">
                  <CheckCircle2 className="w-6 h-6 text-white" />
-                 Save This Entry
+                 Confirm & Log
               </h2>
               <div className="px-3 py-1 bg-white/5 text-white text-[10px] font-black uppercase tracking-widest rounded-full border border-white/10">
                  {lastAnalysis.category} • Score: {lastAnalysis.mental_score}
@@ -263,7 +263,7 @@ export default function LogPage() {
               className="w-full h-16 bg-white hover:bg-zinc-200 text-black rounded-2xl font-black text-lg shadow-none transition-all"
             >
               {saving ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Plus className="w-5 h-5 mr-3" />}
-              Save Log Entry
+              Confirm & Save to Journal
             </Button>
           </div>
         </Card>

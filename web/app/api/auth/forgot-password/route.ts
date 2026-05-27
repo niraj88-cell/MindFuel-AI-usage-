@@ -13,7 +13,7 @@ const AUTH_LIMIT = 5
 
 export async function POST(req: NextRequest) {
   try {
-    const fingerprint = getRequestFingerprint(req)
+    const fingerprint = await getRequestFingerprint(req)
     const rateCheck = await checkAuthRateLimit(fingerprint)
     const rlHeaders = buildRateLimitHeaders(rateCheck, AUTH_LIMIT)
 
@@ -44,9 +44,7 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createClient()
 
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
-    const host = req.headers.get('host')
-    const origin = `${protocol}://${host}`
+    const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://mindfuel.app'
 
     // Supabase sends the password reset email
     const { error } = await supabase.auth.resetPasswordForEmail(email, {

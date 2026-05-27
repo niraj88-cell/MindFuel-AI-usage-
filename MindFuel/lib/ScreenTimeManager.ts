@@ -7,6 +7,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -23,7 +25,32 @@ export class ScreenTimeManager {
     return finalStatus === 'granted';
   }
 
-  // MOCK: Simulate triggering an intercept after "detecting" excessive usage
+  // Start tracking a session (e.g. from AppState or a specific view)
+  static async startTracking(sessionType: string = 'general') {
+    const SecureStore = await import('expo-secure-store');
+    await SecureStore.setItemAsync('mindfuel_session_start', Date.now().toString());
+    await SecureStore.setItemAsync('mindfuel_session_type', sessionType);
+  }
+
+  // End tracking and return duration
+  static async endTracking() {
+    const SecureStore = await import('expo-secure-store');
+    const startStr = await SecureStore.getItemAsync('mindfuel_session_start');
+    const sessionType = await SecureStore.getItemAsync('mindfuel_session_type') || 'general';
+    
+    if (startStr) {
+      const startTime = parseInt(startStr, 10);
+      const durationMs = Date.now() - startTime;
+      
+      await SecureStore.deleteItemAsync('mindfuel_session_start');
+      await SecureStore.deleteItemAsync('mindfuel_session_type');
+      
+      return { durationMs, sessionType };
+    }
+    return null;
+  }
+
+  // Trigger intercept if needed
   static async simulateAppUsageIntercept(appName: string = 'Instagram', delayMs: number = 3000) {
     const hasPermission = await this.requestPermissions();
     if (!hasPermission) {
@@ -31,7 +58,7 @@ export class ScreenTimeManager {
       return;
     }
 
-    console.log(`[ScreenTimeManager] Scheduling mock intercept for ${appName} in ${delayMs}ms`);
+    console.log(`[ScreenTimeManager] Scheduling intercept for ${appName} in ${delayMs}ms`);
 
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -43,7 +70,7 @@ export class ScreenTimeManager {
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: delayMs / 1000,
+        seconds: Math.max(1, delayMs / 1000),
       },
     });
   }

@@ -3,7 +3,6 @@
 //         request fingerprinting, and content policy enforcement.
 
 import { NextRequest } from 'next/server'
-import { createHash } from 'crypto'
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -153,19 +152,23 @@ export function validateEmail(email: unknown): ValidationResult {
 /**
  * Generate a stable fingerprint for a request (for rate limiting without exposing raw IP).
  * Uses: IP + User-Agent hash.
+ * This runs in Edge runtime, so we must use Web Crypto API, not Node 'crypto'.
  */
-export function getRequestFingerprint(req: NextRequest): string {
+export async function getRequestFingerprint(req: NextRequest): Promise<string> {
   const ip =
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     req.headers.get('x-real-ip') ||
     'unknown'
 
   const ua = req.headers.get('user-agent') || 'unknown'
-
-  return createHash('sha256')
-    .update(`${ip}:${ua}`)
-    .digest('hex')
-    .substring(0, 16)
+  const data = new TextEncoder().encode(`${ip}:${ua}`)
+  
+  // Use Web Crypto API
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  
+  return hashHex.substring(0, 16)
 }
 
 /**
@@ -238,13 +241,44 @@ const NOSQLI_PATTERNS = [
 
 /**
  * Deep scan an incoming JSON payload for malicious injection signatures.
- * Blocks Prototype Pollution, SQLi, and NoSQLi.
+ * Blocks Prototype Pollution via dangerous keys.
+ * Only scans object KEYS (not values) to avoid false positives on user text.
  */
 export function inspectPayload(payload: unknown): { safe: boolean; threats: string[] } {
-  // WAF temporarily bypassed to prevent false positive blocks.
+  const threats: string[] = []
+
+  function scanKeys(obj: unknown, depth = 0): void {
+    if (depth > 10) return // Prevent stack overflow on deeply nested payloads
+    if (obj === null || obj === undefined) return
+    if (typeof obj !== 'object') return
+
+    if (Array.isArray(obj)) {
+      for (const item of obj) scanKeys(item, depth + 1)
+      return
+    }
+
+    for (const key of Object.keys(obj as Record<string, unknown>)) {
+      // Prototype pollution
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+        threats.push('prototype_pollution')
+      }
+      // NoSQL injection operators in keys
+      if (NOSQLI_PATTERNS.some(p => p.test(key))) {
+        threats.push('nosql_injection')
+      }
+      scanKeys((obj as Record<string, unknown>)[key], depth + 1)
+    }
+  }
+
+  try {
+    scanKeys(payload)
+  } catch {
+    threats.push('malformed_payload')
+  }
+
   return {
-    safe: true,
-    threats: []
+    safe: threats.length === 0,
+    threats,
   }
 }
 

@@ -96,13 +96,27 @@ async function extractMetadataFromUrl(url: string): Promise<string> {
   }
 
   try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname;
+    // Block private/internal IPs
+    if (/^(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.|127\.|0\.0\.0\.0|169\.254\.)/i.test(hostname) || hostname === 'localhost') {
+      return url;
+    }
+
     const res = await fetch(url, { 
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; MindFuelBot/1.0)' },
       signal: AbortSignal.timeout(3000) 
     });
     if (!res.ok) return url;
     
-    const html = await res.text();
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('text/html')) {
+      return url; // Only parse HTML
+    }
+    
+    // Read up to 50KB to avoid memory exhaustion
+    const htmlText = await res.text();
+    const html = htmlText.substring(0, 50000);
     const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
     const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["'][^>]*>/i) || 
                       html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["'][^>]*>/i) ||

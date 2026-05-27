@@ -1,4 +1,4 @@
-// lib/supabase/types.ts — Full TypeScript types for Supabase DB (Mobile)
+// lib/supabase/types.ts — Full TypeScript types for Supabase DB
 
 export type Json = string | number | boolean | null | { [key: string]: Json } | Json[]
 
@@ -31,6 +31,9 @@ export interface Database {
           daily_log_limit: number
           created_at: string
           updated_at: string
+          onboarding_completed: boolean
+          content_love: string | null
+          content_regret: string | null
         }
         Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'updated_at'> & {
           created_at?: string
@@ -254,6 +257,100 @@ export interface Database {
             referencedColumns: ["id"]
           }
         ]
+      }
+      push_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['push_subscriptions']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['push_subscriptions']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      focus_sessions: {
+        Row: {
+          id: string
+          user_id: string
+          duration_minutes: number
+          completed: boolean
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['focus_sessions']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['focus_sessions']['Insert']>
+        Relationships: []
+      }
+      daily_pulses: {
+        Row: {
+          id: string
+          user_id: string
+          date: string
+          rating: number
+          note: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['daily_pulses']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['daily_pulses']['Insert']>
+        Relationships: []
+      }
+      intercept_logs: {
+        Row: {
+          id: string
+          user_id: string
+          intent: string
+          emotion: string | null
+          action: 'continued' | 'disconnected'
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['intercept_logs']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['intercept_logs']['Insert']>
+        Relationships: []
+      }
+      mood_scans: {
+        Row: {
+          id: string
+          user_id: string
+          url: string | null
+          content: string
+          platform: string | null
+          emotional_valence: number
+          energy_signature: string
+          psychological_themes: string[]
+          mood_trajectory: string
+          consumption_risk: string
+          mood_verdict: string
+          recommended_action: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['mood_scans']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['mood_scans']['Insert']>
+        Relationships: []
       }
     }
     Views: {

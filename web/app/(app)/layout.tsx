@@ -6,23 +6,16 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Brain, LayoutDashboard, PenLine, BarChart3,
-  MessageCircle, Trophy, User, LogOut, Menu, X, Bell, CreditCard, Sparkles,
-  ScanLine, ShieldAlert, Timer, Heart
+  MessageCircle, User, LogOut, Menu, X, Bell, Sparkles
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/log', label: 'Log Content', icon: PenLine },
-  { href: '/focus', label: 'Focus Timer', icon: Timer },
-  { href: '/pulse', label: 'Daily Pulse', icon: Heart },
-  { href: '/intercept', label: 'Mindful Intercept', icon: ShieldAlert },
-  { href: '/mood-scan', label: 'Mood Scan', icon: ScanLine },
+  { href: '/dashboard', label: 'Today', icon: LayoutDashboard },
+  { href: '/log', label: 'Log', icon: PenLine },
+  { href: '/coach', label: 'Coach', icon: MessageCircle },
   { href: '/insights', label: 'Insights', icon: BarChart3 },
-  { href: '/coach', label: 'AI Coach', icon: MessageCircle },
-  { href: '/challenges', label: 'Challenges', icon: Trophy },
-  { href: '/subscription', label: 'Membership', icon: CreditCard },
-  { href: '/profile', label: 'Profile', icon: User },
+  { href: '/profile', label: 'Settings', icon: User },
 ]
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

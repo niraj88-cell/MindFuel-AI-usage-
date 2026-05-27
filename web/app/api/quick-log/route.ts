@@ -3,7 +3,7 @@
 // Designed for minimal friction: just category + optional mood = full log with AI enrichment
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { scanContent } from '@/lib/agents/tools/contentScanner'
 import { checkAnalyzeRateLimit } from '@/lib/rate-limit'
 import { sanitizeText } from '@/lib/security'
@@ -241,8 +241,9 @@ export async function POST(req: NextRequest) {
     if (insertError) throw insertError
 
     // Update daily summary
+    const adminSupabase = createAdminClient()
     const today = format(new Date(), 'yyyy-MM-dd')
-    const { data: existing } = await supabase
+    const { data: existing } = await adminSupabase
       .from('daily_summaries')
       .select('*')
       .eq('user_id', user.id)
@@ -255,7 +256,7 @@ export async function POST(req: NextRequest) {
       const breakdown = existing.category_breakdown as Record<string, number>
       breakdown[logData.category] = (breakdown[logData.category] || 0) + 1
 
-      await supabase.from('daily_summaries').update({
+      await adminSupabase.from('daily_summaries').update({
         total_logs: newTotal,
         total_score: newTotalScore,
         average_score: Math.round(newTotalScore / newTotal),
@@ -263,7 +264,7 @@ export async function POST(req: NextRequest) {
       }).eq('id', existing.id)
     } else {
       const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd')
-      const { data: yesterdaySummary } = await supabase
+      const { data: yesterdaySummary } = await adminSupabase
         .from('daily_summaries')
         .select('streak_days')
         .eq('user_id', user.id)
@@ -272,7 +273,7 @@ export async function POST(req: NextRequest) {
 
       const newStreak = yesterdaySummary ? (yesterdaySummary.streak_days || 0) + 1 : 1
 
-      await supabase.from('daily_summaries').insert({
+      await adminSupabase.from('daily_summaries').insert({
         user_id: user.id,
         date: today,
         total_score: logData.mental_score,

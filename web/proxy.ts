@@ -1,5 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { checkIPRateLimit } from '@/lib/rate-limit'
+import { getRequestFingerprint } from '@/lib/security'
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -8,16 +10,44 @@ export async function proxy(request: NextRequest) {
     },
   })
 
-  // Basic API Origin Security for mutating requests
   const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
+
+  // Global Edge Rate Limiting for API routes (WAF layer)
+  if (isApiRoute) {
+    const fingerprint = await getRequestFingerprint(request)
+    // 300 requests per 5 minutes per IP as a global flood protection
+    const rateCheck = await checkIPRateLimit(fingerprint, { maxRequests: 300, windowSeconds: 300, burstLimit: 50 })
+    if (!rateCheck.success) {
+      return NextResponse.json({ error: 'Too Many Requests' }, { status: 429 })
+    }
+  }
+
+  // CSRF protection for mutating API requests
   if (isApiRoute && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
     const origin = request.headers.get('origin')
     const host = request.headers.get('host')
-    // Ensure the origin matches our host (protect against CSRF from malicious sites)
-    if (origin && host) {
-      const originUrl = new URL(origin)
-      if (originUrl.host !== host) {
-        return NextResponse.json({ error: 'Forbidden: Origin mismatch' }, { status: 403 })
+
+    if (origin) {
+      // If Origin is present (e.g. from a browser), it MUST match the host
+      try {
+        const originUrl = new URL(origin)
+        if (originUrl.host !== host) {
+          return NextResponse.json({ error: 'Forbidden: Origin mismatch' }, { status: 403 })
+        }
+      } catch {
+        return NextResponse.json({ error: 'Forbidden: Invalid origin' }, { status: 403 })
+      }
+    } else {
+      // No Origin header (could be mobile app, cURL, or webhook)
+      const isStripeWebhook = request.nextUrl.pathname.startsWith('/api/stripe/webhook')
+      const authHeader = request.headers.get('authorization')
+      const hasBearer = authHeader?.startsWith('Bearer ')
+      const isMobileApp = request.headers.get('x-mindfuel-mobile') === 'true'
+
+      // Only allow requests without Origin if it's a Stripe webhook or an authenticated mobile request
+      // We rely on 'x-mindfuel-mobile' to verify intent, but authentication is validated below.
+      if (!isStripeWebhook && !(isMobileApp && hasBearer)) {
+        return NextResponse.json({ error: 'Forbidden: Missing origin' }, { status: 403 })
       }
     }
   }
@@ -50,9 +80,9 @@ export async function proxy(request: NextRequest) {
 
   // Basic route protection
   const { pathname } = request.nextUrl
-  const isPublicRoute = ['/', '/login', '/signup', '/forgot-password'].includes(pathname)
+  const isPublicRoute = ['/', '/login', '/signup', '/forgot-password', '/sitemap.xml', '/robots.txt'].includes(pathname)
   const isAuthCallback = pathname.startsWith('/api/auth/callback')
-  const isStatic = pathname.startsWith('/_next') || /\.(ico|png|jpg|jpeg|svg|css|js)$/.test(pathname)
+  const isStatic = pathname.startsWith('/_next') || /\.(ico|png|jpg|jpeg|svg|css|js|xml|txt)$/.test(pathname)
 
   if (!user && !isPublicRoute && !isApiRoute && !isStatic) {
     // Redirect unauthenticated users to login page

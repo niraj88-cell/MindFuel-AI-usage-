@@ -3,8 +3,10 @@
 import { Platform } from 'react-native';
 import { supabase } from '../supabase/client';
 
-// Always use the Vercel production URL from env, never localhost
-const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'https://web-rust-six-k2qqc0qdnc.vercel.app';
+const API_BASE = process.env.EXPO_PUBLIC_API_URL;
+if (!API_BASE) {
+  throw new Error('EXPO_PUBLIC_API_URL is not defined in environment variables');
+}
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -13,6 +15,7 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   }
   return {
     'Authorization': `Bearer ${session.access_token}`,
+    'x-mindfuel-mobile': 'true',
   };
 }
 

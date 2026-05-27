@@ -16,7 +16,7 @@ export default function FocusScreen() {
   const [phase, setPhase] = useState<'select' | 'running' | 'done'>('select');
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [totalSeconds, setTotalSeconds] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startTimer = () => {
     const total = selectedMinutes * 60;

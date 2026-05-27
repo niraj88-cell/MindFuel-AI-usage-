@@ -2,7 +2,7 @@
 // GET: Fetch weekly insights with mood correlations, rate limiting, caching
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { analyzeMoodPatterns } from '@/lib/agents/tools/moodAnalyzer'
 import { checkInsightsRateLimit, buildRateLimitHeaders } from '@/lib/rate-limit'
 import { subDays, format } from 'date-fns'
@@ -76,11 +76,45 @@ export async function GET(req: NextRequest) {
     const hasEnoughData = (moodLogs && moodLogs.length >= 2) || (contentLogs && contentLogs.length >= 3)
     
     if (hasEnoughData) {
-      moodAnalysis = await analyzeMoodPatterns(
-        moodLogs || [],
-        contentLogs || [],
-        7
-      )
+      const adminClient = createAdminClient()
+      const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString()
+      
+      const { data: cachedInsight } = await adminClient
+        .from('ai_insights')
+        .select('body, action_items')
+        .eq('user_id', user.id)
+        .eq('type', 'mood_correlation')
+        .gte('created_at', sixHoursAgo)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (cachedInsight && cachedInsight.body) {
+        try {
+          moodAnalysis = JSON.parse(cachedInsight.body)
+        } catch {
+          // ignore parse error
+        }
+      }
+
+      if (!moodAnalysis) {
+        moodAnalysis = await analyzeMoodPatterns(
+          moodLogs || [],
+          contentLogs || [],
+          7
+        )
+        
+        // Save to cache
+        await adminClient.from('ai_insights').insert({
+          user_id: user.id,
+          type: 'mood_correlation',
+          title: 'Mood Correlation Cache',
+          body: JSON.stringify(moodAnalysis),
+          action_items: moodAnalysis.action_items || [],
+          metadata: {},
+          is_read: true
+        })
+      }
     } else {
       // Return a "Cold Start" analysis
       moodAnalysis = {

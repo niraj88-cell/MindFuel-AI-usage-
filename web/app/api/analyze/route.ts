@@ -57,6 +57,10 @@ export async function POST(req: NextRequest) {
       ? await supabase.auth.getUser(bearerToken)
       : await supabase.auth.getUser()
 
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     let tier: 'free' | 'premium' = 'free'
     let dailyLogsRemaining: number | null = null
 
@@ -105,11 +109,11 @@ export async function POST(req: NextRequest) {
           )
         }
 
-        dailyLogsRemaining = dailyLimit - todayLogs - 1 // -1 because this analysis will consume one
-      }
+      dailyLogsRemaining = dailyLimit - todayLogs - 1 // -1 because this analysis will consume one
     }
+  } // <-- MISSING BRACE for if (user) { ... }
 
-    // ── Sanitize content — strip potential prompt injection markers ──
+  // ── Sanitize content — strip potential prompt injection markers ──
     const sanitized = content
       .replace(/```/g, '')           // Remove code fences that could confuse the model
       .replace(/\[INST\]/gi, '')     // Common prompt injection pattern

@@ -252,7 +252,7 @@ export function ContentAnalyzer({ onAnalyzed }: ContentAnalyzerProps) {
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>
-                Analyze <Zap className="w-4 h-4 ml-1" />
+                Analyze Content <Zap className="w-4 h-4 ml-1" />
               </>
             )}
           </Button>

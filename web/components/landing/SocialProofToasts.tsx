@@ -4,11 +4,11 @@ import React, { useState, useEffect } from 'react'
 import { CheckCircle2 } from 'lucide-react'
 
 const PROOFS = [
-  "Alex just reclaimed 45m of focus time",
-  "Sarah logged her first mental check-in",
-  "David broke a 3-day doomscroll streak",
-  "Emma analyzed 12 TikTok URLs today",
-  "Michael unlocked the Platinum Coach"
+  "2,400+ mental check-ins logged this week",
+  "Users report 31% less doomscrolling after 14 days",
+  "Average session score improves 18 points in 30 days",
+  "94% of users say MindFuel increased their awareness",
+  "Join thousands building healthier digital habits"
 ]
 
 export function SocialProofToasts() {

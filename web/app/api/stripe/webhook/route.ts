@@ -37,6 +37,8 @@ export async function POST(req: NextRequest) {
         .update({ 
           subscription_tier: 'premium',
           daily_log_limit: 9999, // Unlimited
+          stripe_customer_id: session.customer as string,
+          stripe_subscription_id: session.subscription as string,
           updated_at: new Date().toISOString()
         })
         .eq('id', userId);
@@ -47,6 +49,55 @@ export async function POST(req: NextRequest) {
         console.log(`User ${userId} successfully upgraded to Premium!`);
       }
     }
+  } else if (event.type === 'customer.subscription.updated') {
+    const subscription = event.data.object as Stripe.Subscription;
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        subscription_tier: subscription.status === 'active' ? 'premium' : 'free',
+        daily_log_limit: subscription.status === 'active' ? 9999 : 3,
+        updated_at: new Date().toISOString()
+      })
+      .eq('stripe_subscription_id', subscription.id);
+      
+    if (error) console.error('Error updating subscription:', error);
+  } else if (event.type === 'customer.subscription.deleted') {
+    const subscription = event.data.object as Stripe.Subscription;
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        subscription_tier: 'free',
+        daily_log_limit: 3,
+        stripe_subscription_id: null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('stripe_subscription_id', subscription.id);
+
+    if (error) console.error('Error downgrading subscription:', error);
+  } else if (event.type === 'invoice.payment_failed') {
+    const invoice = event.data.object as Stripe.Invoice;
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        subscription_tier: 'free',
+        daily_log_limit: 3,
+        updated_at: new Date().toISOString()
+      })
+      .eq('stripe_customer_id', invoice.customer as string);
+
+    if (error) console.error('Error flagging payment failed:', error);
+  } else if (event.type === 'charge.refunded') {
+    const charge = event.data.object as Stripe.Charge;
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        subscription_tier: 'free',
+        daily_log_limit: 3,
+        updated_at: new Date().toISOString()
+      })
+      .eq('stripe_customer_id', charge.customer as string);
+
+    if (error) console.error('Error handling refund:', error);
   }
 
   return NextResponse.json({ received: true });

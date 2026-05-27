@@ -24,8 +24,9 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient()
     let userId: string | null = null
 
-    // If it's not the cron job, check if it's the authenticated user testing it
-    if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
+    const isCron = CRON_SECRET && authHeader === `Bearer ${CRON_SECRET}`
+
+    if (!isCron) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

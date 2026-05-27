@@ -17,7 +17,8 @@ import {
   ChevronRight,
   Timer,
   Heart,
-  Lock
+  Lock,
+  X
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -54,6 +55,8 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showWelcomeBack, setShowWelcomeBack] = useState(false)
+  const [daysSinceLastLog, setDaysSinceLastLog] = useState(0)
   const [userId, setUserId] = useState<string | null>(null)
 
   const loadDashboard = useCallback(async () => {
@@ -63,55 +66,101 @@ export default function DashboardPage() {
 
     const today = format(new Date(), 'yyyy-MM-dd')
 
-    // Fetch profile for subscription status and onboarding
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('subscription_tier, onboarding_completed, content_love, content_regret')
-      .eq('id', user.id)
-      .maybeSingle()
-      
-    // Check local storage first to prevent Next.js cache staleness
-    const localCompleted = localStorage.getItem(`onboarding_done_${user.id}`)
+    // Run ALL independent queries in parallel instead of sequentially
+    const [
+      { data: profile },
+      { data: summary },
+      { data: logs },
+      { data: insight },
+      { data: todayLogs },
+      focusResult,
+      pulseResult,
+      { data: lastLog },
+    ] = await Promise.all([
+      // 1. Profile
+      supabase
+        .from('profiles')
+        .select('subscription_tier, onboarding_completed, content_love, content_regret')
+        .eq('id', user.id)
+        .maybeSingle(),
+      // 2. Daily summary
+      supabase
+        .from('daily_summaries')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('date', today)
+        .maybeSingle(),
+      // 3. Recent logs
+      supabase
+        .from('mental_logs')
+        .select('id, content, category, mental_score, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5),
+      // 4. Coach insight
+      supabase
+        .from('ai_insights')
+        .select('body, action_items')
+        .eq('user_id', user.id)
+        .eq('type', 'daily_coach')
+        .eq('is_read', false)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      // 5. Today's logs for category breakdown
+      supabase
+        .from('mental_logs')
+        .select('category, mental_score')
+        .eq('user_id', user.id)
+        .gte('created_at', today),
+      // 6. Focus sessions
+      supabase
+        .from('focus_sessions')
+        .select('duration_minutes, completed')
+        .eq('user_id', user.id)
+        .eq('completed', true)
+        .gte('created_at', format(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')),
+      // 7. Today's pulse
+      supabase
+        .from('daily_pulses')
+        .select('rating')
+        .eq('user_id', user.id)
+        .eq('date', today)
+        .maybeSingle(),
+      // 8. Last log for welcome back check
+      supabase
+        .from('mental_logs')
+        .select('created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ])
 
+    // Check onboarding status
+    const localCompleted = localStorage.getItem(`onboarding_done_${user.id}`)
     if (localCompleted !== 'true' && profile && profile.onboarding_completed === false) {
       setShowOnboarding(true)
       setUserId(user.id)
+    } else {
+      setUserId(user.id) // Ensure userId is set for welcome banner dismissal
     }
 
-    // Fetch today's summary
-    const { data: summary } = await supabase
-      .from('daily_summaries')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('date', today)
-      .maybeSingle()
+    if (lastLog) {
+      const lastDate = new Date(lastLog.created_at)
+      const now = new Date()
+      const diffTime = Math.abs(now.getTime() - lastDate.getTime())
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+      if (diffDays >= 3) {
+        const dismissed = localStorage.getItem(`welcome_dismissed_${user.id}`)
+        if (dismissed !== 'true') {
+          setDaysSinceLastLog(diffDays)
+          setShowWelcomeBack(true)
+        }
+      }
+    }
 
-    // Fetch recent logs
-    const { data: logs } = await supabase
-      .from('mental_logs')
-      .select('id, content, category, mental_score, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(5)
-
-    // Fetch latest coach insight
-    const { data: insight } = await supabase
-      .from('ai_insights')
-      .select('body, action_items')
-      .eq('user_id', user.id)
-      .eq('type', 'daily_coach')
-      .eq('is_read', false)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    // Build category breakdown from today's logs
-    const { data: todayLogs } = await supabase
-      .from('mental_logs')
-      .select('category, mental_score')
-      .eq('user_id', user.id)
-      .gte('created_at', today)
-
+    // Build category breakdown
     const catMap = new Map<string, { count: number; totalScore: number }>()
     const allLogs = (todayLogs || []) as Array<{ category: string; mental_score: number }>
     allLogs.forEach((log) => {
@@ -127,32 +176,16 @@ export default function DashboardPage() {
       avgScore: Math.round(d.totalScore / d.count),
     }))
 
-    // Fetch focus stats
+    // Process focus stats
+    const focusData = focusResult?.data
     let focusHours = 0
     let focusSessions = 0
-    try {
-      const { data: focusData } = await supabase
-        .from('focus_sessions')
-        .select('duration_minutes, completed')
-        .eq('user_id', user.id)
-        .eq('completed', true)
-      if (focusData) {
-        focusSessions = focusData.length
-        focusHours = Math.round(focusData.reduce((acc, s) => acc + s.duration_minutes, 0) / 60 * 10) / 10
-      }
-    } catch {}
+    if (focusData) {
+      focusSessions = focusData.length
+      focusHours = Math.round(focusData.reduce((acc: number, s: any) => acc + s.duration_minutes, 0) / 60 * 10) / 10
+    }
 
-    // Fetch today's pulse
-    let todayPulse: number | null = null
-    try {
-      const { data: pulseData } = await supabase
-        .from('daily_pulses')
-        .select('rating')
-        .eq('user_id', user.id)
-        .eq('date', today)
-        .maybeSingle()
-      todayPulse = pulseData?.rating || null
-    } catch {}
+    const todayPulse = pulseResult?.data?.rating || null
 
     setData({
       todayScore: summary?.average_score || 0,
@@ -208,12 +241,40 @@ export default function DashboardPage() {
         />
       )}
       <OnboardingDemo />
+      {/* Welcome Back Banner */}
+      {showWelcomeBack && (
+        <Card className="bg-zinc-900 border-white/10 rounded-2xl p-6 relative">
+          <button 
+            onClick={() => {
+              if (userId) localStorage.setItem(`welcome_dismissed_${userId}`, 'true');
+              setShowWelcomeBack(false);
+            }} 
+            className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center shrink-0 border border-white/10">
+              <Heart className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <h3 className="text-xl font-bold text-white">Welcome back. We missed you.</h3>
+              <p className="text-zinc-400 mt-1 mb-4">No streak to worry about. No guilt. Your data is exactly where you left it. Ready when you are.</p>
+              <button 
+                onClick={() => router.push('/log')}
+                className="px-6 py-2 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition-colors cursor-pointer"
+              >
+                Log how you're feeling
+              </button>
+            </div>
+          </div>
+        </Card>
+      )}
       {/* Premium Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <div className="flex items-center gap-2 text-zinc-500 font-black text-[10px] uppercase tracking-[0.2em] mb-2">
-            <Zap className="w-3 h-3" />
-            System Status: Online
+            👋 {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'}
           </div>
           {data?.contentLove ? (
             <h1 className="text-3xl md:text-5xl font-black tracking-tight">
@@ -316,19 +377,14 @@ export default function DashboardPage() {
       <Card className="bg-zinc-900 border-white/10 rounded-2xl overflow-hidden p-6 border-dashed">
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div>
-            <h3 className="font-bold text-white mb-1">Simulate Mindful Intercept</h3>
-            <p className="text-sm text-zinc-400">Experience the breathing exercise that triggers when you open a distracting app.</p>
+            <h3 className="font-bold text-white mb-1">Try Adaptive Mindful Intercept</h3>
+            <p className="text-sm text-zinc-400">Experience the hold-to-breathe friction system. It adapts to your usage patterns in real time.</p>
           </div>
           <button 
-            onClick={() => {
-              alert("Wait 3 seconds! Simulating you opening Instagram...");
-              setTimeout(() => {
-                router.push('/intercept?appName=Instagram');
-              }, 3000);
-            }}
+            onClick={() => router.push('/intercept')}
             className="whitespace-nowrap px-6 py-3 bg-white text-black rounded-xl font-bold hover:bg-zinc-200 transition-colors cursor-pointer"
           >
-            Simulate Now
+            Try It Now
           </button>
         </div>
       </Card>
@@ -373,14 +429,14 @@ export default function DashboardPage() {
            {data && data.categoryBreakdown.length > 0 ? (
               <NutritionBreakdown data={data.categoryBreakdown} />
             ) : (
-              <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-zinc-800 rounded-3xl">
-                <p className="text-zinc-500 font-medium text-lg">No logs yet today</p>
-                <p className="text-zinc-600 text-sm mt-1">Use the Quick Log button below to get started</p>
+              <div className="h-64 flex flex-col items-center justify-center rounded-3xl bg-white/[0.02] border border-white/5 animate-fade-in-up">
+                <p className="text-white font-bold text-lg mb-2">Your quiet space is ready.</p>
+                <p className="text-zinc-500 text-sm mb-6 text-center max-w-sm">What's on your mind today? Start by logging your first item to begin uncovering your patterns.</p>
                 <button
                   onClick={() => router.push('/log')}
-                  className="mt-4 bg-white/5 text-white px-6 py-2 rounded-full font-bold hover:bg-white/10 cursor-pointer"
+                  className="bg-white text-black px-6 py-2 rounded-full font-bold hover:bg-zinc-200 cursor-pointer transition-colors"
                 >
-                  Log First Item
+                  Start Reflecting
                 </button>
               </div>
             )}
@@ -395,12 +451,12 @@ export default function DashboardPage() {
               <Lock className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-white flex items-center gap-2">Discover your hidden triggers <Sparkles className="w-4 h-4 text-zinc-400" /></h3>
-              <p className="text-zinc-400 mt-1 max-w-xl">You've logged {data.totalLogs} entries. Upgrade to Platinum to see exactly what's draining your mental energy over time.</p>
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">Notice a pattern? <Sparkles className="w-4 h-4 text-zinc-400" /></h3>
+              <p className="text-zinc-400 mt-1 max-w-xl">You've logged {data.totalLogs} entries. Plus gently connects the dots across your entries to help you understand your habits on a deeper level.</p>
             </div>
           </div>
           <Link href="/subscription" className="whitespace-nowrap px-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition-colors">
-            Unlock Deep Insights
+            See what your thoughts reveal
           </Link>
         </div>
       )}

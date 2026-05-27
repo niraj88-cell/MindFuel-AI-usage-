@@ -25,7 +25,9 @@ export async function initSubscription(userId: string): Promise<void> {
       console.warn('RevenueCat API key not configured');
       return;
     }
-    Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
+    if (__DEV__) {
+      Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
+    }
     Purchases.configure({
       apiKey,
       appUserID: userId,
@@ -43,7 +45,7 @@ export async function getSubscriptionStatus(): Promise<UserSubscription> {
   try {
     const customerInfo = await Purchases.getCustomerInfo();
 
-    if (customerInfo.activeSubscriptions.length > 0) {
+    if (customerInfo.entitlements.active['premium']) {
       const expirationDate = customerInfo.entitlements.active['premium']?.expirationDate;
 
       return {

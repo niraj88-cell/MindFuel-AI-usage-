@@ -6,7 +6,7 @@ import type { NextConfig } from 'next'
 const CSP = [
   "default-src 'self'",
   // Scripts: self + Next.js inline scripts (hashes preferred over 'unsafe-inline' in prod)
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",   // unsafe-eval required by Next.js dev mode
+  `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"}`,
   // Styles: self + Google Fonts
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   // Fonts
@@ -63,7 +63,7 @@ const nextConfig: NextConfig = {
             key: 'Permissions-Policy',
             value: [
               'camera=()',
-              'microphone=()',
+              'microphone=(self)',
               'geolocation=()',
               'payment=()',
               'usb=()',

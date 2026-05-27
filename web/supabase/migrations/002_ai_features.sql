@@ -51,7 +51,7 @@ create policy "Users can update own insights" on ai_insights
   for update using (auth.uid() = user_id);
 
 create policy "System can insert insights" on ai_insights
-  for insert with check (true);
+  for insert to service_role with check (true);
 
 -- ========================================
 -- HABIT CHALLENGES TABLE
@@ -107,11 +107,11 @@ create policy "Users can manage own notifications" on notifications
 -- ========================================
 drop policy if exists "Users cannot insert summaries directly" on daily_summaries;
 create policy "Service role can insert summaries" on daily_summaries
-  for insert with check (true);
+  for insert to service_role with check (true);
 
 drop policy if exists "Users cannot update summaries directly" on daily_summaries;
 create policy "Service role can update summaries" on daily_summaries
-  for update using (true);
+  for update to service_role using (true);
 
 -- ========================================
 -- SUPABASE CRON: Daily Coach at 8AM UTC
