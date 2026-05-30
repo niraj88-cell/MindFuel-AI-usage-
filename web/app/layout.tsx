@@ -17,13 +17,27 @@ export const metadata: Metadata = {
     title: 'MindFuel — Mental Nutrition Tracker',
     description: 'Track your digital diet and stop doomscrolling with AI-powered mental wellness tracking.',
     type: 'website',
-    images: ['https://getmindfuel.vercel.app/og-premium.png'],
+    images: [
+      {
+        url: 'https://getmindfuel.vercel.app/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'MindFuel — Mental Nutrition Tracker',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'MindFuel — Mental Nutrition Tracker',
     description: 'Track your digital diet and stop doomscrolling with AI-powered mental wellness tracking.',
-    images: ['https://getmindfuel.vercel.app/og-premium.png'],
+    images: [
+      {
+        url: 'https://getmindfuel.vercel.app/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'MindFuel — Mental Nutrition Tracker',
+      },
+    ],
   },
   verification: {
     google: 'jbQhKcXinwrOHvVws6RQPrPVZl-UXv1QOqNoHH2L1VY',
