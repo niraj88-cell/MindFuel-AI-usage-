@@ -24,6 +24,18 @@ interface AnalysisResult {
   tags: string[]
   is_junk: boolean
   time_well_spent: boolean
+  // Intelligence fields
+  severity: 'critical' | 'warning' | 'moderate' | 'safe' | 'excellent'
+  confidence: number
+  impact_analysis: {
+    mood_shift: string
+    cognitive_load: string
+    habit_risk: string
+    time_quality: string
+  }
+  root_causes: Array<{ reason: string; evidence: string; confidence: number }>
+  copilot_actions: Array<{ action: string; reason: string; impact: string; confidence: number }>
+  missing_context?: string[]
 }
 
 interface Alternative {

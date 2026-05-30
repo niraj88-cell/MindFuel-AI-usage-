@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ContentAnalyzer } from '@/components/log/ContentAnalyzer'
+import { IntelligenceCard } from '@/components/log/IntelligenceCard'
 import { MoodSlider } from '@/components/log/MoodSlider'
 import { QuickLogFAB } from '@/components/dashboard/QuickLogFAB'
 import { createClient } from '@/lib/supabase/client'
@@ -23,6 +24,12 @@ export default function LogPage() {
     category: string
     mental_score: number
     summary: string
+    severity?: 'critical' | 'warning' | 'moderate' | 'safe' | 'excellent'
+    confidence?: number
+    impact_analysis?: { mood_shift: string; cognitive_load: string; habit_risk: string; time_quality: string }
+    root_causes?: Array<{ reason: string; evidence: string; confidence: number }>
+    copilot_actions?: Array<{ action: string; reason: string; impact: string; confidence: number }>
+    missing_context?: string[]
   } | null>(null)
   const [lastContent, setLastContent] = useState('')
   const [saved, setSaved] = useState(false)
@@ -52,7 +59,7 @@ export default function LogPage() {
     loadStats()
   }, [saved])
 
-  function handleAnalyzed(result: { category: string; mental_score: number; summary: string }, content: string) {
+  function handleAnalyzed(result: any, content: string) {
     setLastAnalysis(result)
     setLastContent(content)
     setSaved(false)
@@ -207,6 +214,18 @@ export default function LogPage() {
             <ContentAnalyzer onAnalyzed={handleAnalyzed} />
          </Card>
       </div>
+
+      {/* Intelligence Card — appears after analysis */}
+      {lastAnalysis && !saved && lastAnalysis.severity && (
+        <IntelligenceCard data={{
+          severity: lastAnalysis.severity,
+          confidence: lastAnalysis.confidence || 50,
+          impact_analysis: lastAnalysis.impact_analysis || { mood_shift: 'neutral', cognitive_load: 'moderate', habit_risk: 'low', time_quality: 'neutral' },
+          root_causes: lastAnalysis.root_causes || [],
+          copilot_actions: lastAnalysis.copilot_actions || [],
+          missing_context: lastAnalysis.missing_context,
+        }} />
+      )}
 
       {/* Save log section — appears after analysis */}
       {lastAnalysis && !saved && (

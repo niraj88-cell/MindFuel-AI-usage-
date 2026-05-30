@@ -9,9 +9,123 @@ export const ContentAnalysisSchema = z.object({
   tags: z.array(z.string()),
   is_junk: z.boolean(),
   time_well_spent: z.boolean(),
+  // ── Intelligence Engine Fields ──
+  severity: z.enum(['critical', 'warning', 'moderate', 'safe', 'excellent']),
+  confidence: z.number().min(0).max(100),
+  impact_analysis: z.object({
+    mood_shift: z.enum(['strong_negative', 'negative', 'neutral', 'positive', 'strong_positive']),
+    cognitive_load: z.enum(['overwhelming', 'high', 'moderate', 'low', 'restorative']),
+    habit_risk: z.enum(['high', 'moderate', 'low', 'none']),
+    time_quality: z.enum(['wasted', 'low', 'neutral', 'good', 'excellent']),
+  }),
+  root_causes: z.array(z.object({
+    reason: z.string(),
+    evidence: z.string(),
+    confidence: z.number().min(0).max(100),
+  })),
+  copilot_actions: z.array(z.object({
+    action: z.string(),
+    reason: z.string(),
+    impact: z.enum(['high', 'medium', 'low']),
+    confidence: z.number().min(0).max(100),
+  })),
+  missing_context: z.array(z.string()).optional(),
 })
 
 export type ContentAnalysis = z.infer<typeof ContentAnalysisSchema>
+
+// ── Intelligence Helpers ──
+function computeSeverity(score: number): ContentAnalysis['severity'] {
+  if (score >= 80) return 'excellent'
+  if (score >= 60) return 'safe'
+  if (score >= 40) return 'moderate'
+  if (score >= 20) return 'warning'
+  return 'critical'
+}
+
+function computeImpact(score: number, category: string): ContentAnalysis['impact_analysis'] {
+  const moodMap: Record<string, ContentAnalysis['impact_analysis']['mood_shift']> = {
+    educational: 'positive', productive: 'positive', creative: 'strong_positive',
+    social: 'neutral', entertainment: 'neutral', doomscroll: 'strong_negative', neutral: 'neutral',
+  }
+  const cogMap: Record<string, ContentAnalysis['impact_analysis']['cognitive_load']> = {
+    educational: 'moderate', productive: 'moderate', creative: 'low',
+    social: 'low', entertainment: 'low', doomscroll: 'overwhelming', neutral: 'moderate',
+  }
+  const habitMap: Record<string, ContentAnalysis['impact_analysis']['habit_risk']> = {
+    educational: 'none', productive: 'none', creative: 'none',
+    social: 'low', entertainment: 'moderate', doomscroll: 'high', neutral: 'low',
+  }
+  return {
+    mood_shift: score <= 20 ? 'strong_negative' : score <= 40 ? 'negative' : (moodMap[category] || 'neutral'),
+    cognitive_load: score <= 20 ? 'overwhelming' : (cogMap[category] || 'moderate'),
+    habit_risk: habitMap[category] || 'low',
+    time_quality: score >= 80 ? 'excellent' : score >= 60 ? 'good' : score >= 40 ? 'neutral' : score >= 20 ? 'low' : 'wasted',
+  }
+}
+
+function computeRootCauses(score: number, category: string, matchScore: number): ContentAnalysis['root_causes'] {
+  const causes: ContentAnalysis['root_causes'] = []
+  if (category === 'doomscroll') {
+    causes.push({ reason: 'Dopamine loop exploitation', evidence: 'Content uses infinite scroll and algorithmic feed patterns that hijack reward circuitry', confidence: 92 })
+    causes.push({ reason: 'Attention fragmentation', evidence: 'Short-form content reduces sustained attention capacity over time', confidence: 85 })
+    causes.push({ reason: 'Emotional manipulation', evidence: 'Outrage and novelty triggers exploit amygdala reactivity', confidence: 78 })
+  } else if (category === 'entertainment') {
+    causes.push({ reason: 'Passive consumption mode', evidence: 'Entertainment content activates default mode network without cognitive engagement', confidence: 75 })
+    causes.push({ reason: 'Moderate dopamine stimulation', evidence: 'Leisure media provides temporary mood lift but limited lasting benefit', confidence: 68 })
+  } else if (category === 'educational') {
+    causes.push({ reason: 'Active learning engagement', evidence: 'Educational content strengthens prefrontal cortex pathways and builds long-term knowledge', confidence: 90 })
+    causes.push({ reason: 'Self-efficacy boost', evidence: 'Learning new skills correlates with increased confidence and positive self-image', confidence: 82 })
+  } else if (category === 'productive') {
+    causes.push({ reason: 'Goal-directed behavior', evidence: 'Work-focused activity engages executive function and provides achievement satisfaction', confidence: 88 })
+    causes.push({ reason: 'Flow state potential', evidence: 'Deep work enables flow states that boost both performance and wellbeing', confidence: 76 })
+  } else if (category === 'creative') {
+    causes.push({ reason: 'Flow state activation', evidence: 'Creative work is one of the strongest triggers for flow states, reducing cortisol', confidence: 91 })
+    causes.push({ reason: 'Self-expression therapy', evidence: 'Creative output provides emotional processing and identity reinforcement', confidence: 84 })
+  } else if (category === 'social') {
+    causes.push({ reason: 'Social bonding activation', evidence: 'Meaningful social interaction releases oxytocin and reduces stress hormones', confidence: 72 })
+    causes.push({ reason: 'Comparison risk', evidence: 'Passive social browsing can trigger social comparison and reduce self-esteem', confidence: 60 })
+  } else {
+    causes.push({ reason: 'Neutral cognitive engagement', evidence: 'Content does not strongly activate positive or negative psychological mechanisms', confidence: 55 })
+  }
+  return causes
+}
+
+function computeCopilotActions(score: number, category: string): ContentAnalysis['copilot_actions'] {
+  if (score >= 75) {
+    return [
+      { action: 'Continue this type of content', reason: 'This content pattern supports your cognitive wellness goals', impact: 'high', confidence: 88 },
+      { action: 'Set a mindful time boundary', reason: 'Even healthy content benefits from intentional time limits to maintain balance', impact: 'medium', confidence: 75 },
+    ]
+  }
+  if (score >= 50) {
+    return [
+      { action: 'Swap to a higher-value alternative', reason: 'Similar content exists that provides deeper engagement and learning', impact: 'high', confidence: 80 },
+      { action: 'Set a 20-minute timer', reason: 'Bounded consumption prevents this from becoming a habit loop', impact: 'medium', confidence: 72 },
+    ]
+  }
+  return [
+    { action: 'Exit this content now', reason: 'Every additional minute deepens the dopamine loop and makes disengagement harder', impact: 'high', confidence: 92 },
+    { action: 'Open a learning resource instead', reason: 'Replacing low-value content with educational material rewires reward associations', impact: 'high', confidence: 85 },
+    { action: 'Take a 5-minute walk', reason: 'Physical movement resets dopamine baseline and breaks the scroll pattern', impact: 'medium', confidence: 78 },
+  ]
+}
+
+function computeMissingContext(score: number, matchScore: number): string[] | undefined {
+  const missing: string[] = []
+  if (matchScore < 2) missing.push('Specific content title or URL for deeper analysis')
+  if (matchScore < 1) missing.push('Duration of consumption for time-impact assessment')
+  if (missing.length === 0) return undefined
+  return missing
+}
+
+function computeConfidence(matchScore: number, isApiResult: boolean): number {
+  if (isApiResult) return Math.min(96, Math.max(70, 80 + matchScore * 3))
+  if (matchScore >= 4) return 88
+  if (matchScore >= 2) return 75
+  if (matchScore >= 1) return 60
+  return 45
+}
 
 async function extractMetadataFromUrl(url: string): Promise<string> {
   // Fast-path for short-form video platforms that block scrapers
@@ -226,21 +340,40 @@ export async function scanContent(contentOrUrl: string): Promise<ContentAnalysis
 
       for (const [domain, hint] of Object.entries(urlDomainHints)) {
         if (lower.includes(domain)) {
+          const s = hint.score
+          const cat = hint.category
           return {
-            category: hint.category as any,
-            mental_score: hint.score,
+            category: cat as any,
+            mental_score: s,
             summary: `Content from ${domain} detected.`,
-            reasoning: `Domain-based classification: ${domain} typically falls under ${hint.category} content.`,
-            tags: [hint.category, 'auto-detected'],
-            is_junk: hint.score < 40,
-            time_well_spent: hint.score >= 60,
+            reasoning: `Domain-based classification: ${domain} typically falls under ${cat} content.`,
+            tags: [cat, 'auto-detected'],
+            is_junk: s < 40,
+            time_well_spent: s >= 60,
+            severity: computeSeverity(s),
+            confidence: computeConfidence(1, false),
+            impact_analysis: computeImpact(s, cat),
+            root_causes: computeRootCauses(s, cat, 1),
+            copilot_actions: computeCopilotActions(s, cat),
+            missing_context: ['Specific page or video title for more precise analysis'],
           }
         }
       }
     }
 
     // Generate nuanced results based on best match
-    const resultMap: Record<string, ContentAnalysis> = {
+    // Helper to build a full result with intelligence fields
+    const buildResult = (base: Omit<ContentAnalysis, 'severity' | 'confidence' | 'impact_analysis' | 'root_causes' | 'copilot_actions' | 'missing_context'>): ContentAnalysis => ({
+      ...base,
+      severity: computeSeverity(base.mental_score),
+      confidence: computeConfidence(maxScore, false),
+      impact_analysis: computeImpact(base.mental_score, base.category),
+      root_causes: computeRootCauses(base.mental_score, base.category, maxScore),
+      copilot_actions: computeCopilotActions(base.mental_score, base.category),
+      missing_context: computeMissingContext(base.mental_score, maxScore),
+    })
+
+    const resultMap: Record<string, Omit<ContentAnalysis, 'severity' | 'confidence' | 'impact_analysis' | 'root_causes' | 'copilot_actions' | 'missing_context'>> = {
       doomscroll: {
         category: 'doomscroll',
         mental_score: Math.max(10, Math.min(35, 30 - Math.floor(maxScore * 2))),
@@ -298,10 +431,10 @@ export async function scanContent(contentOrUrl: string): Promise<ContentAnalysis
     }
 
     if (resultMap[maxCategory]) {
-      return resultMap[maxCategory]
+      return buildResult(resultMap[maxCategory])
     }
 
-    return {
+    return buildResult({
       category: 'neutral',
       mental_score: 50,
       summary: "General digital content consumption.",
@@ -309,7 +442,7 @@ export async function scanContent(contentOrUrl: string): Promise<ContentAnalysis
       tags: ['general', 'unclassified'],
       is_junk: false,
       time_well_spent: true
-    }
+    })
   }
 
   if (!apiKey || apiKey === 'your_free_groq_key_here') {
@@ -331,7 +464,22 @@ RETURN ONLY A VALID JSON OBJECT with these exact fields (NO MARKDOWN WRAPPERS):
   "reasoning": "<2-3 sentences explaining WHY this score, referencing specific psychological mechanisms. Be specific, not generic.>",
   "tags": ["<tag1>", "<tag2>", "<tag3>"],
   "is_junk": <boolean — true if content is designed to exploit attention without providing value>,
-  "time_well_spent": <boolean — would a mindful person choose this content intentionally?>
+  "time_well_spent": <boolean — would a mindful person choose this content intentionally?>,
+  "severity": "critical" | "warning" | "moderate" | "safe" | "excellent",
+  "confidence": <number 0-100, how confident you are in this analysis>,
+  "impact_analysis": {
+    "mood_shift": "strong_negative" | "negative" | "neutral" | "positive" | "strong_positive",
+    "cognitive_load": "overwhelming" | "high" | "moderate" | "low" | "restorative",
+    "habit_risk": "high" | "moderate" | "low" | "none",
+    "time_quality": "wasted" | "low" | "neutral" | "good" | "excellent"
+  },
+  "root_causes": [
+    { "reason": "<primary psychological mechanism>", "evidence": "<specific evidence from the content>", "confidence": <0-100> }
+  ],
+  "copilot_actions": [
+    { "action": "<specific action to take>", "reason": "<why this helps>", "impact": "high" | "medium" | "low", "confidence": <0-100> }
+  ],
+  "missing_context": ["<optional: what additional info would improve analysis>"]
 }
 
 SCORING SYSTEM (mental_score) — be precise, not approximate:
@@ -341,6 +489,11 @@ SCORING SYSTEM (mental_score) — be precise, not approximate:
 - 35-54: LOW. Repetitive entertainment, mindless scrolling, clickbait-adjacent, time-wasting patterns.
 - 15-34: POOR. Active doomscrolling, outrage bait, drama-seeking, infinite scroll exploitation.
 - 1-14: HARMFUL. Toxic content, heavy doomscrolling, polarizing material, content that actively harms mental state.
+
+SEVERITY: critical (score 1-20), warning (21-40), moderate (41-60), safe (61-80), excellent (81-100).
+CONFIDENCE: How sure you are. Be honest — generic inputs should get lower confidence.
+ROOT CAUSES: Rank by confidence. Include 2-3 psychological mechanisms.
+COPILOT ACTIONS: 2-3 specific, actionable recommendations.
 
 IMPORTANT NUANCES:
 - YouTube can range from 15 (shorts/drama) to 95 (deep educational) — don't bucket all YouTube together
@@ -362,11 +515,21 @@ ${content}`
     const text = completion.choices[0]?.message?.content || '{}'
     const parsed = JSON.parse(text)
     
+    const score = Math.max(1, Math.min(100, Number(parsed.mental_score) || 50))
+    const cat = parsed.category || 'neutral'
+    
     // Validate with Zod to ensure safe output
     const validated = ContentAnalysisSchema.safeParse({
       ...parsed,
       tags: Array.isArray(parsed.tags) ? parsed.tags : [],
-      mental_score: Math.max(1, Math.min(100, Number(parsed.mental_score) || 50)),
+      mental_score: score,
+      // Ensure intelligence fields have fallbacks
+      severity: parsed.severity || computeSeverity(score),
+      confidence: Math.max(0, Math.min(100, Number(parsed.confidence) || computeConfidence(3, true))),
+      impact_analysis: parsed.impact_analysis || computeImpact(score, cat),
+      root_causes: Array.isArray(parsed.root_causes) ? parsed.root_causes : computeRootCauses(score, cat, 3),
+      copilot_actions: Array.isArray(parsed.copilot_actions) ? parsed.copilot_actions : computeCopilotActions(score, cat),
+      missing_context: Array.isArray(parsed.missing_context) ? parsed.missing_context : undefined,
     })
     
     if (validated.success) {
@@ -376,13 +539,19 @@ ${content}`
     // Partial validation fallback — use what we can
     console.warn('[Content Scanner] Zod validation failed, using fallback:', validated.error.issues)
     return {
-      category: parsed.category || 'neutral',
-      mental_score: Math.max(1, Math.min(100, Number(parsed.mental_score) || 50)),
+      category: cat,
+      mental_score: score,
       summary: parsed.summary || 'Analysis completed with partial data.',
       reasoning: parsed.reasoning || '',
       tags: Array.isArray(parsed.tags) ? parsed.tags : [],
       is_junk: Boolean(parsed.is_junk),
       time_well_spent: Boolean(parsed.time_well_spent),
+      severity: computeSeverity(score),
+      confidence: computeConfidence(2, true),
+      impact_analysis: computeImpact(score, cat),
+      root_causes: computeRootCauses(score, cat, 2),
+      copilot_actions: computeCopilotActions(score, cat),
+      missing_context: computeMissingContext(score, 2),
     } satisfies ContentAnalysis
   } catch (e) {
     console.warn("[Content Scanner API Error] Falling back to Local Heuristic AI Model", e)
