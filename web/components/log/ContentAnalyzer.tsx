@@ -45,8 +45,12 @@ interface Alternative {
   estimated_score: number
   duration_minutes: number
   type: string
+  url?: string
   url_hint?: string
+  provider?: string
   why_better: string
+  relevance_score?: number
+  expected_outcome?: string
 }
 
 interface ContentAnalyzerProps {
@@ -402,43 +406,52 @@ export function ContentAnalyzer({ onAnalyzed }: ContentAnalyzerProps) {
             </CardContent>
           </Card>
 
-          {/* Instant Insight + Swap Suggestions */}
+          {/* Smart Swap Suggestions */}
           {alternatives.length > 0 && result.is_junk && (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-indigo-400" />
-                <h4 className="text-sm font-black text-indigo-300 uppercase tracking-widest">Smart Swap Suggestions</h4>
+                <Sparkles className="w-4 h-4 text-white" />
+                <h4 className="text-sm font-black text-white uppercase tracking-widest">Smart Swap</h4>
+                <span className="text-[9px] font-black text-zinc-500 bg-white/5 px-2 py-0.5 rounded-full border border-white/10 ml-auto">AI Matched</span>
               </div>
               <div className="grid gap-2">
-                {alternatives.map((alt, i) => (
-                  <div
-                    key={i}
-                    className="glass-card p-4 flex items-center gap-4 hover:border-indigo-500/30 transition-all duration-200 group cursor-pointer"
-                  >
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0"
-                      style={{ background: `${getScoreColor(alt.estimated_score)}15` }}
+                {alternatives.map((alt, i) => {
+                  const hasUrl = alt.url && alt.url.startsWith('http')
+                  const Wrapper = hasUrl ? 'a' : 'div'
+                  const wrapperProps = hasUrl ? { href: alt.url, target: '_blank', rel: 'noopener noreferrer' } : {}
+                  return (
+                    <Wrapper
+                      key={i}
+                      {...wrapperProps as any}
+                      className="glass-card p-4 flex items-center gap-4 hover:border-white/20 transition-all duration-200 group cursor-pointer"
                     >
-                      {getCategoryEmoji(alt.category)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold truncate text-white">{alt.title}</span>
-                        <Badge variant="outline" className="text-[10px] shrink-0 bg-emerald-500/5 text-emerald-400 border-emerald-500/20">
-                          +{alt.estimated_score - result.mental_score} pts
-                        </Badge>
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0"
+                        style={{ background: `${getScoreColor(alt.estimated_score)}15` }}
+                      >
+                        {getCategoryEmoji(alt.category)}
                       </div>
-                      <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{alt.why_better}</p>
-                    </div>
-                    <div className="shrink-0 text-xs text-slate-500 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {alt.duration_minutes}min
-                    </div>
-                    {alt.url_hint && (
-                      <ExternalLink className="w-3.5 h-3.5 text-[var(--muted-foreground)] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                    )}
-                  </div>
-                ))}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-bold text-white truncate">{alt.title}</span>
+                          <Badge variant="outline" className="text-[10px] shrink-0 bg-white/5 text-zinc-400 border-white/10">
+                            {alt.type}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] shrink-0 bg-emerald-500/5 text-emerald-400 border-emerald-500/20">
+                            +{alt.estimated_score - result.mental_score} pts
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-zinc-500 mt-0.5 line-clamp-1">{alt.why_better}</p>
+                        {alt.provider && (
+                          <p className="text-[10px] text-zinc-600 mt-0.5 font-bold">{alt.provider} · {alt.duration_minutes}min</p>
+                        )}
+                      </div>
+                      {hasUrl && (
+                        <ExternalLink className="w-4 h-4 text-zinc-600 group-hover:text-white transition-colors shrink-0" />
+                      )}
+                    </Wrapper>
+                  )
+                })}
               </div>
             </div>
           )}

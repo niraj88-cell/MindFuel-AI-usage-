@@ -126,18 +126,19 @@ export async function POST(req: NextRequest) {
     // If junk content, find alternatives
     let alternatives = null
     if (analysis.is_junk) {
-      let userContext = undefined
+      let userContext: { avg_score?: number; recent_categories?: string[] } | undefined = undefined
       if (user) {
         const { data: logs } = await supabase
           .from('mental_logs')
-          .select('mental_score')
+          .select('mental_score, category')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(20)
 
         if (logs && logs.length > 0) {
           const avgScore = Math.round(logs.reduce((sum, l) => sum + l.mental_score, 0) / logs.length)
-          userContext = { avg_score: avgScore }
+          const recentCategories = logs.map(l => l.category)
+          userContext = { avg_score: avgScore, recent_categories: recentCategories }
         }
       }
 
