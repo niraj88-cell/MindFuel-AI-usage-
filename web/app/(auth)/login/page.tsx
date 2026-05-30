@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
 import { identifyUser, trackEvent } from '@/lib/mixpanel'
+import { AnimatedBackground } from '@/components/landing/AnimatedBackground'
+import { AnimatedBrain } from '@/components/landing/AnimatedBrain'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -59,50 +61,46 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex">
+    <div className="min-h-screen bg-black flex relative overflow-hidden">
       {/* Left Panel - Value Proposition */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        {/* Background effects */}
-        <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-black to-zinc-900" />
-        <div className="absolute top-[20%] left-[10%] w-[400px] h-[400px] bg-white/[0.03] blur-[100px] rounded-full" />
-        <div className="absolute bottom-[10%] right-[10%] w-[300px] h-[300px] bg-white/[0.02] blur-[80px] rounded-full" />
+        {/* Animated Background */}
+        <AnimatedBackground variant="auth" />
         
-        <div className="relative z-10 flex flex-col justify-center px-16 py-20">
-          <div className="mb-12">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center">
-                <Brain className="w-7 h-7 text-black" />
-              </div>
-              <span className="text-2xl font-black tracking-tight text-white">MindFuel</span>
+        <div className="relative z-10 flex flex-col justify-center px-16 py-20 w-full h-full">
+          <div className="mb-12 animate-fade-in-up">
+            <div className="flex items-center gap-4 mb-8">
+              <AnimatedBrain size={60} />
+              <span className="text-3xl font-black tracking-tight text-white">MindFuel</span>
             </div>
             
-            <h2 className="text-4xl font-black text-white leading-tight mb-4">
+            <h2 className="text-5xl font-black text-white leading-tight mb-4">
               Your digital diet<br />
-              <span className="text-zinc-500">shapes your mind.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-500">shapes your mind.</span>
             </h2>
-            <p className="text-zinc-500 text-lg max-w-md leading-relaxed">
+            <p className="text-zinc-400 text-lg max-w-md leading-relaxed font-medium">
               Join thousands who are already optimizing their screen time for better focus, mood, and mental performance.
             </p>
           </div>
 
           {/* Features */}
-          <div className="space-y-6">
-            <FeatureRow icon={<Zap className="w-4 h-4" />} title="Pattern Discovery" desc="Gently uncover hidden patterns in your daily thoughts" />
-            <FeatureRow icon={<Sparkles className="w-4 h-4" />} title="Mood Intelligence" desc="Understand how your screen time affects your emotional state" />
-            <FeatureRow icon={<Shield className="w-4 h-4" />} title="Personal AI Coach" desc="Get guidance to build healthier digital habits" />
+          <div className="space-y-6 stagger-children">
+            <FeatureRow icon={<Zap className="w-4 h-4 text-white" />} title="Pattern Discovery" desc="Gently uncover hidden patterns in your daily thoughts" />
+            <FeatureRow icon={<Sparkles className="w-4 h-4 text-white" />} title="Mood Intelligence" desc="Understand how your screen time affects your emotional state" />
+            <FeatureRow icon={<Shield className="w-4 h-4 text-white" />} title="Personal AI Coach" desc="Get guidance to build healthier digital habits" />
           </div>
 
           {/* Social proof */}
-          <div className="mt-12 pt-8 border-t border-white/5">
+          <div className="mt-12 pt-8 border-t border-white/5 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
             <div className="flex items-center gap-4">
-              <div className="flex -space-x-2">
-                {['A', 'B', 'C', 'D'].map((letter) => (
-                  <div key={letter} className="w-8 h-8 rounded-full bg-zinc-800 border-2 border-black flex items-center justify-center text-[10px] font-bold text-zinc-400">
+              <div className="flex -space-x-3">
+                {['A', 'B', 'C', 'D'].map((letter, i) => (
+                  <div key={letter} className="w-10 h-10 rounded-full bg-zinc-900 border-2 border-black flex items-center justify-center text-xs font-black text-zinc-300 shadow-lg" style={{ zIndex: 10 - i }}>
                     {letter}
                   </div>
                 ))}
               </div>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-zinc-500 font-medium">
                 <span className="text-white font-bold">500+</span> users tracking their digital wellness
               </p>
             </div>
@@ -111,21 +109,17 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
-        <div className="w-full max-w-[420px]">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative z-10 bg-black">
+        <div className="w-full max-w-[420px] animate-fade-in-up">
           {/* Mobile logo */}
-          <div className="lg:hidden text-center mb-10">
-            <Link href="/" className="inline-flex items-center gap-2">
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-                <Brain className="w-6 h-6 text-black" />
-              </div>
-              <span className="text-xl font-black text-white">MindFuel</span>
-            </Link>
+          <div className="lg:hidden text-center mb-10 flex flex-col items-center gap-4">
+            <AnimatedBrain size={50} />
+            <span className="text-2xl font-black text-white">MindFuel</span>
           </div>
 
           <div className="mb-8">
-            <h1 className="text-2xl sm:text-3xl font-black text-white mb-2">Welcome back</h1>
-            <p className="text-zinc-500">
+            <h1 className="text-3xl sm:text-4xl font-black text-white mb-2">Welcome back</h1>
+            <p className="text-zinc-400 font-medium">
               Sign in to continue your wellness journey
             </p>
           </div>
@@ -136,7 +130,7 @@ export default function LoginPage() {
             type="button"
             onClick={handleGoogleLogin}
             disabled={googleLoading}
-            className="w-full h-12 flex items-center justify-center gap-3 bg-zinc-900/50 border border-white/10 rounded-xl text-white font-bold text-sm hover:bg-zinc-800/80 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+            className="w-full h-12 flex items-center justify-center gap-3 bg-zinc-900/40 border border-white/10 rounded-xl text-white font-bold text-sm hover:bg-zinc-800 hover:border-white/20 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-lg"
           >
             {googleLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -154,94 +148,96 @@ export default function LoginPage() {
           </button>
 
           {/* Divider */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 my-8">
             <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs text-zinc-600 font-bold">OR</span>
+            <span className="text-[10px] text-zinc-500 font-black tracking-widest uppercase">Or</span>
             <div className="flex-1 h-px bg-white/10" />
           </div>
 
           {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-bold text-zinc-400">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                className="h-12 bg-zinc-900/50 border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-white/10"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm font-bold text-zinc-400">Password</Label>
-                <Link href="/forgot-password" className="text-xs text-zinc-500 hover:text-white transition-colors font-medium">
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="relative">
+          <div className="p-6 sm:p-8 bg-zinc-900/30 border border-white/5 rounded-3xl group focus-within:border-white/10 focus-within:bg-zinc-900/50 transition-all shadow-2xl">
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-xs font-black uppercase tracking-wider text-zinc-500">Email</Label>
                 <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  autoComplete="current-password"
-                  className="h-12 bg-zinc-900/50 border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-white/10 pr-12"
+                  autoComplete="email"
+                  className="h-12 bg-black/50 border-white/5 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors cursor-pointer"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
               </div>
-            </div>
 
-            {error && (
-              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400">
-                {error}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-xs font-black uppercase tracking-wider text-zinc-500">Password</Label>
+                  <Link href="/forgot-password" className="text-xs text-zinc-500 hover:text-white transition-colors font-medium">
+                    Forgot?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    className="h-12 bg-black/50 border-white/5 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors cursor-pointer w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
-            )}
 
-            <Button
-              id="login-button"
-              type="submit"
-              className="w-full h-12 bg-white text-black hover:bg-zinc-200 rounded-xl font-black text-sm transition-all active:scale-[0.98]"
-              disabled={loading}
-            >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <span className="flex items-center gap-2">
-                  Sign In <ArrowRight className="w-4 h-4" />
-                </span>
+              {error && (
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400 font-medium">
+                  {error}
+                </div>
               )}
-            </Button>
-          </form>
+
+              <Button
+                id="login-button"
+                type="submit"
+                className="w-full h-12 bg-white text-black hover:bg-zinc-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] rounded-xl font-black text-sm transition-all active:scale-[0.98] mt-2"
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <span className="flex items-center gap-2">
+                    Sign In <ArrowRight className="w-4 h-4" />
+                  </span>
+                )}
+              </Button>
+            </form>
+          </div>
 
           <div className="mt-8 text-center">
-            <p className="text-sm text-zinc-600">
+            <p className="text-sm text-zinc-500 font-medium">
               Don&apos;t have an account?{' '}
-              <Link href="/signup" className="text-white hover:underline font-bold">
+              <Link href="/signup" className="text-white hover:text-zinc-300 transition-colors font-bold">
                 Create one free →
               </Link>
             </p>
           </div>
 
           {/* Trust badges */}
-          <div className="mt-10 flex items-center justify-center gap-6 text-[10px] font-bold text-zinc-700 uppercase tracking-widest">
-            <span>🔒 Strictly Private</span>
-            <span>•</span>
-            <span>🛡️ Encrypted</span>
-            <span>•</span>
-            <span>🧠 Thoughtful AI</span>
+          <div className="mt-12 flex justify-center">
+            <div className="inline-flex items-center gap-6 px-4 py-2 rounded-full bg-white/[0.02] border border-white/5 text-[10px] font-black text-zinc-500 uppercase tracking-widest">
+              <span>🔒 Private</span>
+              <span className="w-1 h-1 rounded-full bg-zinc-700" />
+              <span>🛡️ Encrypted</span>
+            </div>
           </div>
         </div>
       </div>
@@ -251,13 +247,13 @@ export default function LoginPage() {
 
 function FeatureRow({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
-    <div className="flex items-start gap-4">
-      <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-white shrink-0">
+    <div className="flex items-start gap-5 group">
+      <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center text-white shrink-0 group-hover:bg-white/[0.08] group-hover:scale-110 transition-all">
         {icon}
       </div>
       <div>
-        <p className="text-sm font-bold text-white">{title}</p>
-        <p className="text-sm text-zinc-500">{desc}</p>
+        <p className="text-base font-bold text-white mb-1">{title}</p>
+        <p className="text-sm text-zinc-400 leading-relaxed">{desc}</p>
       </div>
     </div>
   )

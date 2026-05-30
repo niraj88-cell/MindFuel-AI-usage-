@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
 import { identifyUser, trackEvent } from '@/lib/mixpanel'
+import { AnimatedBackground } from '@/components/landing/AnimatedBackground'
+import { AnimatedBrain } from '@/components/landing/AnimatedBrain'
 
 function getPasswordStrength(pw: string) {
   let s = 0
@@ -95,7 +97,7 @@ export default function SignupPage() {
   if (success) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center px-4">
-        <div className="text-center p-10 max-w-md rounded-3xl bg-zinc-900/50 border border-white/10">
+        <div className="text-center p-10 max-w-md rounded-3xl bg-zinc-900/50 border border-white/10 animate-fade-in-up">
           <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-6">
             <Check className="w-8 h-8 text-emerald-400" />
           </div>
@@ -115,32 +117,30 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex">
+    <div className="min-h-screen bg-black flex relative overflow-hidden">
       {/* Left Panel - Value Proposition */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-black to-zinc-900" />
-        <div className="absolute top-[30%] left-[15%] w-[350px] h-[350px] bg-white/[0.03] blur-[100px] rounded-full" />
+        {/* Animated Background */}
+        <AnimatedBackground variant="auth" />
         
-        <div className="relative z-10 flex flex-col justify-center px-16 py-20">
-          <div className="mb-12">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center">
-                <Brain className="w-7 h-7 text-black" />
-              </div>
-              <span className="text-2xl font-black tracking-tight text-white">MindFuel</span>
+        <div className="relative z-10 flex flex-col justify-center px-16 py-20 w-full h-full">
+          <div className="mb-12 animate-fade-in-up">
+            <div className="flex items-center gap-4 mb-8">
+              <AnimatedBrain size={60} />
+              <span className="text-3xl font-black tracking-tight text-white">MindFuel</span>
             </div>
             
-            <h2 className="text-4xl font-black text-white leading-tight mb-4">
+            <h2 className="text-5xl font-black text-white leading-tight mb-4">
               Start optimizing your<br />
-              <span className="text-zinc-500">digital nutrition today.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-500">digital nutrition today.</span>
             </h2>
-            <p className="text-zinc-500 text-lg max-w-md leading-relaxed">
+            <p className="text-zinc-400 text-lg max-w-md leading-relaxed font-medium">
               It takes 30 seconds to create an account. No credit card required.
             </p>
           </div>
 
           {/* Privacy Promise */}
-          <div className="mb-12">
+          <div className="mb-12 stagger-children">
             <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 relative overflow-hidden group hover:border-white/10 transition-colors">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="flex items-center gap-3 mb-4">
@@ -156,7 +156,7 @@ export default function SignupPage() {
           </div>
 
           {/* Testimonial */}
-          <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5">
+          <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
             <p className="text-sm text-zinc-400 italic leading-relaxed mb-4">
               &ldquo;MindFuel helped me realize I was spending 4 hours daily on content that drained my energy. Now I&apos;m more intentional about what I consume.&rdquo;
             </p>
@@ -172,21 +172,17 @@ export default function SignupPage() {
       </div>
 
       {/* Right Panel - Signup Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
-        <div className="w-full max-w-[420px]">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative z-10 bg-black">
+        <div className="w-full max-w-[420px] animate-fade-in-up">
           {/* Mobile logo */}
-          <div className="lg:hidden text-center mb-10">
-            <Link href="/" className="inline-flex items-center gap-2">
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-                <Brain className="w-6 h-6 text-black" />
-              </div>
-              <span className="text-xl font-black text-white">MindFuel</span>
-            </Link>
+          <div className="lg:hidden text-center mb-10 flex flex-col items-center gap-4">
+            <AnimatedBrain size={50} />
+            <span className="text-2xl font-black text-white">MindFuel</span>
           </div>
 
           <div className="mb-8">
-            <h1 className="text-2xl sm:text-3xl font-black text-white mb-2">Create your account</h1>
-            <p className="text-zinc-500">
+            <h1 className="text-3xl sm:text-4xl font-black text-white mb-2">Create your account</h1>
+            <p className="text-zinc-400 font-medium">
               Free forever. No credit card needed.
             </p>
           </div>
@@ -211,7 +207,7 @@ export default function SignupPage() {
               }
             }}
             disabled={googleLoading}
-            className="w-full h-12 flex items-center justify-center gap-3 bg-zinc-900/50 border border-white/10 rounded-xl text-white font-bold text-sm hover:bg-zinc-800/80 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+            className="w-full h-12 flex items-center justify-center gap-3 bg-zinc-900/40 border border-white/10 rounded-xl text-white font-bold text-sm hover:bg-zinc-800 hover:border-white/20 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-lg"
           >
             {googleLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -229,126 +225,128 @@ export default function SignupPage() {
           </button>
 
           {/* Divider */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 my-8">
             <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs text-zinc-600 font-bold">OR</span>
+            <span className="text-[10px] text-zinc-500 font-black tracking-widest uppercase">Or</span>
             <div className="flex-1 h-px bg-white/10" />
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSignup} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-bold text-zinc-400">Full Name</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                autoComplete="name"
-                className="h-12 bg-zinc-900/50 border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-white/10"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="signup-email" className="text-sm font-bold text-zinc-400">Email</Label>
-              <Input
-                id="signup-email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                className="h-12 bg-zinc-900/50 border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-white/10"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="signup-password" className="text-sm font-bold text-zinc-400">Password</Label>
-              <div className="relative">
+          <div className="p-6 sm:p-8 bg-zinc-900/30 border border-white/5 rounded-3xl group focus-within:border-white/10 focus-within:bg-zinc-900/50 transition-all shadow-2xl">
+            <form onSubmit={handleSignup} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-xs font-black uppercase tracking-wider text-zinc-500">Full Name</Label>
                 <Input
-                  id="signup-password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Min 8 characters"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  id="name"
+                  type="text"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   required
-                  autoComplete="new-password"
-                  minLength={8}
-                  className="h-12 bg-zinc-900/50 border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-white/10 pr-12"
+                  autoComplete="name"
+                  className="h-12 bg-black/50 border-white/5 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors cursor-pointer"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
               </div>
 
-              {/* Password Strength Indicator */}
-              {password.length > 0 && (
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden flex gap-0.5">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <div
-                          key={i}
-                          className={`flex-1 rounded-full transition-all duration-300 ${
-                            i <= strength ? STR_COLORS[strength] : 'bg-transparent'
-                          }`}
-                        />
-                      ))}
+              <div className="space-y-2">
+                <Label htmlFor="signup-email" className="text-xs font-black uppercase tracking-wider text-zinc-500">Email</Label>
+                <Input
+                  id="signup-email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  className="h-12 bg-black/50 border-white/5 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signup-password" className="text-xs font-black uppercase tracking-wider text-zinc-500">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="signup-password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Min 8 characters"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    minLength={8}
+                    className="h-12 bg-black/50 border-white/5 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors cursor-pointer w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                {/* Password Strength Indicator */}
+                {password.length > 0 && (
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <div
+                            key={i}
+                            className={`flex-1 rounded-full transition-all duration-300 ${
+                              i <= strength ? STR_COLORS[strength] : 'bg-transparent'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${
+                        strength >= 4 ? 'text-emerald-400' : strength >= 3 ? 'text-yellow-400' : 'text-zinc-600'
+                      }`}>
+                        {STR_LABELS[strength]}
+                      </span>
                     </div>
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${
-                      strength >= 4 ? 'text-emerald-400' : strength >= 3 ? 'text-yellow-400' : 'text-zinc-600'
-                    }`}>
-                      {STR_LABELS[strength]}
-                    </span>
+                    <ul className="space-y-1">
+                      <Rule met={password.length >= 8} label="At least 8 characters" />
+                      <Rule met={/[A-Z]/.test(password)} label="One uppercase letter" />
+                      <Rule met={/[a-z]/.test(password)} label="One lowercase letter" />
+                      <Rule met={/[0-9]/.test(password)} label="One number" />
+                      <Rule met={/[^A-Za-z0-9]/.test(password)} label="One special character (optional)" />
+                    </ul>
                   </div>
-                  <ul className="space-y-1">
-                    <Rule met={password.length >= 8} label="At least 8 characters" />
-                    <Rule met={/[A-Z]/.test(password)} label="One uppercase letter" />
-                    <Rule met={/[a-z]/.test(password)} label="One lowercase letter" />
-                    <Rule met={/[0-9]/.test(password)} label="One number" />
-                    <Rule met={/[^A-Za-z0-9]/.test(password)} label="One special character (optional)" />
-                  </ul>
+                )}
+              </div>
+
+              {error && (
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400 font-medium">
+                  {error}
                 </div>
               )}
-            </div>
 
-            {error && (
-              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400">
-                {error}
-              </div>
-            )}
+              <Button
+                id="signup-button"
+                type="submit"
+                className="w-full h-12 bg-white text-black hover:bg-zinc-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] rounded-xl font-black text-sm transition-all active:scale-[0.98] mt-2"
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <span className="flex items-center gap-2">
+                    Create Free Account <ArrowRight className="w-4 h-4" />
+                  </span>
+                )}
+              </Button>
 
-            <Button
-              id="signup-button"
-              type="submit"
-              className="w-full h-12 bg-white text-black hover:bg-zinc-200 rounded-xl font-black text-sm transition-all active:scale-[0.98]"
-              disabled={loading}
-            >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <span className="flex items-center gap-2">
-                  Create Free Account <ArrowRight className="w-4 h-4" />
-                </span>
-              )}
-            </Button>
-
-            <p className="text-[10px] text-zinc-700 text-center leading-relaxed">
-              By signing up, you agree to our Terms of Service and Privacy Policy.
-            </p>
-          </form>
+              <p className="text-[10px] text-zinc-600 text-center leading-relaxed mt-4">
+                By signing up, you agree to our Terms of Service and Privacy Policy.
+              </p>
+            </form>
+          </div>
 
           <div className="mt-8 text-center">
-            <p className="text-sm text-zinc-600">
+            <p className="text-sm text-zinc-500 font-medium">
               Already have an account?{' '}
-              <Link href="/login" className="text-white hover:underline font-bold">
+              <Link href="/login" className="text-white hover:text-zinc-300 transition-colors font-bold">
                 Sign in →
               </Link>
             </p>

@@ -407,3 +407,71 @@ input[type="range"].accent-amber-500::-webkit-slider-thumb {
 .stagger-children > *:nth-child(9) { animation-delay: 0.5s; }
 .stagger-children > *:nth-child(10) { animation-delay: 0.55s; }
 
+/* ── MindFuel Rebrand Animations ── */
+@keyframes orb-float-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+}
+.animate-orb-1 { animation: orb-float-1 20s ease-in-out infinite; }
+
+@keyframes orb-float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-40px, 30px) scale(0.95); }
+  66% { transform: translate(20px, -20px) scale(1.05); }
+}
+.animate-orb-2 { animation: orb-float-2 25s ease-in-out infinite reverse; }
+
+@keyframes orb-float-3 {
+  0%, 100% { transform: translate(-50%, 0) scale(1); }
+  50% { transform: translate(-50%, -30px) scale(1.02); }
+}
+.animate-orb-3 { animation: orb-float-3 15s ease-in-out infinite; }
+
+@keyframes orb-float-4 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(20px, 40px) scale(0.98); }
+}
+.animate-orb-4 { animation: orb-float-4 22s ease-in-out infinite; }
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+.animate-breathe { animation: breathe 4s ease-in-out infinite; }
+
+@keyframes node-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.5); }
+}
+.animate-node-pulse {
+  animation: node-pulse 3s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+@keyframes signal-path {
+  0% { stroke-dasharray: 0, 1000; opacity: 0; }
+  10% { opacity: 1; }
+  90% { stroke-dasharray: 100, 1000; opacity: 0; }
+  100% { stroke-dasharray: 100, 1000; opacity: 0; }
+}
+.animate-signal-path {
+  animation-name: signal-path;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes glow-ring {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+.animate-glow-ring {
+  animation: glow-ring 4s ease-in-out infinite;
+}
+
+/* ── Word-by-word reveal ── */
+.word-reveal {
+  opacity: 0;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
