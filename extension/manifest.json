@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "MindFuel AI - Digital Nutrition",
+  "version": "1.0.0",
+  "description": "Passive content intelligence and intercept layer for MindFuel.",
+  "permissions": [
+    "storage",
+    "webNavigation",
+    "tabs",
+    "scripting",
+    "alarms"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "*://*.tiktok.com/*",
+    "*://*.instagram.com/*",
+    "*://*.twitter.com/*",
+    "*://*.x.com/*",
+    "*://*.reddit.com/*",
+    "http://localhost:3000/*",
+    "https://getmindfuel.vercel.app/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "MindFuel Status"
+  }
+}

@@ -30,6 +30,11 @@ export const ContentAnalysisSchema = z.object({
     confidence: z.number().min(0).max(100),
   })),
   missing_context: z.array(z.string()).optional(),
+  media_metadata: z.object({
+    thumbnail_url: z.string().optional(),
+    title: z.string().optional(),
+    provider: z.string().optional(),
+  }).optional(),
 })
 
 export type ContentAnalysis = z.infer<typeof ContentAnalysisSchema>
@@ -127,9 +132,29 @@ function computeConfidence(matchScore: number, isApiResult: boolean): number {
   return 45
 }
 
-async function extractMetadataFromUrl(url: string): Promise<string> {
+async function extractMetadataFromUrl(url: string): Promise<{ text: string, media_metadata?: any }> {
   // Fast-path for short-form video platforms that block scrapers
   const lowerUrl = url.toLowerCase();
+  
+  // Spotify oEmbed integration for real-time acoustic aura metadata
+  if (lowerUrl.includes('spotify.com/')) {
+    try {
+      const oembedRes = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`);
+      if (oembedRes.ok) {
+        const oembedData = await oembedRes.json();
+        return {
+          text: `Link Content Detected:\nURL: ${url}\nTitle: ${oembedData.title || 'Spotify Content'}\nDescription: Audio streaming content.`,
+          media_metadata: {
+            thumbnail_url: oembedData.thumbnail_url,
+            title: oembedData.title,
+            provider: 'Spotify'
+          }
+        };
+      }
+    } catch (e) {
+      console.warn('Failed to fetch Spotify oEmbed', e);
+    }
+  }
   
   // Enhanced platform detection with more nuanced categorization
   const platformPatterns: Array<{ match: (u: string) => boolean; result: string }> = [
@@ -190,7 +215,7 @@ async function extractMetadataFromUrl(url: string): Promise<string> {
       result: `Link Content Detected:\nURL: ${url}\nTitle: GitHub Repository/Code\nDescription: Software development resource — code, documentation, or open-source contribution.`
     },
     {
-      match: (u) => u.includes('spotify.com') || u.includes('podcasts.apple.com'),
+      match: (u) => u.includes('podcasts.apple.com'),
       result: `Link Content Detected:\nURL: ${url}\nTitle: Audio Content (Podcast/Music)\nDescription: Audio streaming content — could be educational podcast or leisure music.`
     },
     {
@@ -205,7 +230,7 @@ async function extractMetadataFromUrl(url: string): Promise<string> {
 
   for (const pattern of platformPatterns) {
     if (pattern.match(lowerUrl)) {
-      return pattern.result
+      return { text: pattern.result }
     }
   }
 
@@ -214,18 +239,18 @@ async function extractMetadataFromUrl(url: string): Promise<string> {
     const hostname = urlObj.hostname;
     // Block private/internal IPs
     if (/^(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.|127\.|0\.0\.0\.0|169\.254\.)/i.test(hostname) || hostname === 'localhost') {
-      return url;
+      return { text: url };
     }
 
     const res = await fetch(url, { 
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; MindFuelBot/1.0)' },
       signal: AbortSignal.timeout(3000) 
     });
-    if (!res.ok) return url;
+    if (!res.ok) return { text: url };
     
     const contentType = res.headers.get('content-type') || '';
     if (!contentType.includes('text/html')) {
-      return url; // Only parse HTML
+      return { text: url }; // Only parse HTML
     }
     
     // Read up to 50KB to avoid memory exhaustion
@@ -244,18 +269,22 @@ async function extractMetadataFromUrl(url: string): Promise<string> {
     const desc = descMatch ? descMatch[1].trim() : '';
     
     if (title || desc) {
-      return `Link Content Detected:\nURL: ${url}\nTitle: ${title}\nDescription: ${desc}${bodyText ? `\nPreview: ${bodyText}` : ''}`;
+      return { text: `Link Content Detected:\nURL: ${url}\nTitle: ${title}\nDescription: ${desc}${bodyText ? `\nPreview: ${bodyText}` : ''}` };
     }
-    return url;
+    return { text: url };
   } catch (e) {
-    return url;
+    return { text: url };
   }
 }
 
 export async function scanContent(contentOrUrl: string): Promise<ContentAnalysis> {
   let textToAnalyze = contentOrUrl.trim();
+  let media_metadata: any = undefined;
+  
   if (textToAnalyze.startsWith('http://') || textToAnalyze.startsWith('https://')) {
-    textToAnalyze = await extractMetadataFromUrl(textToAnalyze);
+    const extracted = await extractMetadataFromUrl(textToAnalyze);
+    textToAnalyze = extracted.text;
+    media_metadata = extracted.media_metadata;
   }
 
   const content = textToAnalyze.length > 5000
@@ -530,6 +559,7 @@ ${content}`
       root_causes: Array.isArray(parsed.root_causes) ? parsed.root_causes : computeRootCauses(score, cat, 3),
       copilot_actions: Array.isArray(parsed.copilot_actions) ? parsed.copilot_actions : computeCopilotActions(score, cat),
       missing_context: Array.isArray(parsed.missing_context) ? parsed.missing_context : undefined,
+      media_metadata: media_metadata,
     })
     
     if (validated.success) {
@@ -552,6 +582,7 @@ ${content}`
       root_causes: computeRootCauses(score, cat, 2),
       copilot_actions: computeCopilotActions(score, cat),
       missing_context: computeMissingContext(score, 2),
+      media_metadata: media_metadata,
     } satisfies ContentAnalysis
   } catch (e) {
     console.warn("[Content Scanner API Error] Falling back to Local Heuristic AI Model", e)

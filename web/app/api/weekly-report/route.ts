@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { subDays, format } from 'date-fns'
+import { calculatePredictiveHealth } from '@/lib/agents/tools/predictiveHealth'
 
 export const runtime = 'nodejs'
 
@@ -87,6 +88,8 @@ export async function GET(req: NextRequest) {
        }
     }
 
+    const predictiveHealth = calculatePredictiveHealth(mentalLogs || [])
+
     return NextResponse.json({
       success: true,
       report: {
@@ -99,6 +102,7 @@ export async function GET(req: NextRequest) {
         streakCount,
         logsCount: mentalLogs?.length || 0,
         moodChecksCount: moodLogs?.length || 0,
+        predictiveHealth
       }
     })
   } catch (error) {

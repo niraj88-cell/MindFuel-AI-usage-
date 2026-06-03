@@ -7,7 +7,7 @@ import {
   Search, Loader2, ArrowRight, Zap, ExternalLink, Mic, MicOff,
   Camera, Play, Newspaper, Smartphone, MessageCircle,
   Headphones, BookOpen, Code, Gamepad2, Sparkles, TrendingUp,
-  BarChart3, Clock, ChevronDown, ChevronUp
+  BarChart3, Clock, ChevronDown, ChevronUp, Brain
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,6 +36,11 @@ interface AnalysisResult {
   root_causes: Array<{ reason: string; evidence: string; confidence: number }>
   copilot_actions: Array<{ action: string; reason: string; impact: string; confidence: number }>
   missing_context?: string[]
+  media_metadata?: {
+    thumbnail_url?: string
+    title?: string
+    provider?: string
+  }
 }
 
 interface Alternative {
@@ -323,88 +328,185 @@ export function ContentAnalyzer({ onAnalyzed }: ContentAnalyzerProps) {
 
       {/* Enhanced Analysis Result */}
       {result && (
-        <div className="animate-fade-in-up space-y-4">
-          {/* Main Score Card */}
-          <Card className="overflow-hidden border-none shadow-2xl">
-            <div
-              className="h-1.5"
-              style={{ background: `linear-gradient(to right, ${getScoreColor(result.mental_score)}, transparent)` }}
-            />
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <div
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black shadow-lg"
-                    style={{
-                      background: `${getScoreColor(result.mental_score)}15`,
-                      color: getScoreColor(result.mental_score),
-                      boxShadow: `0 8px 24px ${getScoreColor(result.mental_score)}20`,
-                    }}
-                  >
-                    {result.mental_score}
+        <div className="animate-fade-in-up space-y-6">
+          {/* Sonic Ripple / Spatial Media Card */}
+          {result.media_metadata && result.media_metadata.thumbnail_url ? (
+            <div className="relative group overflow-hidden rounded-[40px] p-[1px]">
+              {/* Vibrant glowing background extracted from cover art concept */}
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/40 via-purple-500/20 to-black rounded-[40px] blur-xl opacity-70 group-hover:opacity-100 transition-opacity duration-1000" />
+              
+              <div className="relative bg-zinc-950/80 backdrop-blur-3xl rounded-[40px] p-8 md:p-10 border border-white/10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] flex flex-col md:flex-row items-center gap-8 md:gap-12">
+                <div className="shrink-0 relative">
+                  <div className="absolute inset-0 bg-white/20 blur-2xl rounded-full scale-110" />
+                  <img src={result.media_metadata.thumbnail_url} alt="Cover Art" className="w-40 h-40 md:w-48 md:h-48 rounded-3xl shadow-2xl relative z-10 object-cover border border-white/10 group-hover:scale-105 transition-transform duration-700 ease-out" />
+                  <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-black rounded-2xl flex items-center justify-center shadow-xl border border-white/10 z-20">
+                     <Headphones className="w-5 h-5 text-white" />
                   </div>
+                </div>
+                
+                <div className="flex-1 space-y-6 text-center md:text-left">
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-lg font-black text-white">{getScoreLabel(result.mental_score)}</span>
-                      <span className={`category-pill category-${result.category}`}>
-                        {getCategoryEmoji(result.category)} {result.category}
-                      </span>
+                    <div className="flex items-center justify-center md:justify-start gap-3 mb-3">
+                       <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
+                         {result.media_metadata.provider || 'Acoustic Aura'}
+                       </span>
+                       <span className={`category-pill category-${result.category}`}>
+                         {getCategoryEmoji(result.category)} {result.category}
+                       </span>
                     </div>
-                    <p className="text-sm text-slate-400 max-w-md">{result.summary}</p>
+                    <h2 className="text-3xl font-serif text-white opacity-90 tracking-tight leading-tight line-clamp-2">
+                      {result.media_metadata.title || result.summary}
+                    </h2>
+                  </div>
+
+                  {/* The State Shift Bridge */}
+                  <div className="bg-white/5 border border-white/10 rounded-3xl p-5 relative overflow-hidden group/bridge">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/bridge:translate-x-full transition-transform duration-1000" />
+                    <div className="flex items-center justify-between relative z-10">
+                      <div className="text-center flex-1">
+                         <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-1">Impact</span>
+                         <span className="text-sm font-bold text-white capitalize">{result.impact_analysis.mood_shift.replace('_', ' ')}</span>
+                      </div>
+                      <div className="px-4">
+                         <ArrowRight className="w-5 h-5 text-zinc-600" />
+                      </div>
+                      <div className="text-center flex-1">
+                         <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-1">Cognitive Load</span>
+                         <span className="text-sm font-bold text-white capitalize">{result.impact_analysis.cognitive_load}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-zinc-400 font-medium leading-relaxed italic">
+                    "{result.reasoning}"
+                  </p>
+                  
+                  {/* Trust Explainability Toggle */}
+                  <div className="pt-2 flex items-center justify-center md:justify-start gap-4">
+                    <button onClick={() => setShowDetailedReasoning(!showDetailedReasoning)} className="text-xs text-zinc-500 hover:text-white font-bold transition-colors">
+                      Why this score?
+                    </button>
+                    <div className="w-1 h-1 bg-zinc-700 rounded-full" />
+                    <button className="text-xs text-zinc-500 hover:text-white font-bold transition-colors">
+                      Actually, I feel different
+                    </button>
                   </div>
                 </div>
-                {(result.time_well_spent || result.mental_score > 70) ? (
-                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shrink-0">
-                    <TrendingUp className="w-3 h-3 mr-1" /> Time Well Spent ✓
-                  </Badge>
-                ) : (
-                  <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 shrink-0">
-                    <BarChart3 className="w-3 h-3 mr-1" /> Could Be Better
-                  </Badge>
-                )}
-              </div>
-
-              {/* Mental Impact Bar */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Mental Nutrition Level</span>
-                  <span className="text-xs font-bold" style={{ color: getScoreColor(result.mental_score) }}>
-                    {result.mental_score}/100
-                  </span>
-                </div>
-                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-1000 ease-out"
-                    style={{
-                      width: `${result.mental_score}%`,
-                      background: `linear-gradient(90deg, ${getScoreColor(result.mental_score)}, ${getScoreColor(result.mental_score)}80)`,
-                    }}
-                  />
+                
+                {/* Score Orb */}
+                <div className="shrink-0 flex flex-col items-center gap-3">
+                  <div 
+                    className="w-24 h-24 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.1)] relative border border-white/10"
+                    style={{ background: `${getScoreColor(result.mental_score)}20` }}
+                  >
+                     <div className="absolute inset-0 rounded-full blur-md" style={{ background: `${getScoreColor(result.mental_score)}30` }} />
+                     <span className="text-4xl font-serif text-white relative z-10">{result.mental_score}</span>
+                  </div>
+                  <span className="text-[10px] font-black text-white uppercase tracking-widest">{getScoreLabel(result.mental_score)}</span>
                 </div>
               </div>
-
-              {/* Expandable Reasoning */}
-              <button
-                onClick={() => setShowDetailedReasoning(!showDetailedReasoning)}
-                className="flex items-center gap-1 text-xs text-slate-500 hover:text-indigo-400 transition-colors font-bold"
-              >
-                {showDetailedReasoning ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                {showDetailedReasoning ? 'Hide' : 'Show'} AI Reasoning
-              </button>
+              
               {showDetailedReasoning && (
-                <p className="text-xs text-slate-500 mt-2 p-3 bg-slate-800/30 rounded-xl italic leading-relaxed border border-white/5">
-                  {result.reasoning}
-                </p>
+                <div className="mt-4 bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 text-sm text-zinc-300 font-medium leading-relaxed shadow-2xl relative z-10 animate-fade-in-up">
+                  <div className="flex items-center gap-2 mb-3">
+                     <Brain className="w-4 h-4 text-indigo-400" />
+                     <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">AI Synthesis</span>
+                  </div>
+                  {result.root_causes && result.root_causes.map((cause, idx) => (
+                    <div key={idx} className="mb-2 last:mb-0">
+                      <strong className="text-white block mb-0.5">{cause.reason}</strong>
+                      <span className="text-zinc-500 text-xs">{cause.evidence}</span>
+                    </div>
+                  ))}
+                </div>
               )}
+            </div>
+          ) : (
+            <Card className="overflow-hidden border-white/5 bg-zinc-950/80 backdrop-blur-2xl shadow-2xl rounded-[32px]">
+              <div
+                className="h-1.5"
+                style={{ background: `linear-gradient(to right, ${getScoreColor(result.mental_score)}, transparent)` }}
+              />
+              <CardContent className="p-8">
+                <div className="flex flex-col md:flex-row items-start justify-between gap-6 mb-8">
+                  <div className="flex items-center gap-6">
+                    <div
+                      className="w-20 h-20 rounded-[24px] flex items-center justify-center text-3xl font-serif shadow-lg border border-white/5"
+                      style={{
+                        background: `${getScoreColor(result.mental_score)}15`,
+                        color: getScoreColor(result.mental_score),
+                        boxShadow: `0 8px 32px ${getScoreColor(result.mental_score)}20`,
+                      }}
+                    >
+                      {result.mental_score}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-xl font-serif text-white">{getScoreLabel(result.mental_score)}</span>
+                        <span className={`category-pill category-${result.category}`}>
+                          {getCategoryEmoji(result.category)} {result.category}
+                        </span>
+                      </div>
+                      <p className="text-base text-slate-300 max-w-lg leading-relaxed">{result.summary}</p>
+                    </div>
+                  </div>
+                  {(result.time_well_spent || result.mental_score > 70) ? (
+                    <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shrink-0 px-4 py-1.5 rounded-xl">
+                      <TrendingUp className="w-4 h-4 mr-2" /> Time Well Spent ✓
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 shrink-0 px-4 py-1.5 rounded-xl">
+                      <BarChart3 className="w-4 h-4 mr-2" /> Could Be Better
+                    </Badge>
+                  )}
+                </div>
 
-              {/* Tags */}
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {result.tags?.map((tag) => (
-                  <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                {/* Mental Impact Bar */}
+                <div className="mb-6 bg-white/5 p-5 rounded-[24px] border border-white/5">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Cognitive State Flow</span>
+                    <span className="text-xs font-bold" style={{ color: getScoreColor(result.mental_score) }}>
+                      {result.mental_score}/100
+                    </span>
+                  </div>
+                  <div className="w-full h-3 bg-black rounded-full overflow-hidden shadow-inner">
+                    <div
+                      className="h-full rounded-full transition-all duration-1000 ease-out relative"
+                      style={{
+                        width: `${result.mental_score}%`,
+                        background: `linear-gradient(90deg, ${getScoreColor(result.mental_score)}, ${getScoreColor(result.mental_score)}80)`,
+                      }}
+                    >
+                       <div className="absolute top-0 right-0 bottom-0 w-8 bg-white/20 blur-md" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expandable Reasoning */}
+                <button
+                  onClick={() => setShowDetailedReasoning(!showDetailedReasoning)}
+                  className="flex items-center gap-2 text-xs text-slate-400 hover:text-white transition-colors font-bold bg-white/5 px-4 py-2 rounded-full border border-white/5"
+                >
+                  {showDetailedReasoning ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  {showDetailedReasoning ? 'Hide' : 'Show'} AI Reasoning
+                </button>
+                {showDetailedReasoning && (
+                  <div className="mt-4 bg-black/40 border border-white/5 rounded-[24px] p-6">
+                    <p className="text-sm text-slate-300 italic leading-relaxed">
+                      {result.reasoning}
+                    </p>
+                  </div>
+                )}
+
+                {/* Tags */}
+                <div className="flex flex-wrap gap-2 mt-6">
+                  {result.tags?.map((tag) => (
+                    <Badge key={tag} variant="outline" className="text-xs bg-white/5 border-white/10 text-slate-300 px-3 py-1">{tag}</Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Smart Swap Suggestions */}
           {alternatives.length > 0 && result.is_junk && (

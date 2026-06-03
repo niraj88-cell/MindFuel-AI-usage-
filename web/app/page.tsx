@@ -6,6 +6,15 @@ import { ScrollReveal } from '@/components/landing/ScrollReveal'
 import { AnimatedBrain } from '@/components/landing/AnimatedBrain'
 import { StatsCounter } from '@/components/landing/StatsCounter'
 import { TestimonialCarousel } from '@/components/landing/TestimonialCarousel'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'MindFuel — AI-Powered Focus & Productivity App | Track Your Digital Wellness',
+  description: 'MindFuel is the AI-powered focus and productivity app that tracks your digital content consumption, builds healthier habits, and provides personalized coaching. Focus timer, mood tracking, habit streaks & AI insights. Start free today.',
+  alternates: {
+    canonical: 'https://getmindfuel.vercel.app',
+  },
+}
 
 export default function LandingPage() {
   return (
@@ -27,7 +36,7 @@ export default function LandingPage() {
               Log in
             </Link>
             <Link href="/signup" className="px-5 py-2 text-sm font-bold text-black bg-white rounded-lg hover:bg-zinc-200 transition-colors shadow-none">
-              Get Started Free
+              Begin Your Map
             </Link>
           </div>
         </div>
@@ -42,20 +51,17 @@ export default function LandingPage() {
 
         {/* Headline with word reveal */}
         <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-white leading-[1.1] tracking-tight mb-6">
-          <span className="inline-block word-reveal" style={{ animationDelay: '0.1s' }}>Your</span>{' '}
-          <span className="inline-block word-reveal" style={{ animationDelay: '0.2s' }}>phone</span>{' '}
-          <span className="inline-block word-reveal" style={{ animationDelay: '0.3s' }}>changes</span>{' '}
+          <span className="inline-block word-reveal" style={{ animationDelay: '0.1s' }}>Understand</span>{' '}
+          <span className="inline-block word-reveal" style={{ animationDelay: '0.2s' }}>your</span>{' '}
+          <span className="inline-block word-reveal" style={{ animationDelay: '0.3s' }}>mind.</span>{' '}
           <br className="hidden sm:block" />
-          <span className="inline-block word-reveal" style={{ animationDelay: '0.4s' }}>your</span>{' '}
-          <span className="inline-block word-reveal text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-400 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" style={{ animationDelay: '0.5s' }}>mood.</span>{' '}
-          <span className="inline-block word-reveal text-zinc-500" style={{ animationDelay: '0.6s' }}>We</span>{' '}
-          <span className="inline-block word-reveal text-zinc-500" style={{ animationDelay: '0.7s' }}>show</span>{' '}
-          <span className="inline-block word-reveal text-zinc-500" style={{ animationDelay: '0.8s' }}>you</span>{' '}
-          <span className="inline-block word-reveal text-zinc-500" style={{ animationDelay: '0.9s' }}>how.</span>
+          <span className="inline-block word-reveal text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-400 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" style={{ animationDelay: '0.4s' }}>Elevate</span>{' '}
+          <span className="inline-block word-reveal text-zinc-500" style={{ animationDelay: '0.5s' }}>your</span>{' '}
+          <span className="inline-block word-reveal text-zinc-500" style={{ animationDelay: '0.6s' }}>life.</span>
         </h1>
 
-        <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-12 font-medium leading-relaxed animate-fade-in-up" style={{ animationDelay: '1s' }}>
-          MindFuel is like a nutritionist — but for your screen time. Log what you watch, see how it affects your brain, and get AI coaching to build healthier habits.
+        <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-12 font-medium leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
+          The first mental operating system that reveals how your digital diet shapes your emotional reality. Discover patterns, build clarity, and return to center.
         </p>
 
         <div className="animate-fade-in-up" style={{ animationDelay: '1.2s', width: '100%' }}>
@@ -177,18 +183,146 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* What is MindFuel? — Featured Snippet Section */}
+      <section id="what-is-mindfuel" className="border-t border-white/5 bg-zinc-900/20 py-20 px-6 relative z-10">
+        <div className="max-w-3xl mx-auto">
+          <ScrollReveal direction="up">
+            <h2 className="text-2xl sm:text-3xl font-black text-white mb-6 text-center">What is MindFuel?</h2>
+            <p className="text-zinc-400 text-base sm:text-lg leading-relaxed">
+              MindFuel is an AI-powered focus and productivity app that serves as your mental nutrition tracker. It analyzes your digital content consumption — what you watch, scroll, and listen to — and reveals how it affects your mood and focus. With features like an AI content scanner, focus timer, mood tracking, habit challenges, and personalized AI coaching, MindFuel helps you build healthier digital habits and reclaim an average of 2+ hours per day. Available as a web app with a free plan and a Platinum plan at $9.99/month.
+            </p>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* FAQ Section — Rich Results */}
+      <section id="faq" className="border-t border-white/5 bg-black py-20 px-6 relative z-10">
+        <div className="max-w-3xl mx-auto">
+          <ScrollReveal direction="up">
+            <div className="text-center mb-12">
+              <h2 className="text-2xl sm:text-3xl font-black text-white mb-3">Frequently Asked Questions</h2>
+              <p className="text-zinc-500 text-sm">Everything you need to know about MindFuel.</p>
+            </div>
+          </ScrollReveal>
+
+          <div className="space-y-4">
+            <ScrollReveal delay={0.1} direction="up">
+              <details className="group border border-white/10 rounded-2xl bg-zinc-900/40 transition-colors hover:border-white/20">
+                <summary className="cursor-pointer list-none px-6 py-5 text-white font-bold text-sm sm:text-base flex items-center justify-between">
+                  How does MindFuel track my digital content?
+                  <span className="ml-4 text-zinc-500 group-open:rotate-45 transition-transform text-xl leading-none">+</span>
+                </summary>
+                <div className="px-6 pb-5 text-zinc-400 text-sm leading-relaxed">
+                  Simply tell MindFuel what you just watched, scrolled, or listened to. You can type it, speak it, or pick from quick presets. Our AI instantly scores the mental impact on a 0-100 scale and categorizes the content to reveal your digital consumption patterns.
+                </div>
+              </details>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.15} direction="up">
+              <details className="group border border-white/10 rounded-2xl bg-zinc-900/40 transition-colors hover:border-white/20">
+                <summary className="cursor-pointer list-none px-6 py-5 text-white font-bold text-sm sm:text-base flex items-center justify-between">
+                  Is MindFuel free to use?
+                  <span className="ml-4 text-zinc-500 group-open:rotate-45 transition-transform text-xl leading-none">+</span>
+                </summary>
+                <div className="px-6 pb-5 text-zinc-400 text-sm leading-relaxed">
+                  Yes! MindFuel offers a generous free plan that includes 3 content scans per day, AI Coach conversations, Focus Timer, Mood Tracking, and Habit Challenges. For unlimited scans, 30-day pattern analysis, custom AI challenges, and priority coaching, upgrade to Platinum at $9.99/month.
+                </div>
+              </details>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.2} direction="up">
+              <details className="group border border-white/10 rounded-2xl bg-zinc-900/40 transition-colors hover:border-white/20">
+                <summary className="cursor-pointer list-none px-6 py-5 text-white font-bold text-sm sm:text-base flex items-center justify-between">
+                  What makes MindFuel different from other productivity apps?
+                  <span className="ml-4 text-zinc-500 group-open:rotate-45 transition-transform text-xl leading-none">+</span>
+                </summary>
+                <div className="px-6 pb-5 text-zinc-400 text-sm leading-relaxed">
+                  Unlike traditional productivity apps that only track time or tasks, MindFuel is the first mental operating system that analyzes the quality of your digital consumption. It connects what you consume to how you feel, providing AI-powered insights that go beyond screen time statistics.
+                </div>
+              </details>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.25} direction="up">
+              <details className="group border border-white/10 rounded-2xl bg-zinc-900/40 transition-colors hover:border-white/20">
+                <summary className="cursor-pointer list-none px-6 py-5 text-white font-bold text-sm sm:text-base flex items-center justify-between">
+                  Does MindFuel have an AI Coach?
+                  <span className="ml-4 text-zinc-500 group-open:rotate-45 transition-transform text-xl leading-none">+</span>
+                </summary>
+                <div className="px-6 pb-5 text-zinc-400 text-sm leading-relaxed">
+                  Yes, MindFuel includes a personalized AI Coach that actually knows your patterns. It provides customized strategies to break content addiction, suggests healthier alternatives, and guides you through digital wellness challenges — all based on your real usage data.
+                </div>
+              </details>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.3} direction="up">
+              <details className="group border border-white/10 rounded-2xl bg-zinc-900/40 transition-colors hover:border-white/20">
+                <summary className="cursor-pointer list-none px-6 py-5 text-white font-bold text-sm sm:text-base flex items-center justify-between">
+                  Can I use MindFuel for focus and deep work?
+                  <span className="ml-4 text-zinc-500 group-open:rotate-45 transition-transform text-xl leading-none">+</span>
+                </summary>
+                <div className="px-6 pb-5 text-zinc-400 text-sm leading-relaxed">
+                  Absolutely. MindFuel includes a built-in Pomodoro-style focus timer that helps you commit to phone-free blocks. Track your focus hours, build streaks, and see exactly how much genuinely productive time you achieve each day.
+                </div>
+              </details>
+            </ScrollReveal>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="border-t border-white/5 py-10 px-6 text-center text-sm text-zinc-600 font-medium relative z-10 bg-black">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center justify-center gap-2">
-            <Brain className="w-4 h-4" />
-            <span className="font-bold">MindFuel</span>
+      <footer className="border-t border-white/5 py-14 px-6 text-sm text-zinc-600 font-medium relative z-10 bg-black">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
+            {/* Brand */}
+            <div className="col-span-2 md:col-span-1">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-7 h-7 bg-white rounded-lg flex items-center justify-center">
+                  <Brain className="w-4 h-4 text-black" />
+                </div>
+                <span className="font-black text-white">MindFuel</span>
+              </div>
+              <p className="text-zinc-500 text-xs leading-relaxed">Your AI-powered mental nutrition tracker for better focus, productivity, and digital wellness.</p>
+            </div>
+
+            {/* Product */}
+            <div>
+              <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-4">Product</h4>
+              <ul className="space-y-2.5">
+                <li><Link href="/signup" className="hover:text-white transition-colors">Dashboard</Link></li>
+                <li><Link href="/signup" className="hover:text-white transition-colors">Focus Timer</Link></li>
+                <li><Link href="/signup" className="hover:text-white transition-colors">AI Coach</Link></li>
+                <li><Link href="/signup" className="hover:text-white transition-colors">Challenges</Link></li>
+              </ul>
+            </div>
+
+            {/* Company */}
+            <div>
+              <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-4">Company</h4>
+              <ul className="space-y-2.5">
+                <li><Link href="#what-is-mindfuel" className="hover:text-white transition-colors">About</Link></li>
+                <li><Link href="#faq" className="hover:text-white transition-colors">FAQ</Link></li>
+                <li><Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-4">Legal</h4>
+              <ul className="space-y-2.5">
+                <li><Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link href="#" className="hover:text-white transition-colors">Terms of Service</Link></li>
+              </ul>
+            </div>
           </div>
-          <p>&copy; {new Date().getFullYear()} MindFuel. All rights reserved.</p>
-          <div className="flex items-center justify-center gap-6">
-            <Link href="/login" className="hover:text-white transition-colors">Log In</Link>
-            <Link href="/signup" className="hover:text-white transition-colors">Sign Up</Link>
+
+          <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p>&copy; {new Date().getFullYear()} MindFuel. All rights reserved.</p>
+            <a href="https://fazier.com/launches/mindfuel" target="_blank" rel="noopener noreferrer" className="opacity-80 hover:opacity-100 transition-opacity">
+              <img src="https://fazier.com/badge.svg" alt="Launched on Fazier" className="h-8" />
+            </a>
           </div>
+
+          <p className="text-center text-zinc-600 text-xs mt-8">MindFuel — Your AI-powered mental nutrition tracker for better focus, productivity, and digital wellness.</p>
         </div>
       </footer>
     </div>

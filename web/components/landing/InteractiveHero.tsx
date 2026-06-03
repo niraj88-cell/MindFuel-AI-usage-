@@ -112,17 +112,10 @@ export function InteractiveHero() {
     setResult(null)
     setProgressWidth(0)
 
-    // Animate the progress bar
-    const startTime = Date.now()
-    const duration = 2000
-    const animate = () => {
-      const elapsed = Date.now() - startTime
-      const progress = Math.min(elapsed / duration, 1)
-      // Ease-out curve
-      setProgressWidth(Math.round((1 - Math.pow(1 - progress, 3)) * 100))
-      if (progress < 1) requestAnimationFrame(animate)
-    }
-    requestAnimationFrame(animate)
+    // Animate the progress bar with CSS transition
+    setTimeout(() => {
+      setProgressWidth(100)
+    }, 50)
 
     // Show result after animation
     setTimeout(() => {
@@ -147,7 +140,7 @@ export function InteractiveHero() {
           onClick={() => router.push('/signup')}
           className="w-full sm:w-auto bg-white text-black px-8 py-4 rounded-xl font-black text-sm sm:text-base hover:bg-zinc-200 transition-colors shadow-[0_0_40px_rgba(255,255,255,0.1)] active:scale-95"
         >
-          Try it free — see your score
+          Begin Your Map
         </button>
         <a 
           href="#try-demo"
@@ -230,8 +223,8 @@ export function InteractiveHero() {
               {/* Progress bar */}
               <div className="w-full max-w-xs h-1 bg-white/5 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-white/60 rounded-full transition-all duration-100"
-                  style={{ width: `${progressWidth}%` }}
+                  className="h-full bg-white/60 rounded-full transition-all ease-[cubic-bezier(0.16,1,0.3,1)]"
+                  style={{ width: `${progressWidth}%`, transitionDuration: '2000ms' }}
                 />
               </div>
               <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest animate-pulse">Understanding your thoughts...</span>

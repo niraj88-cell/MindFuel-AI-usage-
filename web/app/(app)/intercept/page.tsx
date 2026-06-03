@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import { ShieldAlert, ArrowRight, X, Check, Clock, Heart, Leaf } from 'lucide-react'
+import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { ShieldAlert, ArrowRight, X, Check, Clock, Heart, Leaf, ExternalLink, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client'
@@ -62,7 +63,7 @@ function getLastInterceptMinutesAgo(logs: InterceptLog[]): number | null {
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
-export default function InterceptPage() {
+function InterceptContent() {
   const router = useRouter()
 
   // State
@@ -72,6 +73,12 @@ export default function InterceptPage() {
   const [emotion, setEmotion] = useState('')
   const [intent, setIntent] = useState('')
   const [tollgateText, setTollgateText] = useState('')
+
+  // Prediction and Smart Swaps
+  const searchParams = useSearchParams()
+  const targetUrl = searchParams?.get('target') || ''
+  const [prediction, setPrediction] = useState<string | null>(null)
+  const [smartSwaps, setSmartSwaps] = useState<any[]>([])
 
   // Hold-to-breathe state
   const [holdProgress, setHoldProgress] = useState(0)
@@ -101,11 +108,27 @@ export default function InterceptPage() {
     } catch { /* silent */ }
   }, [])
 
-  useEffect(() => { loadLogs() }, [loadLogs])
+  const loadPrediction = useCallback(async () => {
+    if (!targetUrl) return
+    try {
+      const res = await fetch(`/api/intercept/predict?url=${encodeURIComponent(targetUrl)}`)
+      if (res.ok) {
+        const data = await res.json()
+        setPrediction(data.prediction)
+        setSmartSwaps(data.alternatives || [])
+      }
+    } catch { /* silent */ }
+  }, [targetUrl])
+
+  useEffect(() => { 
+    loadLogs()
+    loadPrediction()
+  }, [loadLogs, loadPrediction])
 
   // ─── Hold-to-breathe interaction ────────────────────────────────────────
   const startHold = useCallback(() => {
     setIsHolding(true)
+    if (holdInterval.current) clearInterval(holdInterval.current)
     holdInterval.current = setInterval(() => {
       setHoldProgress((prev) => {
         const next = prev + (holdStep / holdDuration) * 100
@@ -398,6 +421,11 @@ export default function InterceptPage() {
             <ShieldAlert className="w-10 h-10 text-zinc-500 mx-auto" />
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">Now — what&apos;s your actual intention?</h1>
             <p className="text-zinc-500 text-sm">If you can&apos;t name a reason, maybe you don&apos;t need to open it.</p>
+            {prediction && (
+              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-bold animate-fade-in-up">
+                ⚠️ {prediction}
+              </div>
+            )}
           </div>
 
           <Input
@@ -480,6 +508,37 @@ export default function InterceptPage() {
             </div>
           </div>
 
+          {/* Smart Swaps */}
+          {smartSwaps.length > 0 && landingSeconds <= 0 && (
+            <div className="w-full max-w-sm mb-8 text-left animate-fade-in-up">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-indigo-400" />
+                <h4 className="text-xs font-black text-indigo-300 uppercase tracking-widest">Smart Swaps</h4>
+              </div>
+              <div className="space-y-2">
+                {smartSwaps.map((alt, i) => (
+                  <a
+                    key={i}
+                    href={alt.url || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block p-3 rounded-xl bg-zinc-900 border border-white/5 hover:border-white/20 transition-all group"
+                  >
+                    <div className="flex justify-between items-start gap-2">
+                      <span className="text-sm font-bold text-white line-clamp-1">{alt.title}</span>
+                      <Badge variant="outline" className="text-[9px] shrink-0 bg-white/5 text-zinc-400 border-white/10">{alt.type}</Badge>
+                    </div>
+                    <p className="text-xs text-zinc-500 mt-1 line-clamp-1">{alt.why_better}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-[10px] text-zinc-600 font-bold">{alt.provider} · {alt.duration_minutes}m</span>
+                      <ExternalLink className="w-3 h-3 text-zinc-600 group-hover:text-white ml-auto" />
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
           {landingSeconds <= 0 && (
             <div className="flex flex-col gap-3 w-full max-w-xs">
               <button
@@ -499,5 +558,13 @@ export default function InterceptPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function InterceptPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-zinc-500">Loading...</div>}>
+      <InterceptContent />
+    </Suspense>
   )
 }

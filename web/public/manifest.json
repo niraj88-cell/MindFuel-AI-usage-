@@ -1,11 +1,12 @@
 {
-  "name": "MindFuel Tracker",
+  "name": "MindFuel — Focus & Productivity App",
   "short_name": "MindFuel",
-  "description": "AI-powered mental nutrition tracker",
+  "description": "AI-powered focus and productivity app. Track your digital wellness, build healthier habits, and get personalized AI coaching.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
+  "categories": ["productivity", "lifestyle", "health"],
   "icons": [
     {
       "src": "/icon-192x192.png",
