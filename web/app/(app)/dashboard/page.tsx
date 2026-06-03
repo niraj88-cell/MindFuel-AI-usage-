@@ -45,6 +45,7 @@ interface DashboardData {
   categoryBreakdown: Array<{ category: string; count: number; percentage: number; avgScore: number }>
   recentLogs: Array<{ id: string; content: string; category: string; mental_score: number; created_at: string }>
   coachInsight: { body: string; action_items: any } | null
+  behavioralInsight: { headline: string; pattern: string; pattern_category: string } | null
   focusHours: number
   focusSessions: number
   todayPulse: number | null
@@ -77,6 +78,7 @@ export default function DashboardPage() {
         { data: summary },
         { data: logs },
         { data: insight },
+        behavioralResult,
         { data: todayLogs },
         focusResult,
         pulseResult,
@@ -110,6 +112,15 @@ export default function DashboardPage() {
         .eq('user_id', user.id)
         .eq('type', 'daily_coach')
         .eq('is_read', false)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      // 4b. Behavioral insight
+      supabase
+        .from('ai_insights')
+        .select('body')
+        .eq('user_id', user.id)
+        .eq('type', 'behavioral_insight')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
@@ -199,6 +210,13 @@ export default function DashboardPage() {
 
     const todayPulse = pulseResult?.data?.rating || null
 
+    let behavioralInsight = null
+    if (behavioralResult?.data?.body) {
+      try {
+        behavioralInsight = JSON.parse(behavioralResult.data.body)
+      } catch {}
+    }
+
     setData({
       todayScore: summary?.average_score || 0,
       totalLogs: summary?.total_logs || 0,
@@ -207,6 +225,7 @@ export default function DashboardPage() {
       categoryBreakdown,
       recentLogs: logs || [],
       coachInsight: insight || null,
+      behavioralInsight,
       focusHours,
       focusSessions,
       todayPulse,
@@ -329,6 +348,25 @@ export default function DashboardPage() {
             >
               <Brain className="w-4 h-4" /> Go deeper
             </button>
+          </div>
+        )}
+
+        {/* Behavioral Insight Preview */}
+        {data?.behavioralInsight && (
+          <div 
+            onClick={() => router.push('/insights')}
+            className="mt-6 max-w-md w-full mx-auto bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-5 text-left cursor-pointer hover:bg-zinc-800/60 hover:border-white/20 transition-all group shadow-xl flex gap-4 items-center"
+          >
+            <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/10 group-hover:scale-110 transition-transform">
+               <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">{data.behavioralInsight.pattern}</span>
+              </div>
+              <p className="text-sm font-serif text-white opacity-90 leading-snug line-clamp-2">{data.behavioralInsight.headline}</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-white transition-colors" />
           </div>
         )}
       </div>

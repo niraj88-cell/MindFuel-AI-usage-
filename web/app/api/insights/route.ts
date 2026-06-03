@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { analyzeMoodPatterns } from '@/lib/agents/tools/moodAnalyzer'
+import { generateBehavioralInsight } from '@/lib/agents/tools/insightEngine'
 import { checkInsightsRateLimit, buildRateLimitHeaders } from '@/lib/rate-limit'
 import { subDays, format } from 'date-fns'
 
@@ -64,6 +65,20 @@ export async function GET(req: NextRequest) {
       .gte('date', sevenDaysAgo)
       .order('date', { ascending: true })
 
+    // Fetch focus sessions
+    const { data: focusSessions } = await supabase
+      .from('focus_sessions')
+      .select('*')
+      .eq('user_id', user.id)
+      .gte('created_at', sevenDaysAgo)
+
+    // Fetch daily pulses
+    const { data: dailyPulses } = await supabase
+      .from('daily_pulses')
+      .select('*')
+      .eq('user_id', user.id)
+      .gte('date', sevenDaysAgo)
+
     // Fetch user profile for subscription status
     const { data: profile } = await supabase
       .from('profiles')
@@ -73,6 +88,7 @@ export async function GET(req: NextRequest) {
 
     // Generate AI mood analysis if we have enough data
     let moodAnalysis = null
+    let behavioralInsight = null
     const hasEnoughData = (moodLogs && moodLogs.length >= 2) || (contentLogs && contentLogs.length >= 3)
     
     if (hasEnoughData) {
@@ -114,6 +130,47 @@ export async function GET(req: NextRequest) {
           metadata: {},
           is_read: true
         })
+      }
+
+      // Generate Behavioral Insight
+      const { data: cachedBehavioral } = await adminClient
+        .from('ai_insights')
+        .select('body, action_items, metadata')
+        .eq('user_id', user.id)
+        .eq('type', 'behavioral_insight')
+        .gte('created_at', sixHoursAgo)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (cachedBehavioral && cachedBehavioral.body) {
+        try {
+          behavioralInsight = JSON.parse(cachedBehavioral.body)
+        } catch {
+          // ignore parse error
+        }
+      }
+
+      if (!behavioralInsight) {
+        behavioralInsight = await generateBehavioralInsight(
+          contentLogs || [],
+          moodLogs || [],
+          focusSessions || [],
+          dailyPulses || [],
+          7
+        )
+
+        if (behavioralInsight) {
+          await adminClient.from('ai_insights').insert({
+            user_id: user.id,
+            type: 'behavioral_insight',
+            title: 'Behavioral Insight',
+            body: JSON.stringify(behavioralInsight),
+            action_items: [behavioralInsight.recommendation],
+            metadata: {},
+            is_read: true
+          })
+        }
       }
     } else {
       // Return a "Cold Start" analysis
@@ -160,6 +217,7 @@ export async function GET(req: NextRequest) {
             : 0,
           moodEntries: moodLogs?.length || 0,
         },
+        behavioralInsight,
         subscriptionTier: profile?.subscription_tier || 'free',
         remaining: rateCheck.remaining,
       },

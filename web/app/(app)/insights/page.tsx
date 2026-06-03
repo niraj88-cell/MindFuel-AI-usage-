@@ -13,7 +13,10 @@ import {
   ArrowUpRight,
   Activity,
   Calendar,
-  Lock
+  Lock,
+  Smartphone,
+  Clock,
+  ChevronDown
 } from 'lucide-react'
 import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -32,6 +35,16 @@ interface InsightsData {
     correlations: Array<{ pattern: string; confidence: 'low' | 'medium' | 'high'; data_points: number }>
     summary: string
     action_items: string[]
+  } | null
+  behavioralInsight?: {
+    headline: string
+    meaning: string
+    pattern: string
+    pattern_category: 'focus_impact' | 'mood_effect' | 'scrolling_pattern' | 'timing_pattern' | 'behavioral_trend' | 'risk_signal' | 'positive_signal'
+    recommendation: string
+    confidence: 'high' | 'medium' | 'low'
+    tone: string
+    data_signals: string[]
   } | null
   stats: { totalLogs: number; avgScore: number; moodEntries: number }
   subscriptionTier: 'free' | 'premium'
@@ -124,6 +137,11 @@ export default function InsightsPage() {
            </div>
         </div>
       </div>
+
+      {/* Behavioral Insight Hero */}
+      {data?.behavioralInsight && (
+        <BehavioralInsightHero insight={data.behavioralInsight} />
+      )}
 
       {/* Primary Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -318,3 +336,94 @@ function Heart(props: any) {
     </svg>
   )
 }
+
+function BehavioralInsightHero({ insight }: { insight: NonNullable<InsightsData['behavioralInsight']> }) {
+  const [showSignals, setShowSignals] = useState(false)
+  
+  const iconMap: Record<string, any> = {
+    focus_impact: Target,
+    mood_effect: Heart,
+    scrolling_pattern: Smartphone,
+    timing_pattern: Clock,
+    behavioral_trend: TrendingUp,
+    risk_signal: AlertTriangle,
+    positive_signal: Sparkles
+  }
+  
+  const Icon = iconMap[insight.pattern_category] || Sparkles
+  const isRisk = insight.pattern_category === 'risk_signal'
+  
+  return (
+    <div className="w-full bg-zinc-950/80 backdrop-blur-3xl border border-white/10 rounded-[40px] p-8 md:p-12 mb-12 relative overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] group">
+      <div className={`absolute top-0 right-0 w-96 h-96 rounded-full blur-[100px] opacity-20 -translate-y-1/2 translate-x-1/3 pointer-events-none ${isRisk ? 'bg-rose-500' : 'bg-white'}`} />
+      
+      <div className="relative z-10">
+        {/* Top: Badge + Confidence */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-[10px] font-black uppercase tracking-widest ${
+            isRisk 
+              ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' 
+              : 'bg-white/10 border-white/10 text-white'
+          }`}>
+            <Icon className="w-3 h-3" />
+            {insight.pattern}
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Confidence</span>
+            <div className="flex gap-1">
+              <div className={`w-2 h-2 rounded-full ${insight.confidence === 'high' || insight.confidence === 'medium' || insight.confidence === 'low' ? 'bg-indigo-400' : 'bg-zinc-700'}`} />
+              <div className={`w-2 h-2 rounded-full ${insight.confidence === 'high' || insight.confidence === 'medium' ? 'bg-indigo-400' : 'bg-zinc-700'}`} />
+              <div className={`w-2 h-2 rounded-full ${insight.confidence === 'high' ? 'bg-indigo-400' : 'bg-zinc-700'}`} />
+            </div>
+          </div>
+        </div>
+        
+        {/* Main Headline */}
+        <h2 className="text-3xl md:text-5xl font-serif text-white leading-tight tracking-tight max-w-4xl mb-6">
+          {insight.headline}
+        </h2>
+        
+        {/* Meaning */}
+        <p className="text-lg text-zinc-400 leading-relaxed max-w-3xl mb-10 font-medium">
+          {insight.meaning}
+        </p>
+        
+        {/* Recommendation & Signals */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-3xl p-6 flex flex-col justify-center">
+            <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2 mb-3">
+              <Sparkles className="w-3 h-3" /> Recommended Action
+            </h4>
+            <p className="text-white text-lg font-serif">
+              {insight.recommendation}
+            </p>
+          </div>
+          
+          <div className="bg-white/5 border border-white/5 rounded-3xl p-6">
+            <button 
+              onClick={() => setShowSignals(!showSignals)}
+              className="w-full flex items-center justify-between text-[10px] font-black text-zinc-400 uppercase tracking-widest cursor-pointer group-hover:text-zinc-300 transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <Activity className="w-3 h-3" /> Data Evidence
+              </span>
+              <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showSignals ? 'rotate-180' : ''}`} />
+            </button>
+            
+            <div className={`mt-4 space-y-3 transition-all duration-300 overflow-hidden ${showSignals ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
+              {insight.data_signals.map((signal, i) => (
+                <div key={i} className="flex items-center gap-3 text-sm text-zinc-300 font-medium bg-black/20 p-3 rounded-xl border border-white/5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-600 shrink-0" />
+                  {signal}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  )
+}
+
