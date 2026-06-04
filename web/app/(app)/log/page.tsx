@@ -14,6 +14,9 @@ import { createClient } from '@/lib/supabase/client'
 import { format, subDays } from 'date-fns'
 import { trackEvent } from '@/lib/mixpanel'
 import { getScoreColor, getScoreLabel } from '@/lib/utils'
+import { FuelOrb } from '@/components/fuel/FuelOrb'
+import { useFuelVoice } from '@/lib/fuel/useFuelVoice'
+import { getScanVoiceLine } from '@/lib/fuel/personalityEngine'
 
 export default function LogPage() {
   const [moodBefore, setMoodBefore] = useState(5)
@@ -36,6 +39,8 @@ export default function LogPage() {
   const [moodLogging, setMoodLogging] = useState(false)
   const [moodSaved, setMoodSaved] = useState(false)
   const [todayStats, setTodayStats] = useState<{ count: number; avg: number } | null>(null)
+  const [fuelThought, setFuelThought] = useState<string | null>(null)
+  const { speak } = useFuelVoice()
 
   // Load today's log stats for progress indicator
   useEffect(() => {
@@ -73,6 +78,14 @@ export default function LogPage() {
     else if (result.mental_score <= 40) suggestedMood = Math.max(1, moodBefore - 1)
     
     setMoodAfter(suggestedMood)
+
+    // Fuel speaks the verdict
+    const voiceLine = getScanVoiceLine(
+      { category: result.category, score: result.mental_score, summary: result.summary },
+      'energized'
+    )
+    setFuelThought(voiceLine)
+    speak(voiceLine)
   }
 
   async function handleSaveLog() {
@@ -349,6 +362,7 @@ export default function LogPage() {
         </div>
       )}
       <QuickLogFAB onLogSaved={() => setTodayStats(prev => prev ? { ...prev, count: prev.count + 1 } : null)} />
+      <FuelOrb thought={fuelThought} />
     </div>
   )
 }

@@ -9,6 +9,7 @@ import {
   MessageCircle, User, LogOut, Menu, X, Bell, Sparkles
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { AttentionRescue } from '@/components/fuel/AttentionRescue'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Today', icon: LayoutDashboard },
@@ -25,6 +26,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [user, setUser] = useState<{ email?: string; full_name?: string; tier?: string } | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [rescueSignal, setRescueSignal] = useState<{ app: string; minutes: number } | null>(null)
+
+  // Listen for Attention Rescue signals from the Chrome extension
+  useEffect(() => {
+    function handleMessage(event: MessageEvent) {
+      if (event.data?.type === 'MINDFUEL_DOOMSCROLL_ALERT') {
+        const { appName, minutesSpent } = event.data
+        setRescueSignal({ app: appName, minutes: minutesSpent })
+      }
+    }
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [])
 
   const loadUser = useCallback(async () => {
     const supabase = createClient()
@@ -241,6 +255,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <main className="flex-1 p-4 sm:p-6 lg:p-12 max-w-7xl w-full mx-auto overflow-y-auto custom-scrollbar scroll-smooth">
           {children}
         </main>
+
+        {/* Global Attention Rescue Overlay */}
+        {rescueSignal && (
+          <AttentionRescue
+            appName={rescueSignal.app}
+            minutesSpent={rescueSignal.minutes}
+            trigger="doomscroll"
+            onClose={() => setRescueSignal(null)}
+          />
+        )}
       </div>
     </div>
   )
