@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Brain, LayoutDashboard, PenLine, BarChart3,
-  MessageCircle, User, LogOut, Menu, X, Bell, Sparkles
+  MessageCircle, User, LogOut, Menu, X, Bell, Sparkles, Compass
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { AttentionRescue } from '@/components/fuel/AttentionRescue'
@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { href: '/log', label: 'Log', icon: PenLine },
   { href: '/coach', label: 'Coach', icon: MessageCircle },
   { href: '/insights', label: 'Insights', icon: BarChart3 },
+  { href: '/challenges', label: 'Expeditions', icon: Compass },
   { href: '/subscription', label: 'Platinum', icon: Sparkles },
   { href: '/profile', label: 'Settings', icon: User },
 ]
