@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ShieldAlert, ArrowRight, X, Check, Clock, Heart, Leaf, ExternalLink, Sparkles } from 'lucide-react'
+import { ShieldAlert, ArrowRight, X, Check, Clock, Heart, Leaf, ExternalLink, Sparkles, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -79,6 +79,12 @@ function InterceptContent() {
   const targetUrl = searchParams?.get('target') || ''
   const [prediction, setPrediction] = useState<string | null>(null)
   const [smartSwaps, setSmartSwaps] = useState<any[]>([])
+  const [intervention, setIntervention] = useState<{
+    message: string
+    command: string
+    severity: string
+    algorithm_callout: string
+  } | null>(null)
 
   // Hold-to-breathe state
   const [holdProgress, setHoldProgress] = useState(0)
@@ -116,6 +122,7 @@ function InterceptContent() {
         const data = await res.json()
         setPrediction(data.prediction)
         setSmartSwaps(data.alternatives || [])
+        if (data.intervention) setIntervention(data.intervention)
       }
     } catch { /* silent */ }
   }, [targetUrl])
@@ -223,6 +230,29 @@ function InterceptContent() {
       {step === 'hold_breathe' && (
         <div className="min-h-[70vh] flex flex-col items-center justify-center text-center animate-fade-in-up select-none">
           <ShieldAlert className="w-10 h-10 text-zinc-600 mb-6" />
+
+          {/* Interceptor Intervention Message */}
+          {intervention && (
+            <div className="w-full max-w-sm mb-8 animate-fade-in-up">
+              <div className={`p-5 rounded-2xl border text-left ${
+                intervention.severity === 'critical' 
+                  ? 'bg-red-500/10 border-red-500/20' 
+                  : intervention.severity === 'severe'
+                  ? 'bg-orange-500/8 border-orange-500/15'
+                  : 'bg-zinc-900 border-white/10'
+              }`}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Zap className={`w-3.5 h-3.5 ${
+                    intervention.severity === 'critical' ? 'text-red-400' : 
+                    intervention.severity === 'severe' ? 'text-orange-400' : 'text-zinc-400'
+                  }`} />
+                  <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Interceptor</span>
+                </div>
+                <p className="text-white font-bold text-sm leading-relaxed mb-2">{intervention.message}</p>
+                <p className="text-zinc-500 text-xs italic">{intervention.algorithm_callout}</p>
+              </div>
+            </div>
+          )}
 
           {/* Contextual headline based on friction mode */}
           {frictionMode === 'tollgate' ? (
