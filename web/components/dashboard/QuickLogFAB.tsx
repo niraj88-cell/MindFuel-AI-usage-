@@ -8,10 +8,12 @@ import {
   Plus, X, Mic, MicOff, Loader2, CheckCircle2,
   Camera, Play, Newspaper, MessageCircle,
   Gamepad2, BookOpen, Headphones, Code, Palette,
-  Smartphone, Zap, TrendingUp, Sparkles, Clock
+  Smartphone, Zap, TrendingUp, Sparkles, Clock, Brain
 } from 'lucide-react'
 import { getMoodEmoji } from '@/lib/utils'
 import { trackEvent } from '@/lib/mixpanel'
+import { FuelOrb } from '@/components/fuel/FuelOrb'
+import { useFuelVoice } from '@/lib/fuel/useFuelVoice'
 
 interface QuickPreset {
   id: string
@@ -61,6 +63,8 @@ export function QuickLogFAB({ onLogSaved }: QuickLogFABProps) {
   const [voiceText, setVoiceText] = useState('')
   const [voiceSupported, setVoiceSupported] = useState(false)
   const recognitionRef = useRef<any>(null)
+  
+  const { speak } = useFuelVoice()
 
   // Check voice support on mount
   useEffect(() => {
@@ -134,12 +138,17 @@ export function QuickLogFAB({ onLogSaved }: QuickLogFABProps) {
       trackEvent('Quick Log Created', { preset: presetId || 'voice', score: data.analysis?.mental_score })
       onLogSaved?.()
 
-      // Auto-close after 3s
+      // Fuel reads the instant insight
+      if (data.instantInsight?.message) {
+        speak(data.instantInsight.message)
+      }
+
+      // Auto-close after 5s
       setTimeout(() => {
         setSaved(false)
         setInsight(null)
         setIsOpen(false)
-      }, 4000)
+      }, 5000)
     } catch {
       setError('Connection error. Please try again.')
     } finally {
@@ -162,39 +171,40 @@ export function QuickLogFAB({ onLogSaved }: QuickLogFABProps) {
     return (
       <button
         onClick={() => { setIsOpen(true); trackEvent('Quick Log FAB Opened') }}
-        className="fixed bottom-8 right-8 z-50 w-16 h-16 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full shadow-2xl shadow-indigo-600/40 flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
+        className="fixed bottom-8 right-8 z-50 w-16 h-16 bg-white hover:bg-zinc-200 text-black rounded-full shadow-[0_0_40px_rgba(255,255,255,0.15)] flex items-center justify-center transition-all hover:scale-110 active:scale-95 group border border-white/10"
         aria-label="Quick Log"
         id="quick-log-fab"
       >
         <Plus className="w-7 h-7 group-hover:rotate-90 transition-transform duration-300" />
-        <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
+        <span className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full animate-pulse shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
       </button>
     )
   }
 
-  // Success state with instant insight
+  // Success state with Fuel Insight
   if (saved && insight) {
     return (
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
-        <div className="relative w-full max-w-md bg-slate-900 border border-emerald-500/30 rounded-[32px] p-8 animate-fade-in-up shadow-2xl">
-          <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
-              <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 animate-fade-in-up">
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={handleClose} />
+        <div className="relative w-full max-w-md">
+          {/* Central Fuel Orb */}
+          <div className="flex justify-center mb-8 relative">
+            <FuelOrb thought={null} autoSpeak="" />
+          </div>
+
+          <div className="bg-zinc-950/60 backdrop-blur-3xl border border-white/10 rounded-[32px] p-8 shadow-2xl text-center space-y-4 animate-[fadeSlideIn_0.4s_ease-out]">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-white" />
+              <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Fuel Insight</span>
             </div>
-            <h3 className="text-xl font-black text-white">Logged! ✨</h3>
             
-            {/* Instant Insight Card */}
-            <div className="bg-slate-800/50 rounded-2xl p-5 text-left border border-white/5">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-2xl">{insight.emoji}</span>
-                <span className="text-xs font-black text-indigo-400 uppercase tracking-widest">Instant Insight</span>
-              </div>
-              <p className="text-sm text-slate-300 font-medium leading-relaxed">{insight.message}</p>
-              <div className="mt-3 flex items-center gap-2">
-                <Sparkles className="w-3 h-3 text-amber-400" />
-                <p className="text-xs text-slate-500">{insight.suggestion}</p>
-              </div>
+            <p className="text-xl font-serif text-white opacity-90 leading-relaxed">
+              "{insight.message}"
+            </p>
+            
+            <div className="pt-4 mt-4 border-t border-white/5 flex items-center justify-center gap-3 text-zinc-400 text-xs font-medium">
+              <span className="text-lg">{insight.emoji}</span>
+              {insight.suggestion}
             </div>
           </div>
         </div>
@@ -207,19 +217,19 @@ export function QuickLogFAB({ onLogSaved }: QuickLogFABProps) {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
       
-      <div className="relative w-full max-w-lg bg-slate-900 border border-white/10 rounded-[32px] overflow-hidden animate-fade-in-up shadow-2xl max-h-[85vh] flex flex-col">
+      <div className="relative w-full max-w-lg bg-zinc-950/80 backdrop-blur-3xl border border-white/10 rounded-[32px] overflow-hidden animate-fade-in-up shadow-2xl max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 pb-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-600/20 rounded-xl flex items-center justify-center border border-indigo-500/20">
-              <Zap className="w-5 h-5 text-indigo-400" />
+            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
+              <Brain className="w-5 h-5 text-black" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-white">Quick Log</h2>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">One-tap capture</p>
+              <h2 className="text-lg font-black text-white">Fuel Check-In</h2>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Sync your state</p>
             </div>
           </div>
-          <button onClick={handleClose} className="text-slate-500 hover:text-white transition-colors p-1">
+          <button onClick={handleClose} className="text-zinc-500 hover:text-white transition-colors p-1 cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -241,7 +251,7 @@ export function QuickLogFAB({ onLogSaved }: QuickLogFABProps) {
               max={10}
               value={mood}
               onChange={(e) => setMood(parseInt(e.target.value))}
-              className="w-full h-2 bg-slate-800 rounded-full appearance-none cursor-pointer accent-indigo-500"
+              className="w-full h-2 bg-zinc-800 rounded-full appearance-none cursor-pointer accent-white"
             />
             <div className="flex justify-between text-[10px] text-slate-600 px-1">
               <span>Very Low</span>
@@ -279,9 +289,9 @@ export function QuickLogFAB({ onLogSaved }: QuickLogFABProps) {
                 <button
                   onClick={() => handleQuickLog()}
                   disabled={saving}
-                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full py-3 bg-white hover:bg-zinc-200 text-black rounded-xl font-bold text-sm shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Brain className="w-4 h-4" />}
                   Log Voice Entry
                 </button>
               )}
@@ -327,14 +337,14 @@ export function QuickLogFAB({ onLogSaved }: QuickLogFABProps) {
 
         {/* Saving indicator */}
         {saving && (
-          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center rounded-[32px] transition-opacity duration-500">
+          <div className="absolute inset-0 bg-zinc-950/90 backdrop-blur-sm flex items-center justify-center rounded-[32px] transition-opacity duration-500">
             <div className="flex flex-col items-center gap-6">
               <div className="relative flex items-center justify-center w-16 h-16">
-                <div className="absolute w-full h-full bg-indigo-500/20 rounded-full animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite]" />
-                <div className="absolute w-12 h-12 bg-indigo-500/40 rounded-full animate-pulse" style={{ animationDuration: '2s' }} />
-                <div className="w-8 h-8 bg-indigo-500 rounded-full shadow-[0_0_20px_rgba(99,102,241,0.5)]" />
+                <div className="absolute w-full h-full bg-white/10 rounded-full animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite]" />
+                <div className="absolute w-12 h-12 bg-white/20 rounded-full animate-pulse" style={{ animationDuration: '2s' }} />
+                <div className="w-8 h-8 bg-white rounded-full shadow-[0_0_20px_rgba(255,255,255,0.5)]" />
               </div>
-              <span className="text-xs font-black text-indigo-300 uppercase tracking-widest animate-pulse">Gathering your thoughts...</span>
+              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest animate-pulse">Processing...</span>
             </div>
           </div>
         )}
