@@ -46,6 +46,26 @@ import { trackEvent } from '@/lib/mixpanel'
 import { calculatePredictiveHealth, PredictiveHealthMetrics } from '@/lib/agents/tools/predictiveHealth'
 import { checkPredictiveRisk, PredictiveState } from '@/lib/fuel/predictiveEngine'
 
+function playNativeVoice(text: string) {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  
+  const voices = window.speechSynthesis.getVoices();
+  const premium = voices.find(v => 
+    v.name.includes('Premium') || 
+    v.name.includes('Enhanced') || 
+    v.name.includes('Siri') ||
+    v.name.includes('Google') ||
+    v.name.includes('Online')
+  );
+  
+  if (premium) utterance.voice = premium;
+  utterance.rate = 1.05;
+  utterance.pitch = 1.0;
+  window.speechSynthesis.speak(utterance);
+}
+
 interface DashboardData {
   todayScore: number
   totalLogs: number
@@ -267,7 +287,6 @@ export default function DashboardPage() {
       contentRegret: profile?.content_regret || null,
       predictiveHealth: calculatePredictiveHealth(sevenDayLogs || [])
     })
-    setLoading(false)
 
     // Fetch neuro state asynchronously (non-blocking)
     try {
@@ -277,6 +296,17 @@ export default function DashboardPage() {
         setNeuroData(neuroJson)
       }
     } catch { /* silent — neuro is enhancement, not critical */ }
+
+    // Check if we should play voice greeting
+    if (typeof window !== 'undefined' && !sessionStorage.getItem('greeting_played')) {
+      // Play a short delay to ensure voices are loaded
+      setTimeout(() => {
+        playNativeVoice("Welcome back, boss. MindFuel A.I. is online. I've analyzed your latest patterns.")
+        sessionStorage.setItem('greeting_played', 'true')
+      }, 1000)
+    }
+
+    setLoading(false)
 
     } catch (err) {
       console.error('[Dashboard Error]', err)
