@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation'
 import { Timer, Play, X, Check, Clock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { format } from 'date-fns'
+import { FuelOrb } from '@/components/fuel/FuelOrb'
+import { useFuelVoice } from '@/lib/fuel/useFuelVoice'
+import { getFocusStartLine, getFocusCompleteLine } from '@/lib/fuel/personalityEngine'
 
 const DURATIONS = [15, 30, 45, 60]
 
@@ -41,12 +44,16 @@ export default function FocusPage() {
 
   useEffect(() => { loadHistory() }, [loadHistory])
 
+  const { speak } = useFuelVoice()
+
   const startTimer = useCallback(() => {
     const total = selectedMinutes * 60
     setTotalSeconds(total)
     setSecondsLeft(total)
     setPhase('running')
-  }, [selectedMinutes])
+    // Fuel speaks on mission start
+    speak(getFocusStartLine(selectedMinutes, 'energized'))
+  }, [selectedMinutes, speak])
 
   useEffect(() => {
     if (phase === 'running' && secondsLeft > 0) {
@@ -56,6 +63,8 @@ export default function FocusPage() {
     if (phase === 'running' && secondsLeft === 0) {
       setPhase('done')
       saveSession(true)
+      // Fuel celebrates completion
+      speak(getFocusCompleteLine(selectedMinutes, 'celebratory'))
     }
   }, [phase, secondsLeft])
 
@@ -182,6 +191,7 @@ export default function FocusPage() {
           <button onClick={giveUp} className="text-zinc-600 hover:text-zinc-400 text-sm font-medium flex items-center gap-2 mx-auto transition-colors cursor-pointer">
             <X className="w-4 h-4" /> Give Up
           </button>
+          <FuelOrb thought="Focus mode active. I'm keeping watch." />
         </div>
       )}
 

@@ -37,6 +37,8 @@ import { MindCore } from '@/components/dashboard/MindCore'
 import { OnboardingDemo } from '@/components/dashboard/OnboardingDemo'
 import { OnboardingFlow } from '@/components/dashboard/OnboardingFlow'
 import { JarvisAssistant } from '@/components/dashboard/JarvisAssistant'
+import { FuelOrb } from '@/components/fuel/FuelOrb'
+import { getDashboardGreeting, getFuelState } from '@/lib/fuel/personalityEngine'
 import { createClient } from '@/lib/supabase/client'
 import { formatRelativeTime, getCategoryEmoji, getScoreColor } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -542,8 +544,35 @@ export default function DashboardPage() {
 
       <QuickLogFAB onLogSaved={() => loadDashboard()} />
 
-      {/* Jarvis Voice & AI Interface */}
-      <JarvisAssistant neuroData={neuroData} />
+      {/* Fuel — Living Digital Companion */}
+      {neuroData ? (
+        <FuelOrb
+          thought={`"${getDashboardGreeting({
+            hour: new Date().getHours(),
+            mood: null,
+            energy: null,
+            focusMinutes: data?.focusHours ? data.focusHours * 60 : 0,
+            doomscrollMinutes: 0,
+            streak: data?.streak || 0,
+            todayScore: data?.todayScore || 50,
+            isFocusActive: false,
+            totalLogsToday: data?.totalLogs || 0,
+          }, neuroData.prophecy.prophecy)}"`}
+          autoSpeak={getDashboardGreeting({
+            hour: new Date().getHours(),
+            mood: null,
+            energy: null,
+            focusMinutes: data?.focusHours ? data.focusHours * 60 : 0,
+            doomscrollMinutes: 0,
+            streak: data?.streak || 0,
+            todayScore: data?.todayScore || 50,
+            isFocusActive: false,
+            totalLogsToday: data?.totalLogs || 0,
+          }, neuroData.prophecy.prophecy)}
+        />
+      ) : (
+        <FuelOrb />
+      )}
     </div>
   )
 }
