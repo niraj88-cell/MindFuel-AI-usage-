@@ -19,7 +19,12 @@ import {
   Heart,
   Lock,
   X,
-  PenLine
+  PenLine,
+  Activity,
+  AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  Minus
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -55,9 +60,28 @@ interface DashboardData {
   predictiveHealth: PredictiveHealthMetrics | null
 }
 
+interface NeuroData {
+  neuroState: {
+    dopamine: { level: string; percentage: number; trend: string; driver: string }
+    cortisol: { level: string; percentage: number; trend: string; driver: string }
+    serotonin: { level: string; percentage: number; trend: string; driver: string }
+    focus_capacity: { level: string; percentage: number; trend: string; driver: string }
+    overall_state: string
+    summary: string
+  }
+  prophecy: {
+    predicted_score: number
+    trajectory: string
+    prophecy: string
+    risk_window: string
+    pivot_action: string
+  }
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [data, setData] = useState<DashboardData | null>(null)
+  const [neuroData, setNeuroData] = useState<NeuroData | null>(null)
   const [loading, setLoading] = useState(true)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showWelcomeBack, setShowWelcomeBack] = useState(false)
@@ -235,6 +259,16 @@ export default function DashboardPage() {
       predictiveHealth: calculatePredictiveHealth(sevenDayLogs || [])
     })
     setLoading(false)
+
+    // Fetch neuro state asynchronously (non-blocking)
+    try {
+      const neuroRes = await fetch('/api/neuro')
+      if (neuroRes.ok) {
+        const neuroJson = await neuroRes.json()
+        setNeuroData(neuroJson)
+      }
+    } catch { /* silent — neuro is enhancement, not critical */ }
+
     } catch (err) {
       console.error('[Dashboard Error]', err)
       setLoading(false)
@@ -370,6 +404,91 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Neurochemical State + Focus Prophecy */}
+      {neuroData && (
+        <div className="w-full max-w-3xl mx-auto mt-10 space-y-6">
+          {/* Focus Prophecy */}
+          <div className={`relative overflow-hidden rounded-[32px] p-6 border backdrop-blur-xl ${
+            neuroData.prophecy.trajectory === 'crash_incoming' ? 'bg-red-500/5 border-red-500/15' :
+            neuroData.prophecy.trajectory === 'declining' ? 'bg-orange-500/5 border-orange-500/10' :
+            neuroData.prophecy.trajectory === 'peak_day' ? 'bg-emerald-500/5 border-emerald-500/15' :
+            neuroData.prophecy.trajectory === 'improving' ? 'bg-sky-500/5 border-sky-500/10' :
+            'bg-zinc-900/40 border-white/10'
+          }`}>
+            <div className="flex items-center gap-2 mb-3">
+              <Zap className={`w-4 h-4 ${
+                neuroData.prophecy.trajectory === 'crash_incoming' ? 'text-red-400' :
+                neuroData.prophecy.trajectory === 'peak_day' ? 'text-emerald-400' : 'text-zinc-400'
+              }`} />
+              <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Focus Prophecy</span>
+              <span className={`ml-auto text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                neuroData.prophecy.trajectory === 'crash_incoming' ? 'text-red-400 bg-red-500/10 border-red-500/20' :
+                neuroData.prophecy.trajectory === 'declining' ? 'text-orange-400 bg-orange-500/10 border-orange-500/20' :
+                neuroData.prophecy.trajectory === 'peak_day' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' :
+                neuroData.prophecy.trajectory === 'improving' ? 'text-sky-400 bg-sky-500/10 border-sky-500/20' :
+                'text-zinc-400 bg-white/5 border-white/10'
+              }`}>{neuroData.prophecy.trajectory.replace('_', ' ')}</span>
+            </div>
+            <p className="text-white font-serif text-lg leading-snug mb-3">{neuroData.prophecy.prophecy}</p>
+            <div className="flex flex-col sm:flex-row gap-3 text-xs">
+              <div className="flex-1 bg-black/20 rounded-xl p-3 border border-white/5">
+                <span className="text-zinc-500 font-bold block mb-1">⚠️ Risk Window</span>
+                <span className="text-zinc-300">{neuroData.prophecy.risk_window}</span>
+              </div>
+              <div className="flex-1 bg-black/20 rounded-xl p-3 border border-white/5">
+                <span className="text-zinc-500 font-bold block mb-1">⚡ Pivot Action</span>
+                <span className="text-zinc-300">{neuroData.prophecy.pivot_action}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Neurochemical Bars */}
+          <div className="rounded-[32px] bg-zinc-950/60 backdrop-blur-xl border border-white/8 p-6">
+            <div className="flex items-center gap-2 mb-5">
+              <Brain className="w-4 h-4 text-zinc-400" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Neural State</span>
+              <span className={`ml-auto text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                neuroData.neuroState.overall_state === 'thriving' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' :
+                neuroData.neuroState.overall_state === 'good' ? 'text-sky-400 bg-sky-500/10 border-sky-500/20' :
+                neuroData.neuroState.overall_state === 'strained' ? 'text-orange-400 bg-orange-500/10 border-orange-500/20' :
+                neuroData.neuroState.overall_state === 'crisis' ? 'text-red-400 bg-red-500/10 border-red-500/20' :
+                'text-zinc-400 bg-white/5 border-white/10'
+              }`}>{neuroData.neuroState.overall_state}</span>
+            </div>
+
+            <div className="space-y-4">
+              {[
+                { label: 'Dopamine', data: neuroData.neuroState.dopamine, color: 'bg-violet-400', icon: '⚡' },
+                { label: 'Cortisol', data: neuroData.neuroState.cortisol, color: 'bg-rose-400', icon: '🔥', inverted: true },
+                { label: 'Serotonin', data: neuroData.neuroState.serotonin, color: 'bg-amber-400', icon: '☀️' },
+                { label: 'Focus', data: neuroData.neuroState.focus_capacity, color: 'bg-cyan-400', icon: '🎯' },
+              ].map(({ label, data: d, color, icon, inverted }) => (
+                <div key={label} className="group">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs">{icon}</span>
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{label}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {d.trend === 'rising' && <ArrowUp className={`w-3 h-3 ${inverted ? 'text-rose-400' : 'text-emerald-400'}`} />}
+                      {d.trend === 'falling' && <ArrowDown className={`w-3 h-3 ${inverted ? 'text-emerald-400' : 'text-rose-400'}`} />}
+                      {d.trend === 'stable' && <Minus className="w-3 h-3 text-zinc-600" />}
+                      <span className="text-xs font-black text-white">{d.percentage}%</span>
+                    </div>
+                  </div>
+                  <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full transition-all duration-1000 ease-out ${color}`} style={{ width: `${d.percentage}%` }} />
+                  </div>
+                  <p className="text-[10px] text-zinc-600 mt-1 group-hover:text-zinc-400 transition-colors line-clamp-1">{d.driver}</p>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-xs text-zinc-500 mt-4 font-medium text-center">{neuroData.neuroState.summary}</p>
+          </div>
+        </div>
+      )}
 
       {/* Floating Action Bar (Quick Stats) */}
       <div className="w-full max-w-3xl mx-auto mt-auto grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10">
