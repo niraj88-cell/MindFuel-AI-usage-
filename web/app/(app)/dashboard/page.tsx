@@ -297,13 +297,23 @@ export default function DashboardPage() {
       }
     } catch { /* silent — neuro is enhancement, not critical */ }
 
-    // Check if we should play voice greeting
-    if (typeof window !== 'undefined' && !sessionStorage.getItem('greeting_played')) {
-      // Play a short delay to ensure voices are loaded
-      setTimeout(() => {
-        playNativeVoice("Welcome back, boss. MindFuel A.I. is online. I've analyzed your latest patterns.")
+    // Play voice greeting (Bound to first interaction to bypass autoplay policies)
+    if (sessionStorage.getItem('greeting_played') !== 'true' && profile?.onboarding_completed) {
+      const greeting = getDashboardGreeting(user.user_metadata?.full_name?.split(' ')[0] || 'boss')
+      
+      const playGreeting = () => {
+        playNativeVoice(greeting)
         sessionStorage.setItem('greeting_played', 'true')
-      }, 1000)
+        // Remove listeners once played
+        document.removeEventListener('click', playGreeting)
+        document.removeEventListener('keydown', playGreeting)
+        document.removeEventListener('scroll', playGreeting)
+      }
+
+      // Add listeners for the first user interaction
+      document.addEventListener('click', playGreeting)
+      document.addEventListener('keydown', playGreeting)
+      document.addEventListener('scroll', playGreeting, { once: true })
     }
 
     setLoading(false)
