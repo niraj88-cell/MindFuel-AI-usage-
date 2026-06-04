@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { scanContent } from '@/lib/agents/tools/contentScanner'
 import { findAlternatives } from '@/lib/agents/tools/alternativeFinder'
+import { analyzeMentalNutrition } from '@/lib/agents/tools/mentalNutrition'
 import { createClient } from '@/lib/supabase/server'
 import { checkAnalyzeRateLimit } from '@/lib/rate-limit'
 import { sanitizeText, inspectPayload } from '@/lib/security'
@@ -121,7 +122,10 @@ export async function POST(req: NextRequest) {
       .trim()
 
     // ── Analyze content ──
-    const analysis = await scanContent(sanitized)
+    const [analysis, nutrition] = await Promise.all([
+      scanContent(sanitized),
+      analyzeMentalNutrition(sanitized)
+    ])
 
     // If junk content, find alternatives
     let alternatives = null
@@ -148,6 +152,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       analysis,
+      nutrition,
       alternatives,
       dailyLogsRemaining: dailyLogsRemaining !== null ? Math.max(0, dailyLogsRemaining) : undefined,
     })
