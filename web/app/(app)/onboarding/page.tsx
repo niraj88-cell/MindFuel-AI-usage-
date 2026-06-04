@@ -1,34 +1,83 @@
+// app/(app)/onboarding/page.tsx — "The First Five Minutes"
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Brain, ArrowRight, Loader2, Target, Smartphone, Bell, Heart, CheckCircle2 } from 'lucide-react'
+import { Brain, ArrowRight, Loader2, Sparkles, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { trackEvent } from '@/lib/mixpanel'
+import { FuelOrb } from '@/components/fuel/FuelOrb'
+import { useFuelVoice } from '@/lib/fuel/useFuelVoice'
 
-const STEPS = [
-  { id: 'app', title: 'What drains your energy most?', icon: Smartphone },
-  { id: 'goal', title: 'What is your primary goal?', icon: Target },
-  { id: 'mood', title: 'How is your baseline mood lately?', icon: Heart },
-  { id: 'finish', title: 'Ready to fuel your mind?', icon: Brain }
+const SCRIPT = [
+  {
+    id: 'greeting',
+    voice: "Hey. I'm Fuel. I'm going to help you understand what your screen is doing to your brain. No lectures, no guilt. Just clarity."
+  },
+  {
+    id: 'quick_scan',
+    voice: "Tell me something you consumed in the last hour. A video, an article, a scroll session — anything."
+  },
+  {
+    id: 'reveal',
+    voice: "Okay, that's high-stimulation entertainment. See that? Most people have no idea their content has a cognitive cost. I'm going to help you see it — and act on it."
+  },
+  {
+    id: 'personalize',
+    voice: "One more thing. When's the time of day you feel most scattered? Morning, afternoon, or evening?"
+  },
+  {
+    id: 'promise',
+    voice: "Got it. I'll be here. Quietly. I'll speak up when it matters. Ready to start?"
+  }
 ]
 
 export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [scanInput, setScanInput] = useState('')
+  const [isScanning, setIsScanning] = useState(false)
+  
+  const { speak } = useFuelVoice()
+  const [fuelThought, setFuelThought] = useState<string | null>(null)
 
   const [data, setData] = useState({
-    drainingApp: '',
-    primaryGoal: '',
-    baselineMood: 5,
+    scatteredTime: '',
   })
+
+  // Start Fuel narration on mount
+  useEffect(() => {
+    handleStepNarration(0)
+  }, [])
+
+  const handleStepNarration = (stepIndex: number) => {
+    if (stepIndex >= SCRIPT.length) return
+    const text = SCRIPT[stepIndex].voice
+    setFuelThought(text)
+    speak(text)
+  }
+
+  const nextStep = () => {
+    const next = step + 1
+    setStep(next)
+    handleStepNarration(next)
+  }
+
+  const handleScanSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!scanInput.trim()) return
+    
+    setIsScanning(true)
+    setTimeout(() => {
+      setIsScanning(false)
+      nextStep()
+    }, 1500) // Fake processing delay for dramatic effect
+  }
 
   async function handleComplete() {
     setLoading(true)
-    setError(null)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -37,21 +86,12 @@ export default function OnboardingPage() {
       return
     }
 
-    const { error: updateError } = await supabase
+    await supabase
       .from('profiles')
       .update({
         onboarding_completed: true,
-        content_regret: data.drainingApp,
-        // we can store goal in metadata if needed, but for now we just set onboarding_completed
       })
       .eq('id', user.id)
-
-    if (updateError) {
-      console.error(updateError)
-      setError('Failed to save your preferences.')
-      setLoading(false)
-      return
-    }
 
     trackEvent('Onboarding Completed', data)
     router.push('/dashboard')
@@ -59,107 +99,125 @@ export default function OnboardingPage() {
 
   const renderStep = () => {
     switch(step) {
-      case 0:
+      case 0: // Greeting
         return (
-          <div className="space-y-4 animate-fade-in-up">
-            {['Instagram Reels', 'TikTok', 'Twitter / X', 'YouTube Shorts', 'News & Politics'].map(app => (
-              <button
-                key={app}
-                onClick={() => { setData({ ...data, drainingApp: app }); setStep(1) }}
-                className="w-full p-4 rounded-2xl bg-zinc-900 border border-white/10 text-left hover:bg-zinc-800 transition-all font-bold text-white flex items-center justify-between"
-              >
-                {app}
-                <ArrowRight className="w-4 h-4 text-zinc-500" />
-              </button>
-            ))}
-          </div>
-        )
-      case 1:
-        return (
-          <div className="space-y-4 animate-fade-in-up">
-            {['Save 1+ hour daily', 'Improve my sleep', 'Reduce anxiety', 'Deepen my focus'].map(goal => (
-              <button
-                key={goal}
-                onClick={() => { setData({ ...data, primaryGoal: goal }); setStep(2) }}
-                className="w-full p-4 rounded-2xl bg-zinc-900 border border-white/10 text-left hover:bg-zinc-800 transition-all font-bold text-white flex items-center justify-between"
-              >
-                {goal}
-                <ArrowRight className="w-4 h-4 text-zinc-500" />
-              </button>
-            ))}
-          </div>
-        )
-      case 2:
-        return (
-          <div className="space-y-6 animate-fade-in-up">
-            <div className="flex justify-between px-2">
-              <span className="text-2xl">😫</span>
-              <span className="text-2xl">😐</span>
-              <span className="text-2xl">🚀</span>
-            </div>
-            <input 
-              type="range" 
-              min="1" max="10" 
-              value={data.baselineMood}
-              onChange={(e) => setData({ ...data, baselineMood: parseInt(e.target.value) })}
-              className="w-full accent-white"
-            />
-            <Button 
-              onClick={() => setStep(3)}
-              className="w-full h-12 bg-white text-black hover:bg-zinc-200 rounded-xl font-bold"
-            >
+          <div className="space-y-8 animate-fade-in-up text-center max-w-md mx-auto">
+            <h1 className="text-3xl md:text-5xl font-serif text-white tracking-tight">Meet Fuel.</h1>
+            <p className="text-zinc-400 text-lg">Your living digital companion.</p>
+            <Button onClick={nextStep} className="w-full h-14 bg-white text-black font-black uppercase tracking-widest rounded-2xl hover:bg-zinc-200">
               Continue
             </Button>
           </div>
         )
-      case 3:
+      case 1: // Quick Scan
         return (
-          <div className="space-y-6 animate-fade-in-up text-center">
-            <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+          <div className="space-y-6 animate-fade-in-up w-full max-w-md mx-auto">
+            <h1 className="text-2xl font-serif text-white tracking-tight mb-2">Let's try something.</h1>
+            
+            <form onSubmit={handleScanSubmit} className="relative">
+              <input
+                type="text"
+                placeholder="e.g. Scrolled TikTok for 20 mins..."
+                value={scanInput}
+                onChange={(e) => setScanInput(e.target.value)}
+                disabled={isScanning}
+                className="w-full bg-zinc-900 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30 transition-colors"
+                autoFocus
+              />
+              <button 
+                type="submit"
+                disabled={isScanning || !scanInput.trim()}
+                className="absolute right-2 top-2 bottom-2 aspect-square bg-white text-black rounded-xl flex items-center justify-center hover:bg-zinc-200 transition-colors disabled:opacity-50"
+              >
+                {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              </button>
+            </form>
+          </div>
+        )
+      case 2: // The Reveal
+        return (
+          <div className="space-y-6 animate-fade-in-up text-center max-w-md mx-auto">
+            <div className="w-full bg-zinc-950/60 backdrop-blur-3xl border border-white/10 rounded-[32px] p-8 shadow-2xl relative overflow-hidden mb-8">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 to-orange-500" />
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Sparkles className="w-4 h-4 text-white" />
+                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Instant Verdict</span>
+              </div>
+              <h2 className="text-2xl font-black text-white mb-2">High-Stimulation</h2>
+              <p className="text-zinc-400 text-sm">Fun in the moment, but your brain treats it like candy — energy spike, then crash.</p>
             </div>
-            <p className="text-zinc-400">
-              We've tailored your dashboard. MindFuel will now help you break your <span className="text-white font-bold">{data.drainingApp}</span> habit and <span className="text-white font-bold">{data.primaryGoal.toLowerCase()}</span>.
-            </p>
-            {error && <p className="text-red-400 text-sm">{error}</p>}
+            <Button onClick={nextStep} className="w-full h-14 bg-white text-black font-black uppercase tracking-widest rounded-2xl hover:bg-zinc-200">
+              Makes Sense
+            </Button>
+          </div>
+        )
+      case 3: // Personalize
+        return (
+          <div className="space-y-6 animate-fade-in-up w-full max-w-md mx-auto">
+            <h1 className="text-2xl font-serif text-white tracking-tight mb-6 text-center">When is your focus weakest?</h1>
+            
+            <div className="space-y-3">
+              {['Morning (8am - 12pm)', 'Afternoon (1pm - 5pm)', 'Evening (6pm - 11pm)'].map(time => (
+                <button
+                  key={time}
+                  onClick={() => { setData({ ...data, scatteredTime: time }); nextStep() }}
+                  className="w-full p-5 rounded-2xl bg-zinc-900 border border-white/10 text-left hover:bg-zinc-800 hover:border-white/20 transition-all font-bold text-white flex items-center justify-between group"
+                >
+                  {time}
+                  <ArrowRight className="w-4 h-4 text-zinc-600 group-hover:text-white transition-colors" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )
+      case 4: // The Promise
+        return (
+          <div className="space-y-8 animate-fade-in-up text-center max-w-md mx-auto">
+            <div className="w-24 h-24 bg-white/5 rounded-[32px] flex items-center justify-center mx-auto mb-6 border border-white/10">
+              <Brain className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-3xl md:text-5xl font-serif text-white tracking-tight">You're ready.</h1>
+            <p className="text-zinc-400 text-lg">Fuel will run quietly in the background.</p>
+            
             <Button 
               onClick={handleComplete}
               disabled={loading}
-              className="w-full h-12 bg-white text-black hover:bg-zinc-200 rounded-xl font-bold"
+              className="w-full h-14 bg-white text-black font-black uppercase tracking-widest rounded-2xl hover:bg-zinc-200 shadow-[0_0_40px_rgba(255,255,255,0.2)] hover:scale-105 transition-all"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Enter Dashboard'}
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Enter Dashboard'}
             </Button>
           </div>
         )
     }
   }
 
-  const CurrentIcon = STEPS[step].icon
-
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <CurrentIcon className="w-6 h-6 text-black" />
-          </div>
-          <h1 className="text-2xl font-black text-white">{STEPS[step].title}</h1>
-        </div>
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-black to-black opacity-60" />
+      </div>
 
-        {/* Progress */}
-        <div className="flex gap-2 mb-8">
-          {STEPS.map((s, i) => (
-            <div 
-              key={s.id} 
-              className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? 'bg-white' : 'bg-white/10'}`} 
-            />
-          ))}
-        </div>
+      {/* Progress */}
+      <div className="absolute top-12 left-0 right-0 max-w-md mx-auto px-6 flex gap-2">
+        {SCRIPT.map((s, i) => (
+          <div 
+            key={s.id} 
+            className="h-1 flex-1 rounded-full transition-all duration-500" 
+            style={{ backgroundColor: i <= step ? 'white' : 'rgba(255,255,255,0.1)' }}
+          />
+        ))}
+      </div>
 
-        {/* Content */}
-        <div className="min-h-[250px]">
-          {renderStep()}
+      {/* Main Content */}
+      <div className="relative z-10 w-full pt-12 pb-32 flex items-center justify-center min-h-[60vh]">
+        {renderStep()}
+      </div>
+
+      {/* Fuel Orb at the bottom */}
+      <div className="absolute bottom-12 left-0 right-0 flex justify-center z-20 pointer-events-none">
+        <div className="pointer-events-auto">
+          <FuelOrb thought={fuelThought} />
         </div>
       </div>
     </div>
