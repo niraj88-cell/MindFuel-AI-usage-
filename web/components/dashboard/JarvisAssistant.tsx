@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState, useRef } from 'react'
-import { Sparkles, Brain, Volume2, VolumeX } from 'lucide-react'
+import { Cpu, Brain, Volume2, VolumeX, Sparkles } from 'lucide-react'
 
 interface JarvisAssistantProps {
   neuroData: {
@@ -36,24 +36,26 @@ export function JarvisAssistant({ neuroData }: JarvisAssistantProps) {
     if (neuroData && !hasSpoken && !isMuted && synthRef.current) {
       setHasSpoken(true)
       
-      const greeting = `Hello Boss. ${neuroData.prophecy.prophecy}`
+      const greeting = `Welcome back, Boss. ${neuroData.prophecy.prophecy}`
       
       const utterance = new SpeechSynthesisUtterance(greeting)
       
-      // Try to find a premium/calm voice (e.g. Daniel on Mac, or a good Google voice)
+      // Look for a slick, smooth voice. E.g., Samantha, Karen, Fiona (female AI vibes like Friday/Edith), or Daniel/Google (Jarvis).
       const voices = synthRef.current.getVoices()
       const preferredVoice = voices.find(v => 
+        v.name.includes('Samantha') || 
+        v.name.includes('Karen') ||
+        v.name.includes('Fiona') ||
         v.name.includes('Daniel') || 
-        v.name.includes('Google UK English Male') ||
-        (v.lang.startsWith('en') && v.name.includes('Male'))
+        v.name.includes('Google UK English')
       )
       
       if (preferredVoice) {
         utterance.voice = preferredVoice
       }
       
-      utterance.rate = 0.95 // slightly slower for a calmer feel
-      utterance.pitch = 0.9 // slightly deeper
+      utterance.rate = 1.05 // Slightly faster for a crisp, techy feel
+      utterance.pitch = 1.1 // Slightly higher/crisper
       
       utterance.onstart = () => setIsSpeaking(true)
       utterance.onend = () => setIsSpeaking(false)
@@ -75,41 +77,46 @@ export function JarvisAssistant({ neuroData }: JarvisAssistantProps) {
   if (!neuroData) return null
 
   return (
-    <div className={`fixed bottom-6 right-6 z-50 flex items-end gap-4 transition-all duration-500 ease-in-out ${isSpeaking ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-90 hover:opacity-100'}`}>
+    <div className={`fixed bottom-6 right-6 z-50 flex items-end gap-4 transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) ${isSpeaking ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-90 scale-95 hover:opacity-100'}`}>
       
       {/* Thought Bubble */}
-      <div className="bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl max-w-[280px] hidden sm:block">
-        <p className="text-sm font-serif text-zinc-300 leading-snug">
-          "Hello Boss. <span className="text-white">{neuroData.prophecy.prophecy}</span>"
+      <div className="bg-zinc-950/90 backdrop-blur-2xl border border-sky-500/20 rounded-2xl p-4 shadow-[0_0_30px_rgba(14,165,233,0.15)] max-w-[280px] hidden sm:block relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-tr from-sky-500/5 to-transparent pointer-events-none" />
+        <p className="text-sm font-sans tracking-wide text-sky-100/70 leading-snug relative z-10">
+          "Welcome back, Boss. <span className="text-sky-50 font-medium">{neuroData.prophecy.prophecy}</span>"
         </p>
       </div>
 
       {/* Assistant Orb */}
       <div className="relative group">
-        {/* Pulsing rings when speaking */}
+        {/* Stark Tech Hologram Rings */}
         {isSpeaking && (
           <>
-            <div className="absolute inset-0 bg-emerald-500/20 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="absolute inset-[-8px] border border-emerald-500/30 rounded-full animate-pulse" />
+            <div className="absolute inset-[-4px] border border-sky-400/40 rounded-full animate-[spin_3s_linear_infinite]" />
+            <div className="absolute inset-[-8px] border-t-2 border-r-2 border-cyan-400/30 rounded-full animate-[spin_2s_linear_infinite_reverse]" />
+            <div className="absolute inset-0 bg-sky-500/20 rounded-full animate-ping" style={{ animationDuration: '1.5s' }} />
           </>
         )}
         
         <button 
           onClick={toggleMute}
-          className={`w-14 h-14 rounded-full flex items-center justify-center border backdrop-blur-xl shadow-2xl transition-all cursor-pointer z-10 relative
+          className={`w-14 h-14 rounded-full flex items-center justify-center border backdrop-blur-2xl shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all duration-500 cursor-pointer z-10 relative overflow-hidden
             ${isSpeaking 
-              ? 'bg-zinc-900 border-emerald-500/50 scale-105' 
-              : 'bg-zinc-900/80 border-white/10 hover:border-white/20'}`}
+              ? 'bg-zinc-950 border-sky-400/60 scale-110 shadow-[0_0_30px_rgba(56,189,248,0.3)]' 
+              : 'bg-zinc-950/80 border-white/10 hover:border-sky-500/30'}`}
         >
+          {/* Inner core glow */}
+          {isSpeaking && <div className="absolute inset-0 rounded-full" style={{ background: 'radial-gradient(circle, rgba(56,189,248,0.3) 0%, transparent 70%)' }} />}
+
           {isSpeaking ? (
-            <Sparkles className="w-6 h-6 text-emerald-400 animate-pulse" />
+            <Cpu className="w-6 h-6 text-sky-400 animate-pulse relative z-10" />
           ) : (
-            <Brain className="w-6 h-6 text-zinc-400 group-hover:text-zinc-200 transition-colors" />
+            <Brain className="w-6 h-6 text-zinc-400 group-hover:text-sky-200 transition-colors relative z-10" />
           )}
 
           {/* Mute toggle indicator (shows on hover) */}
-          <div className="absolute -top-2 -right-2 bg-zinc-800 rounded-full p-1 border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
-            {isMuted ? <VolumeX className="w-3 h-3 text-red-400" /> : <Volume2 className="w-3 h-3 text-zinc-400" />}
+          <div className="absolute -top-1 -right-1 bg-zinc-900 rounded-full p-1 border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-lg">
+            {isMuted ? <VolumeX className="w-3 h-3 text-red-400" /> : <Volume2 className="w-3 h-3 text-sky-400" />}
           </div>
         </button>
       </div>
