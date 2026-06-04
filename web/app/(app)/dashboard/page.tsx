@@ -36,6 +36,7 @@ import { DailyCheckIn } from '@/components/dashboard/DailyCheckIn'
 import { MindCore } from '@/components/dashboard/MindCore'
 import { OnboardingDemo } from '@/components/dashboard/OnboardingDemo'
 import { OnboardingFlow } from '@/components/dashboard/OnboardingFlow'
+import { JarvisAssistant } from '@/components/dashboard/JarvisAssistant'
 import { createClient } from '@/lib/supabase/client'
 import { formatRelativeTime, getCategoryEmoji, getScoreColor } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -540,6 +541,9 @@ export default function DashboardPage() {
       </div>
 
       <QuickLogFAB onLogSaved={() => loadDashboard()} />
+
+      {/* Jarvis Voice & AI Interface */}
+      <JarvisAssistant neuroData={neuroData} />
     </div>
   )
 }
