@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react'
 import {
   User, Mail, Shield, LogOut, Loader2, Award, Download, FileJson,
-  FileText, Flame, Brain, Lock, ChevronRight, Sparkles, BarChart3, Clock
+  FileText, Flame, Brain, Lock, ChevronRight, Sparkles, BarChart3, Clock, Mic
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -47,9 +47,14 @@ export default function ProfilePage() {
   const [exporting, setExporting] = useState<'json' | 'csv' | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [voiceMode, setVoiceMode] = useState<'browser' | 'elevenlabs'>('browser')
 
   useEffect(() => {
     loadProfile()
+    const savedVoiceMode = localStorage.getItem('fuel_voice_mode')
+    if (savedVoiceMode === 'elevenlabs') {
+      setVoiceMode('elevenlabs')
+    }
   }, [])
 
   async function loadProfile() {
@@ -269,6 +274,50 @@ export default function ProfilePage() {
               <div className="text-xs font-black text-white">CSV</div>
               <div className="text-[10px] text-zinc-500">Spreadsheet</div>
             </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Voice Settings */}
+      <div className="bg-zinc-900/50 border border-white/10 rounded-3xl p-6 space-y-4">
+        <div className="flex items-center gap-3 mb-2">
+          <Mic className="w-5 h-5 text-white" />
+          <div>
+            <h3 className="text-sm font-black text-white">Fuel Voice Setting</h3>
+            <p className="text-xs text-zinc-500">Choose the voice engine for your companion</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => {
+              setVoiceMode('browser')
+              localStorage.setItem('fuel_voice_mode', 'browser')
+            }}
+            className={`flex items-center gap-2.5 p-4 rounded-2xl border transition-all cursor-pointer group ${
+              voiceMode === 'browser' ? 'bg-white/10 border-white/30' : 'bg-zinc-800/50 border-white/10 hover:bg-white/5'
+            }`}
+          >
+            <div className="text-left">
+              <div className="text-xs font-black text-white">Standard</div>
+              <div className="text-[10px] text-zinc-500">Device Native</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => {
+              setVoiceMode('elevenlabs')
+              localStorage.setItem('fuel_voice_mode', 'elevenlabs')
+            }}
+            className={`flex items-center justify-between gap-2.5 p-4 rounded-2xl border transition-all cursor-pointer group ${
+              voiceMode === 'elevenlabs' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-zinc-800/50 border-white/10 hover:bg-white/5'
+            }`}
+          >
+            <div className="text-left">
+              <div className="text-xs font-black text-amber-500">Premium</div>
+              <div className="text-[10px] text-zinc-500">ElevenLabs AI</div>
+            </div>
+            {voiceMode === 'elevenlabs' && <Sparkles className="w-4 h-4 text-amber-500" />}
           </button>
         </div>
       </div>
