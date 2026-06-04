@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react'
 import {
   User, Mail, Shield, LogOut, Loader2, Award, Download, FileJson,
-  FileText, Flame, Brain, Lock, ChevronRight, Sparkles, BarChart3, Clock, Mic
+  FileText, Flame, Brain, Lock, ChevronRight, Sparkles, BarChart3, Clock, Mic, Terminal, Key, Copy, Check
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -48,6 +48,7 @@ export default function ProfilePage() {
   const [exportError, setExportError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [voiceMode, setVoiceMode] = useState<'browser' | 'elevenlabs'>('browser')
+  const [copiedKey, setCopiedKey] = useState(false)
 
   useEffect(() => {
     loadProfile()
@@ -319,6 +320,42 @@ export default function ProfilePage() {
             </div>
             {voiceMode === 'elevenlabs' && <Sparkles className="w-4 h-4 text-amber-500" />}
           </button>
+        </div>
+      </div>
+
+      {/* Developer API */}
+      <div className="bg-zinc-900/50 border border-white/10 rounded-3xl p-6 space-y-4">
+        <div className="flex items-center gap-3 mb-2">
+          <Terminal className="w-5 h-5 text-emerald-400" />
+          <div>
+            <h3 className="text-sm font-black text-white">Fuel API (V3 Beta)</h3>
+            <p className="text-xs text-zinc-500">Connect MindFuel to external apps and trackers</p>
+          </div>
+        </div>
+
+        <div className="bg-zinc-950 border border-white/10 rounded-2xl p-4 relative group overflow-hidden">
+          <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center gap-3 mb-3 relative z-10">
+            <Key className="w-4 h-4 text-zinc-500" />
+            <div className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Your Private Key</div>
+          </div>
+          
+          <div className="flex items-center justify-between gap-4 bg-zinc-900/80 rounded-xl p-3 border border-white/5 relative z-10">
+            <code className="text-sm font-mono text-emerald-400/80 tracking-wider truncate">
+              mf_live_xxxxxxxxxxxxxxxxxxxxxxxx
+            </code>
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText('mf_live_demo_key_123')
+                setCopiedKey(true)
+                setTimeout(() => setCopiedKey(false), 2000)
+              }}
+              className="shrink-0 w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-colors"
+            >
+              {copiedKey ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-zinc-400 hover:text-white" />}
+            </button>
+          </div>
+          <p className="text-[10px] text-zinc-500 mt-3 relative z-10">Keep this key secret. You can use it to POST events to <code className="text-zinc-400 bg-zinc-800 px-1 py-0.5 rounded">/api/fuel/ingest</code>.</p>
         </div>
       </div>
 
