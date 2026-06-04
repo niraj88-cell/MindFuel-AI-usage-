@@ -338,8 +338,9 @@ export default function CoachPage() {
                 <Brain className="w-5 h-5 text-indigo-300 relative z-10 animate-pulse" />
              </div>
              <div className="flex items-center gap-2 h-10">
+                <span className="text-xs font-medium text-zinc-400 italic mr-2 animate-pulse">Searching semantic memory...</span>
                 {[0, 150, 300].map(d => (
-                  <div key={d} className="w-2 h-2 rounded-full bg-indigo-400/80 shadow-[0_0_10px_rgba(99,102,241,0.8)] animate-bounce" style={{ animationDelay: `${d}ms` }} />
+                  <div key={d} className="w-1.5 h-1.5 rounded-full bg-indigo-400/80 shadow-[0_0_10px_rgba(99,102,241,0.8)] animate-bounce" style={{ animationDelay: `${d}ms` }} />
                 ))}
              </div>
           </div>

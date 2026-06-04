@@ -97,17 +97,24 @@ export default function LogPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      await supabase.from('mental_logs').insert({
-        user_id: user.id,
-        content: lastContent,
-        category: lastAnalysis.category as any,
-        mental_score: lastAnalysis.mental_score,
-        duration_minutes: parseInt(duration) || 15,
-        mood_before: moodBefore,
-        mood_after: moodAfter,
-        source: 'manual' as const,
-        metadata: { summary: lastAnalysis.summary },
+      const response = await fetch('/api/log/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: lastContent,
+          category: lastAnalysis.category,
+          mental_score: lastAnalysis.mental_score,
+          duration_minutes: parseInt(duration) || 15,
+          mood_before: moodBefore,
+          mood_after: moodAfter,
+          source: 'manual',
+          metadata: { summary: lastAnalysis.summary },
+        })
       })
+
+      if (!response.ok) {
+        throw new Error('Failed to save log')
+      }
 
       // Update daily summary
       const today = format(new Date(), 'yyyy-MM-dd')

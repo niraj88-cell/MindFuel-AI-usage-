@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { storeMemory } from '@/lib/ai/memory'
 
 // Simple naive API key validation for the MVP
 // In a real system, you'd have an API_KEYS table with hashed keys
@@ -64,6 +65,13 @@ export async function POST(req: Request) {
         source: 'auto_tracking' as const,
         metadata: { event, app, timestamp: timestamp || new Date().toISOString() }
       })
+
+      const memoryText = `Passive tracker recorded ${duration_mins || 0} minutes on ${app}. Event: ${event}. Impact: ${50 + mentalScoreImpact}/100. Category: ${category}.`
+      storeMemory(user.id, memoryText, {
+        type: 'intercept',
+        app,
+        event
+      }).catch(e => console.error('Passive Memory Sync Error:', e))
     }
 
     return NextResponse.json({

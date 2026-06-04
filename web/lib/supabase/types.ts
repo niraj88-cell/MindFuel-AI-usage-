@@ -354,12 +354,128 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['mood_scans']['Insert']>
         Relationships: []
       }
+      semantic_memories: {
+        Row: {
+          id: string
+          user_id: string
+          content: string
+          embedding: any
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['semantic_memories']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['semantic_memories']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: "semantic_memories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      biometric_logs: {
+        Row: {
+          id: string
+          user_id: string
+          provider: string
+          sleep_score: number | null
+          hrv: number | null
+          readiness_score: number | null
+          resting_heart_rate: number | null
+          date: string
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['biometric_logs']['Row'], 'id' | 'created_at' | 'date'> & {
+          id?: string
+          date?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['biometric_logs']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: "biometric_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      squads: {
+        Row: {
+          id: string
+          name: string
+          invite_code: string
+          created_by: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['squads']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['squads']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: "squads_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      squad_members: {
+        Row: {
+          squad_id: string
+          user_id: string
+          joined_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['squad_members']['Row'], 'joined_at'> & {
+          joined_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['squad_members']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: "squad_members_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squad_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      match_memories: {
+        Args: {
+          query_embedding: any
+          match_threshold: number
+          match_count: number
+          p_user_id: string
+        }
+        Returns: {
+          id: string
+          content: string
+          metadata: Json
+          similarity: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

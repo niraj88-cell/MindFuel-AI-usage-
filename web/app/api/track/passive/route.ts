@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { scanContent } from '@/lib/agents/tools/contentScanner'
+import { storeMemory } from '@/lib/ai/memory'
 
 export const maxDuration = 60
 
@@ -58,6 +59,14 @@ export async function POST(req: Request) {
       console.error('[Passive Tracking] DB Insert Error:', error)
       return NextResponse.json({ error: 'Failed to save log' }, { status: 500 })
     }
+
+    const memoryText = `Passive tracking recorded ${duration_minutes || 5} minutes on ${platform || 'web'}. Title: "${title}". Impact: ${analysis.mental_score}/100. Category: ${analysis.category}.`
+    storeMemory(user.id, memoryText, {
+      type: 'log',
+      category: analysis.category,
+      mental_score: analysis.mental_score,
+      original_content: contextStr.substring(0, 500)
+    }).catch(e => console.error('Passive Memory Sync Error:', e))
 
     return NextResponse.json({ success: true, analysis })
   } catch (error) {
