@@ -44,6 +44,7 @@ import { formatRelativeTime, getCategoryEmoji, getScoreColor } from '@/lib/utils
 import { format } from 'date-fns'
 import { trackEvent } from '@/lib/mixpanel'
 import { calculatePredictiveHealth, PredictiveHealthMetrics } from '@/lib/agents/tools/predictiveHealth'
+import { checkPredictiveRisk, PredictiveState } from '@/lib/fuel/predictiveEngine'
 
 interface DashboardData {
   todayScore: number
@@ -90,6 +91,7 @@ export default function DashboardPage() {
   const [showWelcomeBack, setShowWelcomeBack] = useState(false)
   const [daysSinceLastLog, setDaysSinceLastLog] = useState(0)
   const [userId, setUserId] = useState<string | null>(null)
+  const [predictiveState, setPredictiveState] = useState<PredictiveState | null>(null)
 
   const loadDashboard = useCallback(async () => {
     const supabase = createClient()
@@ -97,6 +99,10 @@ export default function DashboardPage() {
     if (!user) return
 
     const today = format(new Date(), 'yyyy-MM-dd')
+
+    // Check predictive risk on load
+    const pState = checkPredictiveRisk()
+    setPredictiveState(pState)
 
     try {
       // Run ALL independent queries in parallel instead of sequentially
@@ -373,6 +379,30 @@ export default function DashboardPage() {
           )}
         </div>
 
+        {/* Predictive Rescue Banner (Phase 7) */}
+        {predictiveState?.isRiskActive && (
+          <div className="mt-8 bg-zinc-950/60 backdrop-blur-3xl border border-amber-500/20 rounded-[32px] p-6 shadow-2xl relative overflow-hidden animate-fade-in-up">
+            <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-transparent pointer-events-none" />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center border border-amber-500/20">
+                  <AlertTriangle className="w-6 h-6 text-amber-500" />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold text-lg">{predictiveState.triggerContext}</h3>
+                  <p className="text-zinc-400 text-sm">{predictiveState.voiceLine}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => router.push('/focus')}
+                className="w-full sm:w-auto px-6 py-3 bg-white text-black font-black uppercase tracking-widest text-xs rounded-xl hover:bg-zinc-200 transition-colors shrink-0"
+              >
+                Accept Mission
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* AI Insight (The Narrative) */}
         {data?.coachInsight && (
           <div className="mt-8 max-w-xl mx-auto text-center px-4">
@@ -569,9 +599,10 @@ export default function DashboardPage() {
             isFocusActive: false,
             totalLogsToday: data?.totalLogs || 0,
           }, neuroData.prophecy.prophecy)}
+          riskLevel={predictiveState?.riskLevel || 'safe'}
         />
       ) : (
-        <FuelOrb />
+        <FuelOrb riskLevel={predictiveState?.riskLevel || 'safe'} />
       )}
     </div>
   )
