@@ -2,7 +2,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Send, Loader2, Brain, Bot, User, Sparkles, Clock, AlertCircle } from 'lucide-react'
+import { Send, Loader2, Brain, Bot, User, Sparkles, Clock, AlertCircle, Volume2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
@@ -55,6 +55,30 @@ const QUICK_PROMPTS = [
   'Give me a 7-day digital detox plan',
   'Why do I keep doomscrolling?',
 ]
+
+function playNativeVoice(text: string) {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text.replace(/[*#]/g, ''));
+  
+  const voices = window.speechSynthesis.getVoices();
+  // Hunt for premium neural voices
+  const premium = voices.find(v => 
+    v.name.includes('Premium') || 
+    v.name.includes('Enhanced') || 
+    v.name.includes('Siri') ||
+    v.name.includes('Google') ||
+    v.name.includes('Online')
+  );
+  
+  if (premium) {
+    utterance.voice = premium;
+  }
+  
+  utterance.rate = 1.05;
+  utterance.pitch = 1.0;
+  window.speechSynthesis.speak(utterance);
+}
 
 export default function CoachPage() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -319,8 +343,15 @@ export default function CoachPage() {
                         )}
                      </div>
                      {msg.ts && !msg.isStreaming && (
-                        <div className="text-[10px] text-zinc-600 mt-4 font-medium tracking-wide">
-                          M.A.I. • {new Date(msg.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <div className="flex items-center gap-3 mt-4 text-[10px] text-zinc-600 font-medium tracking-wide">
+                          <span>M.A.I. • {new Date(msg.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          <button 
+                            onClick={() => playNativeVoice(msg.content)}
+                            className="p-1.5 rounded-full hover:bg-white/10 text-zinc-500 hover:text-indigo-400 transition-colors"
+                            title="Listen with native premium voice"
+                          >
+                            <Volume2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                      )}
                    </div>
