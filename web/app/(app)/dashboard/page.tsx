@@ -61,8 +61,9 @@ function playNativeVoice(text: string) {
   );
   
   if (premium) utterance.voice = premium;
-  utterance.rate = 1.05;
-  utterance.pitch = 1.0;
+  // Peter Parker energetic/youthful tweak
+  utterance.rate = 1.15; // Faster talking
+  utterance.pitch = 1.25; // Slightly higher/younger pitch
   window.speechSynthesis.speak(utterance);
 }
 
@@ -299,7 +300,8 @@ export default function DashboardPage() {
 
     // Play voice greeting (Bound to first interaction to bypass autoplay policies)
     if (sessionStorage.getItem('greeting_played') !== 'true' && profile?.onboarding_completed) {
-      const greeting = getDashboardGreeting(user.user_metadata?.full_name?.split(' ')[0] || 'boss')
+      const firstName = user.user_metadata?.full_name?.split(' ')[0] || 'boss'
+      const greeting = `Hey ${firstName}! Suit's online, web shooters are loaded, and I've analyzed your latest neural patterns. Let's get to work!`
       
       const playGreeting = () => {
         playNativeVoice(greeting)

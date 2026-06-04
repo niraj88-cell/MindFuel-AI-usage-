@@ -62,7 +62,6 @@ function playNativeVoice(text: string) {
   const utterance = new SpeechSynthesisUtterance(text.replace(/[*#]/g, ''));
   
   const voices = window.speechSynthesis.getVoices();
-  // Hunt for premium neural voices
   const premium = voices.find(v => 
     v.name.includes('Premium') || 
     v.name.includes('Enhanced') || 
@@ -71,12 +70,9 @@ function playNativeVoice(text: string) {
     v.name.includes('Online')
   );
   
-  if (premium) {
-    utterance.voice = premium;
-  }
-  
-  utterance.rate = 1.05;
-  utterance.pitch = 1.0;
+  if (premium) utterance.voice = premium;
+  utterance.rate = 1.15; // Faster talking
+  utterance.pitch = 1.25; // Slightly higher pitch
   window.speechSynthesis.speak(utterance);
 }
 
