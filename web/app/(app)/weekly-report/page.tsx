@@ -145,22 +145,29 @@ export default function WeeklyStoryPage() {
           The Moment the Week <span className="italic">Shifted</span>
         </h2>
         
-        <div className="w-full text-left bg-white text-black rounded-[32px] p-8 shadow-[0_0_50px_rgba(255,255,255,0.2)] mt-8 relative">
-           <div className="absolute -top-4 -right-4 w-12 h-12 bg-black text-white rounded-full flex items-center justify-center border-4 border-black">
-              <CornerDownRight className="w-5 h-5" />
-           </div>
-           
-           <div className="flex items-center gap-3 mb-6">
-              <span className="text-xs font-black uppercase tracking-widest bg-black/5 px-3 py-1 rounded-full">{story.shiftMoment.day}</span>
-              <span className="text-xs font-black text-black/50">{story.shiftMoment.time}</span>
-           </div>
-           
-           <h3 className="text-2xl font-black mb-4">You {story.shiftMoment.event.toLowerCase()}.</h3>
-           
-           <p className="text-black/70 font-medium leading-relaxed">
-             This single action {story.shiftMoment.impact.toLowerCase()}
-           </p>
-        </div>
+        {story.shiftMoment ? (
+          <div className="w-full text-left bg-white text-black rounded-[32px] p-8 shadow-[0_0_50px_rgba(255,255,255,0.2)] mt-8 relative">
+             <div className="absolute -top-4 -right-4 w-12 h-12 bg-black text-white rounded-full flex items-center justify-center border-4 border-black">
+                <CornerDownRight className="w-5 h-5" />
+             </div>
+             
+             <div className="flex items-center gap-3 mb-6">
+                <span className="text-xs font-black uppercase tracking-widest bg-black/5 px-3 py-1 rounded-full">{story.shiftMoment.day}</span>
+                <span className="text-xs font-black text-black/50">{story.shiftMoment.time}</span>
+             </div>
+             
+             <h3 className="text-2xl font-black mb-4">You {story.shiftMoment.event.toLowerCase()}.</h3>
+             
+             <p className="text-black/70 font-medium leading-relaxed">
+               This single action {story.shiftMoment.impact.toLowerCase()}
+             </p>
+          </div>
+        ) : (
+          <div className="w-full text-center bg-zinc-900/50 border border-white/10 rounded-[32px] p-8 mt-8">
+            <h3 className="text-xl font-bold text-white mb-2">Building your baseline</h3>
+            <p className="text-zinc-400 text-sm">Keep logging to discover your unique turning points and patterns.</p>
+          </div>
+        )}
       </div>
     ),
     // SLIDE 4: Final Score & Share
@@ -184,7 +191,7 @@ export default function WeeklyStoryPage() {
 
         <div className="bg-zinc-950/60 backdrop-blur-3xl border border-white/10 rounded-3xl p-6 max-w-sm">
            <p className="text-sm text-zinc-400 font-medium leading-relaxed">
-             The good news: your mornings are consistently strong. Protect the afternoons, and next week will be your best yet.
+             {story.finalAdvice}
            </p>
         </div>
 

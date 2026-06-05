@@ -9,7 +9,8 @@ export interface WeeklyStoryData {
     time: string
     event: string
     impact: string
-  }
+  } | null
+  finalAdvice: string
 }
 
 export function generateWeeklyStory(data: any): WeeklyStoryData {
@@ -22,37 +23,12 @@ export function generateWeeklyStory(data: any): WeeklyStoryData {
   if (creator >= learner && creator >= consumer) topArchetype = 'Creator'
   else if (learner >= creator && learner >= consumer) topArchetype = 'Learner'
 
-  // Generate a mock shift moment based on the data if one isn't provided
-  // In a real system, this would be computed from the pattern engine (Phase 7)
-  const shiftMoments = [
-    {
-      day: 'Wednesday',
-      time: '2:15 PM',
-      event: 'Opened Instagram',
-      impact: 'Kicked off a 3-day pattern of afternoon scrolling that pulled your average score down 22 points.'
-    },
-    {
-      day: 'Tuesday',
-      time: '9:00 AM',
-      event: 'Started a Deep Work Sprint',
-      impact: 'Set a new baseline. Your focus capacity was 40% higher for the rest of the week.'
-    },
-    {
-      day: 'Thursday',
-      time: '11:30 PM',
-      event: 'Late night YouTube binge',
-      impact: 'Disrupted your sleep architecture, leading to a 30% drop in Friday morning vitality.'
-    }
-  ]
-
-  // Pick one deterministically or semi-randomly for the demo
-  const shiftIndex = data?.timeSavedMinutes ? (data.timeSavedMinutes % 3) : 0
-
   return {
     timeSavedMinutes: data?.timeSavedMinutes || 0,
     topArchetype,
     score: data?.predictiveHealth?.nutritionScore || 72,
-    shiftMoment: shiftMoments[shiftIndex]
+    shiftMoment: data?.shiftMoment || null,
+    finalAdvice: data?.finalAdvice || "Consistency is building. You're maintaining a stable baseline."
   }
 }
 
@@ -65,9 +41,10 @@ export function getStoryNarration(slideIndex: number, story: WeeklyStoryData): s
     case 2:
       return `Your digital DNA is skewing towards ${story.topArchetype}. Your brain is spending more time building and learning than just consuming.`
     case 3:
+      if (!story.shiftMoment) return "You're still building your baseline. Keep logging to discover your turning points."
       return `Here's where the week turned. On ${story.shiftMoment.day} at ${story.shiftMoment.time}, you ${story.shiftMoment.event.toLowerCase()}. That one action ${story.shiftMoment.impact.toLowerCase()}`
     case 4:
-      return `Overall, a ${story.score} out of 100. The good news? Your mornings are consistently strong. If we protect the afternoons, next week could be your best yet.`
+      return `Overall, a ${story.score} out of 100. ${story.finalAdvice}`
     default:
       return ""
   }
