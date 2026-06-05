@@ -34,7 +34,7 @@ import { CoachBanner } from '@/components/dashboard/CoachBanner'
 import { QuickLogFAB } from '@/components/dashboard/QuickLogFAB'
 import { DailyCheckIn } from '@/components/dashboard/DailyCheckIn'
 import { WebRing } from '@/components/dashboard/WebRing'
-import { OnboardingDemo } from '@/components/dashboard/OnboardingDemo'
+
 import { OnboardingFlow } from '@/components/dashboard/OnboardingFlow'
 import { JarvisAssistant } from '@/components/dashboard/JarvisAssistant'
 import { FuelOrb } from '@/components/fuel/FuelOrb'
@@ -331,7 +331,7 @@ export default function DashboardPage() {
           }} 
         />
       )}
-      <OnboardingDemo />
+
 
       {/* Welcome Back Banner */}
       {showWelcomeBack && (
