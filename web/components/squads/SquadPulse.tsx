@@ -59,9 +59,9 @@ export function SquadPulse({ members, pings }: { members: any[], pings: any[] })
           <div className="flex flex-wrap gap-2">
             {pings.slice(0, 5).map(ping => (
               <div key={ping.id} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-800/50 border border-white/5 text-xs">
-                <span className="font-bold text-zinc-300">{ping.from_user.full_name.split(' ')[0]}</span>
+                <span className="font-bold text-zinc-300">{(ping.from_user?.full_name || 'Someone').split(' ')[0]}</span>
                 <span className="text-zinc-500">nudged</span>
-                <span className="font-bold text-zinc-300">{ping.to_user.full_name.split(' ')[0]}</span>
+                <span className="font-bold text-zinc-300">{(ping.to_user?.full_name || 'Someone').split(' ')[0]}</span>
               </div>
             ))}
           </div>
