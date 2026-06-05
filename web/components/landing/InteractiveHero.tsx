@@ -140,7 +140,7 @@ export function InteractiveHero() {
           onClick={() => router.push('/signup')}
           className="w-full sm:w-auto bg-white text-black px-8 py-4 rounded-xl font-black text-sm sm:text-base hover:bg-zinc-200 transition-colors shadow-[0_0_40px_rgba(255,255,255,0.1)] active:scale-95"
         >
-          Begin Your Map
+          Start free
         </button>
         <a 
           href="#try-demo"
@@ -297,7 +297,7 @@ export function InteractiveHero() {
                   onClick={() => router.push('/signup')}
                   className="flex-1 py-4 bg-white text-black font-black text-sm rounded-2xl hover:bg-zinc-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 >
-                  Start tracking for free <ArrowRight className="w-4 h-4" />
+                  Start free <ArrowRight className="w-4 h-4" />
                 </button>
                 <button
                   onClick={handleReset}

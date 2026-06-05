@@ -3,7 +3,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, Loader2, Bot, User, Sparkles, AlertTriangle, Clock, RefreshCw, Volume2, VolumeX } from 'lucide-react'
+import { Send, Loader2, Network, User, Sparkles, AlertTriangle, Clock, RefreshCw, Volume2, VolumeX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface Message {
@@ -114,6 +114,46 @@ function inlineMd(text: string): React.ReactNode {
     return part
   })
 }
+
+const MessageBubble = React.memo(function MessageBubble({ msg }: { msg: Message }) {
+  return (
+    <div className={`flex gap-3 animate-fade-in-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+      {/* Avatar */}
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+        msg.role === 'assistant'
+          ? 'bg-gradient-to-br from-indigo-500/30 to-purple-500/30 text-indigo-400 border border-indigo-500/20'
+          : 'bg-slate-700 text-slate-300'
+      }`}>
+        {msg.role === 'assistant'
+          ? <Network className="w-4 h-4" />
+          : <User className="w-4 h-4" />}
+      </div>
+
+      {/* Bubble */}
+      <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+        msg.role === 'user'
+          ? 'bg-indigo-600 text-white rounded-tr-md'
+          : msg.isCrisis
+            ? 'bg-emerald-500/10 border border-emerald-500/20 rounded-tl-md'
+            : 'bg-slate-800/60 border border-white/5 rounded-tl-md'
+      }`}>
+        {msg.role === 'user' ? (
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+        ) : (
+          <div className="space-y-1">
+            {renderMarkdown(msg.content)}
+            {msg.isStreaming && (
+              <span className="inline-block w-1.5 h-4 bg-indigo-400 animate-pulse rounded-sm ml-0.5 align-middle" />
+            )}
+          </div>
+        )}
+        <p className={`text-[10px] mt-2 ${msg.role === 'user' ? 'text-white/50' : 'text-slate-600'}`}>
+          {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </p>
+      </div>
+    </div>
+  )
+})
 
 export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([
@@ -306,44 +346,7 @@ export function ChatInterface() {
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 p-4 custom-scrollbar">
         {messages.map(msg => (
-          <div
-            key={msg.id}
-            className={`flex gap-3 animate-fade-in-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
-          >
-            {/* Avatar */}
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-              msg.role === 'assistant'
-                ? 'bg-gradient-to-br from-indigo-500/30 to-purple-500/30 text-indigo-400 border border-indigo-500/20'
-                : 'bg-slate-700 text-slate-300'
-            }`}>
-              {msg.role === 'assistant'
-                ? <Bot className="w-4 h-4" />
-                : <User className="w-4 h-4" />}
-            </div>
-
-            {/* Bubble */}
-            <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-              msg.role === 'user'
-                ? 'bg-indigo-600 text-white rounded-tr-md'
-                : msg.isCrisis
-                  ? 'bg-emerald-500/10 border border-emerald-500/20 rounded-tl-md'
-                  : 'bg-slate-800/60 border border-white/5 rounded-tl-md'
-            }`}>
-              {msg.role === 'user' ? (
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-              ) : (
-                <div className="space-y-1">
-                  {renderMarkdown(msg.content)}
-                  {msg.isStreaming && (
-                    <span className="inline-block w-1.5 h-4 bg-indigo-400 animate-pulse rounded-sm ml-0.5 align-middle" />
-                  )}
-                </div>
-              )}
-              <p className={`text-[10px] mt-2 ${msg.role === 'user' ? 'text-white/50' : 'text-slate-600'}`}>
-                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </p>
-            </div>
-          </div>
+          <MessageBubble key={msg.id} msg={msg} />
         ))}
 
         {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (

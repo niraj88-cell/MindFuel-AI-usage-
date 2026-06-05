@@ -92,13 +92,17 @@ export async function GET(req: Request) {
     const allMemberIds = new Set<string>()
     squadsData.forEach(s => s.squad_members.forEach(m => allMemberIds.add(m.user_id)))
 
-    const { data: summaries } = await supabase
-      .from('daily_summaries')
-      .select('user_id, total_score, streak_days')
-      .eq('date', today)
-      .in('user_id', Array.from(allMemberIds))
+    let summaries: any[] = []
+    if (allMemberIds.size > 0) {
+      const { data } = await supabase
+        .from('daily_summaries')
+        .select('user_id, total_score, streak_days')
+        .eq('date', today)
+        .in('user_id', Array.from(allMemberIds))
+      summaries = data || []
+    }
 
-    const summaryMap = (summaries || []).reduce((acc, curr) => {
+    const summaryMap = summaries.reduce((acc, curr) => {
       acc[curr.user_id] = { score: curr.total_score, streak: curr.streak_days }
       return acc
     }, {} as Record<string, { score: number, streak: number }>)
@@ -106,7 +110,7 @@ export async function GET(req: Request) {
     // Format the response
     const formattedSquads = squadsData.map(squad => {
       const members = squad.squad_members.map((m: any) => ({
-        id: m.profiles?.id,
+        id: m.user_id,
         name: m.profiles?.full_name || 'Anonymous User',
         avatar: m.profiles?.avatar_url,
         today_score: summaryMap[m.user_id]?.score || 0,

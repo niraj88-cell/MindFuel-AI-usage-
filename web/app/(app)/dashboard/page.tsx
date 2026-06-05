@@ -33,7 +33,7 @@ import { NutritionBreakdown } from '@/components/dashboard/NutritionBreakdown'
 import { CoachBanner } from '@/components/dashboard/CoachBanner'
 import { QuickLogFAB } from '@/components/dashboard/QuickLogFAB'
 import { DailyCheckIn } from '@/components/dashboard/DailyCheckIn'
-import { MindCore } from '@/components/dashboard/MindCore'
+import { WebRing } from '@/components/dashboard/WebRing'
 import { OnboardingDemo } from '@/components/dashboard/OnboardingDemo'
 import { OnboardingFlow } from '@/components/dashboard/OnboardingFlow'
 import { JarvisAssistant } from '@/components/dashboard/JarvisAssistant'
@@ -46,26 +46,7 @@ import { trackEvent } from '@/lib/mixpanel'
 import { calculatePredictiveHealth, PredictiveHealthMetrics } from '@/lib/agents/tools/predictiveHealth'
 import { checkPredictiveRisk, PredictiveState } from '@/lib/fuel/predictiveEngine'
 
-function playNativeVoice(text: string) {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  
-  const voices = window.speechSynthesis.getVoices();
-  const premium = voices.find(v => 
-    v.name.includes('Premium') || 
-    v.name.includes('Enhanced') || 
-    v.name.includes('Siri') ||
-    v.name.includes('Google') ||
-    v.name.includes('Online')
-  );
-  
-  if (premium) utterance.voice = premium;
-  // Peter Parker energetic/youthful tweak
-  utterance.rate = 1.15; // Faster talking
-  utterance.pitch = 1.25; // Slightly higher/younger pitch
-  window.speechSynthesis.speak(utterance);
-}
+// Native voice synthesis removed for calmer experience
 
 interface DashboardData {
   todayScore: number
@@ -289,34 +270,15 @@ export default function DashboardPage() {
       predictiveHealth: calculatePredictiveHealth(sevenDayLogs || [])
     })
 
-    // Fetch neuro state asynchronously (non-blocking)
-    try {
-      const neuroRes = await fetch('/api/neuro')
-      if (neuroRes.ok) {
-        const neuroJson = await neuroRes.json()
-        setNeuroData(neuroJson)
-      }
-    } catch { /* silent — neuro is enhancement, not critical */ }
+    // Fetch neuro state asynchronously (non-blocking) without awaiting it for setLoading
+    fetch('/api/neuro')
+      .then(res => res.ok ? res.json() : null)
+      .then(neuroJson => {
+        if (neuroJson) setNeuroData(neuroJson)
+      })
+      .catch(() => { /* silent */ })
 
-    // Play voice greeting (Bound to first interaction to bypass autoplay policies)
-    if (sessionStorage.getItem('greeting_played') !== 'true' && profile?.onboarding_completed) {
-      const firstName = user.user_metadata?.full_name?.split(' ')[0] || 'boss'
-      const greeting = `Hey ${firstName}! Suit's online, web shooters are loaded, and I've analyzed your latest neural patterns. Let's get to work!`
-      
-      const playGreeting = () => {
-        playNativeVoice(greeting)
-        sessionStorage.setItem('greeting_played', 'true')
-        // Remove listeners once played
-        document.removeEventListener('click', playGreeting)
-        document.removeEventListener('keydown', playGreeting)
-        document.removeEventListener('scroll', playGreeting)
-      }
-
-      // Add listeners for the first user interaction
-      document.addEventListener('click', playGreeting)
-      document.addEventListener('keydown', playGreeting)
-      document.addEventListener('scroll', playGreeting, { once: true })
-    }
+    // Removed automated voice greeting to keep the dashboard calm
 
     setLoading(false)
 
@@ -403,19 +365,19 @@ export default function DashboardPage() {
 
       {/* Hero Section: The Ambient Mirror */}
       <div className="flex-1 flex flex-col items-center justify-center pt-8 pb-16 relative">
-        <div className="text-center mb-10 z-10">
+        <div className="text-center mb-10 z-10 animate-fade-in-up">
           <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-3">
             {format(new Date(), 'EEEE, MMMM do')}
           </p>
           <h1 className="text-3xl sm:text-4xl font-serif text-white opacity-90 tracking-tight">
-            {data?.todayScore ? 'Your mind is active.' : 'A quiet start to the day.'}
+            {data?.todayScore ? 'The web is active today.' : 'Quiet neighborhood right now.'}
           </h1>
         </div>
 
-        {/* The Mind Core (Spatial UI visualization of score) */}
-        <div className="w-full max-w-md mx-auto">
+        {/* The WebRing (Spatial UI visualization of score) */}
+        <div className="w-full max-w-md mx-auto mb-6">
           {data ? (
-            <MindCore score={data.todayScore} />
+            <WebRing score={data.todayScore} />
           ) : (
              <div className="w-48 h-48 mx-auto rounded-full bg-white/5 animate-pulse" />
           )}
@@ -437,7 +399,7 @@ export default function DashboardPage() {
               </div>
               <button 
                 onClick={() => router.push('/focus')}
-                className="w-full sm:w-auto px-6 py-3 bg-white text-black font-black uppercase tracking-widest text-xs rounded-xl hover:bg-zinc-200 transition-colors shrink-0"
+                className="w-full sm:w-auto px-6 py-3 bg-red-600 text-white font-black uppercase tracking-widest text-xs rounded-xl hover:bg-red-500 transition-colors shrink-0 tap-effect"
               >
                 Accept Mission
               </button>
@@ -567,21 +529,21 @@ export default function DashboardPage() {
 
       {/* Floating Action Bar (Quick Stats) */}
       <div className="w-full max-w-3xl mx-auto mt-auto grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10">
-        <button onClick={() => router.push('/log')} className="group flex flex-col items-center justify-center p-4 rounded-3xl bg-zinc-900/40 backdrop-blur-xl border border-white/5 hover:bg-zinc-800/60 hover:border-white/10 transition-all cursor-pointer h-28 hover-lift">
-          <PenLine className="w-6 h-6 text-zinc-400 group-hover:text-white mb-3 transition-colors" />
+        <button onClick={() => router.push('/log')} className="group flex flex-col items-center justify-center p-4 rounded-3xl web-card hover:bg-white/5 transition-all cursor-pointer h-28 hover-lift">
+          <PenLine className="w-6 h-6 text-zinc-400 group-hover:text-blue-400 mb-3 transition-colors" />
           <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Reflect</span>
         </button>
-        <button onClick={() => router.push('/focus')} className="group flex flex-col items-center justify-center p-4 rounded-3xl bg-zinc-900/40 backdrop-blur-xl border border-white/5 hover:bg-zinc-800/60 hover:border-white/10 transition-all cursor-pointer h-28 hover-lift">
-          <Timer className="w-6 h-6 text-zinc-400 group-hover:text-white mb-3 transition-colors" />
+        <button onClick={() => router.push('/focus')} className="group flex flex-col items-center justify-center p-4 rounded-3xl web-card hover:bg-white/5 transition-all cursor-pointer h-28 hover-lift">
+          <Timer className="w-6 h-6 text-zinc-400 group-hover:text-red-400 mb-3 transition-colors" />
           <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">{data?.focusHours || 0}h Focus</span>
         </button>
-        <button onClick={() => router.push('/pulse')} className="group flex flex-col items-center justify-center p-4 rounded-3xl bg-zinc-900/40 backdrop-blur-xl border border-white/5 hover:bg-zinc-800/60 hover:border-white/10 transition-all cursor-pointer h-28 hover-lift">
-          <Heart className="w-6 h-6 text-zinc-400 group-hover:text-white mb-3 transition-colors" />
+        <button onClick={() => router.push('/pulse')} className="group flex flex-col items-center justify-center p-4 rounded-3xl web-card hover:bg-white/5 transition-all cursor-pointer h-28 hover-lift">
+          <Heart className="w-6 h-6 text-zinc-400 group-hover:text-rose-400 mb-3 transition-colors" />
           <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Pulse</span>
         </button>
-        <button onClick={() => router.push('/insights')} className="group flex flex-col items-center justify-center p-4 rounded-3xl bg-zinc-900/40 backdrop-blur-xl border border-white/5 hover:bg-zinc-800/60 hover:border-white/10 transition-all cursor-pointer h-28 hover-lift relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-transparent opacity-30" />
-          <Flame className="w-6 h-6 text-orange-400 mb-3 relative z-10" />
+        <button onClick={() => router.push('/insights')} className="group flex flex-col items-center justify-center p-4 rounded-3xl web-card hover:bg-white/5 transition-all cursor-pointer h-28 hover-lift relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-transparent opacity-30" />
+          <Flame className="w-6 h-6 text-blue-400 mb-3 relative z-10" />
           <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest relative z-10">{data?.streak || 0}d Streak</span>
         </button>
       </div>

@@ -17,12 +17,11 @@ export async function POST(req: Request) {
 
     const formattedCode = invite_code.trim().toUpperCase()
 
-    // 1. Find the squad by invite code
-    const { data: squad, error: squadError } = await supabase
-      .from('squads')
-      .select('id, name')
-      .eq('invite_code', formattedCode)
-      .single()
+    // 1. Find the squad by invite code using a secure RPC function to bypass RLS for lookups
+    const { data: squads, error: squadError } = await (supabase as any)
+      .rpc('get_squad_by_invite', { code: formattedCode })
+      
+    const squad = squads && squads.length > 0 ? squads[0] : null
 
     if (squadError || !squad) {
       return NextResponse.json({ error: 'Invalid invite code or squad not found' }, { status: 404 })

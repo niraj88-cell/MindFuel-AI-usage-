@@ -25,14 +25,15 @@ function ChartTooltip({ active, payload, label }: {
 }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-slate-900/90 backdrop-blur-xl p-4 rounded-[20px] border border-white/5 shadow-2xl">
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">{label}</p>
-      <div className="space-y-2">
+    <div className="web-card p-4 rounded-[20px] shadow-2xl relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-red-soft)] to-[var(--accent-blue-soft)] opacity-20 pointer-events-none" />
+      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3 relative z-10">{label}</p>
+      <div className="space-y-2 relative z-10">
         {payload.map((p) => (
           <div key={p.dataKey} className="flex items-center justify-between gap-8">
             <div className="flex items-center gap-2">
-               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
-               <span className="text-xs font-bold text-slate-300 capitalize">{p.dataKey}:</span>
+               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color, boxShadow: `0 0 8px ${p.color}` }} />
+               <span className="text-xs font-bold text-zinc-300 capitalize">{p.dataKey}:</span>
             </div>
             <span className="text-sm font-black text-white">{p.value}</span>
           </div>
@@ -61,12 +62,12 @@ export function TrendChart({ data, showMood = true }: TrendChartProps) {
         <AreaChart data={data} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
           <defs>
             <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#6366f1" stopOpacity={0.4} />
-              <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+              <stop offset="0%" stopColor="var(--accent-blue)" stopOpacity={0.3} />
+              <stop offset="100%" stopColor="var(--accent-blue)" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="moodGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#10b981" stopOpacity={0.4} />
-              <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+              <stop offset="0%" stopColor="var(--accent-red)" stopOpacity={0.3} />
+              <stop offset="100%" stopColor="var(--accent-red)" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid vertical={false} strokeDasharray="4 4" stroke="rgba(255,255,255,0.03)" />
@@ -83,27 +84,27 @@ export function TrendChart({ data, showMood = true }: TrendChartProps) {
             axisLine={false} 
             domain={[0, 100]} 
           />
-          <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'rgba(99, 102, 241, 0.2)', strokeWidth: 1 }} />
+          <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'var(--web-line)', strokeWidth: 1, strokeDasharray: '4 4' }} />
           <Area 
             type="monotone" 
             dataKey="score" 
-            stroke="#6366f1" 
-            strokeWidth={4} 
+            stroke="var(--accent-blue)" 
+            strokeWidth={3} 
             fill="url(#scoreGrad)" 
             animationDuration={2000}
-            dot={false}
-            activeDot={{ r: 6, fill: '#fff', stroke: '#6366f1', strokeWidth: 3 }}
+            dot={{ r: 3, fill: 'var(--card)', stroke: 'var(--accent-blue)', strokeWidth: 2 }}
+            activeDot={{ r: 6, fill: '#fff', stroke: 'var(--accent-blue)', strokeWidth: 3 }}
           />
           {showMood && (
             <Area 
               type="monotone" 
               dataKey="mood" 
-              stroke="#10b981" 
-              strokeWidth={3} 
+              stroke="var(--accent-red)" 
+              strokeWidth={2} 
               fill="url(#moodGrad)" 
               animationDuration={2500}
-              dot={false}
-              activeDot={{ r: 5, fill: '#fff', stroke: '#10b981', strokeWidth: 2 }}
+              dot={{ r: 2.5, fill: 'var(--card)', stroke: 'var(--accent-red)', strokeWidth: 1.5 }}
+              activeDot={{ r: 5, fill: '#fff', stroke: 'var(--accent-red)', strokeWidth: 2 }}
             />
           )}
         </AreaChart>

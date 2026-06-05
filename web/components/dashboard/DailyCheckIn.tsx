@@ -1,18 +1,20 @@
 // components/dashboard/DailyCheckIn.tsx
 // End-of-day summary prompt with AI-suggested presets based on past habits
-// Shows a smart check-in card that learns from user patterns
+// Redesigned with Spider-Verse DNA — warm, safe, web-motif.
 'use client'
 
 import React, { useState, useEffect } from 'react'
 import {
   Moon, Sun, CheckCircle2, Loader2, Sparkles,
   TrendingUp, TrendingDown, Minus, Brain,
-  ChevronRight, Clock
+  ChevronRight, Network
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client'
-import { getMoodEmoji } from '@/lib/utils'
 import { trackEvent } from '@/lib/mixpanel'
+import { MoodConstellation } from './MoodConstellation'
+import { AccentButton } from '../ui/AccentButton'
+import { WebCorner } from '../ui/WebCorner'
 
 interface DailyCheckInProps {
   onComplete?: () => void
@@ -39,12 +41,10 @@ export function DailyCheckIn({ onComplete }: DailyCheckInProps) {
     topCategory: string
   } | null>(null)
 
-  // Determine if we should show check-in (evening hours 6pm-midnight)
   const [showCheckIn, setShowCheckIn] = useState(false)
 
   useEffect(() => {
     const hour = new Date().getHours()
-    // Show between 6 PM and midnight, or if user has logged today
     setShowCheckIn(hour >= 18 || hour <= 1)
     loadTodayStats()
   }, [])
@@ -56,7 +56,6 @@ export function DailyCheckIn({ onComplete }: DailyCheckInProps) {
 
     const today = new Date().toISOString().split('T')[0]
 
-    // Get today's logs
     const { data: logs } = await supabase
       .from('mental_logs')
       .select('category, mental_score')
@@ -72,7 +71,6 @@ export function DailyCheckIn({ onComplete }: DailyCheckInProps) {
       setTodayStats({ totalLogs: logs.length, avgScore, topCategory })
     }
 
-    // Generate AI-like suggestions based on past patterns
     const { data: recentLogs } = await supabase
       .from('mental_logs')
       .select('category, content')
@@ -125,7 +123,6 @@ export function DailyCheckIn({ onComplete }: DailyCheckInProps) {
         trackEvent('Daily Check-In Completed', { mood, energy })
         onComplete?.()
         
-        // Also quick-log any selected suggestions
         for (const presetId of selectedSuggestions) {
           await fetch('/api/quick-log', {
             method: 'POST',
@@ -145,38 +142,42 @@ export function DailyCheckIn({ onComplete }: DailyCheckInProps) {
 
   if (completed) {
     return (
-      <Card className="bg-emerald-500/5 border-emerald-500/20 rounded-[32px] p-8 animate-fade-in-up">
+      <div className="web-card border-web rounded-[32px] p-8 animate-web-swing bg-emerald-500/5">
+        <WebCorner position="top-right" color="var(--accent-blue)" />
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20">
             <CheckCircle2 className="w-6 h-6 text-emerald-400" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-white">Daily Reflection Complete ✨</h3>
-            <p className="text-sm text-slate-400">Your data helps build better insights. See you tomorrow!</p>
+            <h3 className="text-lg font-black text-white">Thread Spun ✨</h3>
+            <p className="text-sm text-zinc-400">Your web is connected. See you tomorrow!</p>
           </div>
         </div>
-      </Card>
+      </div>
     )
   }
 
   return (
     <div className="relative group">
-      <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 rounded-[32px] blur opacity-50 group-hover:opacity-100 transition-opacity" />
-      <Card className="relative bg-slate-900 border-white/5 rounded-[32px] overflow-hidden p-8 shadow-2xl">
+      <div className="absolute -inset-1 bg-gradient-brand rounded-[32px] blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+      <div className="web-card border-web relative rounded-[32px] p-8 shadow-2xl">
+        <WebCorner position="top-right" color="var(--accent-blue)" />
+        <WebCorner position="bottom-left" color="var(--accent-red)" />
+        
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center border border-purple-500/20">
-              <Moon className="w-5 h-5 text-purple-400" />
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
+              <Network className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-white">Daily Reflection</h3>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">End of day check-in</p>
+              <h3 className="text-lg font-black text-white">Spin Your Thread</h3>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">End of day reflection</p>
             </div>
           </div>
           <button
             onClick={() => setDismissed(true)}
-            className="text-xs text-slate-600 hover:text-slate-400 font-bold"
+            className="text-xs text-zinc-500 hover:text-white font-bold transition-colors cursor-pointer relative z-10"
           >
             Skip today
           </button>
@@ -184,64 +185,58 @@ export function DailyCheckIn({ onComplete }: DailyCheckInProps) {
 
         {/* Today's Stats Summary */}
         {todayStats && todayStats.totalLogs > 0 && (
-          <div className="bg-white/5 rounded-2xl p-4 mb-6 flex items-center gap-4">
+          <div className="bg-white/5 border border-white/5 rounded-2xl p-4 mb-8 flex items-center gap-4 relative z-10">
             <div className="flex-1">
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Today's Summary</p>
-              <p className="text-sm text-slate-300">
-                <span className="text-white font-bold">{todayStats.totalLogs}</span> entries logged · Avg score{' '}
-                <span className={`font-bold ${todayStats.avgScore >= 60 ? 'text-emerald-400' : todayStats.avgScore >= 40 ? 'text-amber-400' : 'text-rose-400'}`}>
+              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Today's Web</p>
+              <p className="text-sm text-zinc-300">
+                <span className="text-white font-bold">{todayStats.totalLogs}</span> nodes connected · Avg score{' '}
+                <span className={`font-bold ${todayStats.avgScore >= 60 ? 'text-blue-400' : todayStats.avgScore >= 40 ? 'text-amber-400' : 'text-red-400'}`}>
                   {todayStats.avgScore}
                 </span>
               </p>
             </div>
             <div className="text-2xl">
-              {todayStats.avgScore >= 70 ? <TrendingUp className="w-6 h-6 text-emerald-400" /> :
+              {todayStats.avgScore >= 70 ? <TrendingUp className="w-6 h-6 text-blue-400" /> :
                todayStats.avgScore >= 40 ? <Minus className="w-6 h-6 text-amber-400" /> :
-               <TrendingDown className="w-6 h-6 text-rose-400" />}
+               <TrendingDown className="w-6 h-6 text-red-400" />}
             </div>
           </div>
         )}
 
-        <div className="space-y-6">
-          {/* Mood */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Overall Mood</span>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">{getMoodEmoji(mood)}</span>
-                <span className="text-lg font-black text-white tabular-nums">{mood}</span>
-              </div>
+        <div className="space-y-8 relative z-10">
+          {/* Constellation Mood Picker */}
+          <div>
+            <div className="text-center mb-2">
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">How did today feel?</span>
             </div>
-            <input
-              type="range" min={1} max={10} value={mood}
-              onChange={e => setMood(parseInt(e.target.value))}
-              className="w-full h-2 bg-slate-800 rounded-full appearance-none cursor-pointer accent-indigo-500"
-            />
+            <MoodConstellation value={mood} onChange={setMood} size={300} />
           </div>
 
           {/* Energy */}
-          <div className="space-y-3">
+          <div className="space-y-4 pt-4 border-t border-white/10">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Energy Level</span>
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Energy Level</span>
               <div className="flex items-center gap-2">
-                <Sun className="w-5 h-5 text-amber-400" />
+                <Sun className="w-4 h-4 text-amber-400" />
                 <span className="text-lg font-black text-white tabular-nums">{energy}</span>
               </div>
             </div>
             <input
               type="range" min={1} max={10} value={energy}
               onChange={e => setEnergy(parseInt(e.target.value))}
-              className="w-full h-2 bg-slate-800 rounded-full appearance-none cursor-pointer accent-amber-500"
+              className="w-full"
             />
           </div>
 
           {/* AI-Suggested Activities */}
           {suggestions.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Brain className="w-3 h-3 text-indigo-400" />
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">What did you consume today?</span>
-                <span className="text-[9px] font-black text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">AI Suggested</span>
+            <div className="space-y-3 pt-4 border-t border-white/10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Brain className="w-3 h-3 text-blue-400" />
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Pattern Match</span>
+                </div>
+                <span className="text-[9px] font-black text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">Spidey Sense</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {suggestions.map(s => {
@@ -254,14 +249,14 @@ export function DailyCheckIn({ onComplete }: DailyCheckInProps) {
                           isSelected ? prev.filter(id => id !== s.presetId) : [...prev, s.presetId]
                         )
                       }}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border tap-effect cursor-pointer ${
                         isSelected
-                          ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500/30'
-                          : 'bg-slate-800/50 text-slate-400 border-white/5 hover:border-indigo-500/20 hover:text-white'
+                          ? 'bg-blue-600/20 text-blue-300 border-blue-500/40'
+                          : 'bg-white/5 text-zinc-400 border-white/10 hover:border-blue-500/30 hover:text-white'
                       }`}
                     >
                       {s.label}
-                      <span className="ml-2 text-[9px] text-slate-600">{s.confidence}%</span>
+                      <span className="ml-2 text-[9px] opacity-60">{s.confidence}%</span>
                     </button>
                   )
                 })}
@@ -270,35 +265,36 @@ export function DailyCheckIn({ onComplete }: DailyCheckInProps) {
           )}
 
           {/* Quick Reflection Note */}
-          <div className="space-y-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Quick reflection (optional)</span>
+          <div className="space-y-2 pt-4 border-t border-white/10">
+            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">What's on your mind?</span>
             <textarea
               value={reflectionNote}
               onChange={e => setReflectionNote(e.target.value)}
-              placeholder="How was your digital diet today?"
+              placeholder="No judgment here — just you and your web."
               rows={2}
-              className="w-full bg-slate-800/30 border border-white/5 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:border-indigo-500/50 focus:outline-none transition-colors resize-none"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-blue-500/50 focus:outline-none transition-colors resize-none"
             />
           </div>
 
           {/* Submit */}
-          <button
+          <AccentButton 
             onClick={handleSubmit}
-            disabled={saving}
-            className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-sm shadow-xl shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            loading={saving}
+            variant="gradient"
+            className="w-full"
           >
             {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin mx-auto" />
             ) : (
-              <>
+              <div className="flex items-center justify-center gap-2">
                 <Sparkles className="w-4 h-4" />
-                Complete Check-In
+                Connect to Web
                 <ChevronRight className="w-4 h-4" />
-              </>
+              </div>
             )}
-          </button>
+          </AccentButton>
         </div>
-      </Card>
+      </div>
     </div>
   )
 }

@@ -285,7 +285,7 @@ export default function LogPage() {
               className="w-full h-16 bg-white hover:bg-zinc-200 text-black rounded-full font-black text-sm uppercase tracking-widest shadow-[0_0_40px_rgba(255,255,255,0.2)] hover:shadow-[0_0_60px_rgba(255,255,255,0.3)] transition-all"
             >
               {saving ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : null}
-              {saving ? 'Processing...' : 'Save to Mirror'}
+              {saving ? 'Processing...' : 'Save Log'}
             </Button>
           </div>
         </div>

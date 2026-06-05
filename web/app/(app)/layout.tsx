@@ -5,20 +5,18 @@ import React, { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  Brain, LayoutDashboard, PenLine, BarChart3,
-  MessageCircle, User, LogOut, Menu, X, Bell, Sparkles, Compass, Users
+  Network, LayoutDashboard, PenLine, BarChart3,
+  MessageCircle, User, LogOut, Menu, X, Bell, Sparkles, Users
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { AttentionRescue } from '@/components/fuel/AttentionRescue'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Today', icon: LayoutDashboard },
-  { href: '/log', label: 'Log', icon: PenLine },
-  { href: '/coach', label: 'Coach', icon: MessageCircle },
-  { href: '/squads', label: 'Squads', icon: Users },
+  { href: '/log', label: 'Log Content', icon: PenLine },
   { href: '/insights', label: 'Insights', icon: BarChart3 },
-  { href: '/challenges', label: 'Expeditions', icon: Compass },
-  { href: '/subscription', label: 'Platinum', icon: Sparkles },
+  { href: '/coach', label: 'Coach', icon: MessageCircle },
+  { href: '/squads', label: 'Squad', icon: Users },
   { href: '/profile', label: 'Settings', icon: User },
 ]
 
@@ -47,26 +45,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const { data: { user: u } } = await supabase.auth.getUser()
     if (!u) { router.push('/login'); return }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('subscription_tier')
-      .eq('id', u.id)
-      .maybeSingle()
+    const [profileRes, notifRes] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('subscription_tier')
+        .eq('id', u.id)
+        .maybeSingle(),
+      supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', u.id)
+        .eq('is_read', false)
+    ])
 
     setUser({
       email: u.email,
       full_name: u.user_metadata?.full_name,
-      tier: profile?.subscription_tier || 'free',
+      tier: profileRes.data?.subscription_tier || 'free',
     })
 
-    // Fetch unread notification count
-    const { count } = await supabase
-      .from('notifications')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', u.id)
-      .eq('is_read', false)
-
-    setUnreadCount(count || 0)
+    setUnreadCount(notifRes.count || 0)
   }, [router])
 
   useEffect(() => {
@@ -121,7 +119,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Logo */}
         <div className="flex items-center gap-3 px-8 py-10">
           <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center">
-            <Brain className="w-6 h-6 text-black" />
+            <Network className="w-6 h-6 text-black" />
           </div>
           <span className="text-xl font-black tracking-tight text-white">
             MindFuel
@@ -130,7 +128,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* Nav */}
         <nav className="flex-1 px-4 space-y-1">
-          <p className="px-4 text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-4">Navigation</p>
+          <p className="px-4 text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-4">Main</p>
           {NAV_ITEMS.map(item => {
             const active = pathname === item.href
             return (
@@ -192,7 +190,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             onClick={handleLogout}
             className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl text-xs font-black bg-zinc-800 text-zinc-400 hover:bg-white hover:text-black transition-all cursor-pointer border border-white/10"
           >
-            <LogOut className="w-3.5 h-3.5" /> DISCONNECT
+            <LogOut className="w-3.5 h-3.5" /> Sign out
           </button>
         </div>
       </aside>
@@ -204,7 +202,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <aside className="absolute left-0 top-0 bottom-0 w-[85vw] max-w-[320px] bg-zinc-950 border-r border-white/10 flex flex-col animate-fade-in-up">
             <div className="flex items-center justify-between px-8 py-8 border-b border-white/10">
               <div className="flex items-center gap-3">
-                <Brain className="w-8 h-8 text-white" />
+                <Network className="w-8 h-8 text-white" />
                 <span className="text-xl font-black text-white">MindFuel</span>
               </div>
               <button onClick={() => setSidebarOpen(false)} className="text-zinc-400 cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2">
@@ -247,7 +245,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center gap-2">
-            <Brain className="w-6 h-6 text-white" />
+            <Network className="w-6 h-6 text-white" />
             <span className="font-black text-white">MindFuel</span>
           </div>
           <NotifBell />
