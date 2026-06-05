@@ -363,25 +363,74 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Hero Section: The Ambient Mirror */}
-      <div className="flex-1 flex flex-col items-center justify-center pt-8 pb-16 relative">
-        <div className="text-center mb-10 z-10 animate-fade-in-up">
-          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-3">
-            {format(new Date(), 'EEEE, MMMM do')}
-          </p>
-          <h1 className="text-3xl sm:text-4xl font-serif text-white opacity-90 tracking-tight">
-            {data?.todayScore ? 'The web is active today.' : 'Quiet neighborhood right now.'}
+      {data && data.totalLogs === 0 && data.recentLogs.length === 0 && data.focusSessions === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center pt-16 pb-24 relative px-4 z-10 animate-fade-in-up">
+          <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-8 border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.05)]">
+            <Brain className="w-10 h-10 text-white/50" />
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-serif text-white opacity-90 tracking-tight text-center mb-4">
+            Your digital brain is a blank canvas.
           </h1>
+          <p className="text-zinc-400 text-center max-w-md mb-12 leading-relaxed">
+            MindFuel learns from your habits. Start by logging what you're doing right now, or jump straight into a deep work sprint.
+          </p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
+            <button onClick={() => router.push('/log')} className="group flex flex-col items-center justify-center p-6 rounded-3xl bg-zinc-900/50 hover:bg-zinc-800/80 border border-white/5 hover:border-white/20 transition-all cursor-pointer hover-lift shadow-xl">
+              <PenLine className="w-8 h-8 text-zinc-400 group-hover:text-blue-400 mb-4 transition-colors" />
+              <span className="text-sm font-bold text-white uppercase tracking-widest">Log Activity</span>
+              <span className="text-xs text-zinc-500 mt-2 text-center">Capture a moment</span>
+            </button>
+            <button onClick={() => router.push('/focus')} className="group flex flex-col items-center justify-center p-6 rounded-3xl bg-zinc-900/50 hover:bg-zinc-800/80 border border-white/5 hover:border-white/20 transition-all cursor-pointer hover-lift shadow-xl">
+              <Timer className="w-8 h-8 text-zinc-400 group-hover:text-red-400 mb-4 transition-colors" />
+              <span className="text-sm font-bold text-white uppercase tracking-widest">Focus Sprint</span>
+              <span className="text-xs text-zinc-500 mt-2 text-center">Start a timer</span>
+            </button>
+          </div>
         </div>
+      ) : (
+        <>
+          {/* Hero Section: The Ambient Mirror */}
+          <div className="flex-1 flex flex-col items-center justify-center pt-8 pb-8 relative">
+            <div className="text-center mb-10 z-10 animate-fade-in-up">
+              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-3">
+                {format(new Date(), 'EEEE, MMMM do')}
+              </p>
+              <h1 className="text-3xl sm:text-4xl font-serif text-white opacity-90 tracking-tight">
+                {data?.todayScore ? 'The web is active today.' : 'Quiet neighborhood right now.'}
+              </h1>
+            </div>
 
-        {/* The WebRing (Spatial UI visualization of score) */}
-        <div className="w-full max-w-md mx-auto mb-6">
-          {data ? (
-            <WebRing score={data.todayScore} />
-          ) : (
-             <div className="w-48 h-48 mx-auto rounded-full bg-white/5 animate-pulse" />
-          )}
-        </div>
+            {/* The WebRing (Spatial UI visualization of score) */}
+            <div className="w-full max-w-md mx-auto mb-10">
+              {data ? (
+                <WebRing score={data.todayScore} />
+              ) : (
+                 <div className="w-48 h-48 mx-auto rounded-full bg-white/5 animate-pulse" />
+              )}
+            </div>
+
+            {/* Floating Action Bar (Quick Stats) MOVED UP */}
+            <div className="w-full max-w-3xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10 px-4">
+              <button onClick={() => router.push('/log')} className="group flex flex-col items-center justify-center p-4 rounded-3xl web-card hover:bg-white/5 transition-all cursor-pointer h-28 hover-lift">
+                <PenLine className="w-6 h-6 text-zinc-400 group-hover:text-blue-400 mb-3 transition-colors" />
+                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Reflect</span>
+              </button>
+              <button onClick={() => router.push('/focus')} className="group flex flex-col items-center justify-center p-4 rounded-3xl web-card hover:bg-white/5 transition-all cursor-pointer h-28 hover-lift">
+                <Timer className="w-6 h-6 text-zinc-400 group-hover:text-red-400 mb-3 transition-colors" />
+                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">{data?.focusHours || 0}h Focus</span>
+              </button>
+              <button onClick={() => router.push('/pulse')} className="group flex flex-col items-center justify-center p-4 rounded-3xl web-card hover:bg-white/5 transition-all cursor-pointer h-28 hover-lift">
+                <Heart className="w-6 h-6 text-zinc-400 group-hover:text-rose-400 mb-3 transition-colors" />
+                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Pulse</span>
+              </button>
+              <button onClick={() => router.push('/insights')} className="group flex flex-col items-center justify-center p-4 rounded-3xl web-card hover:bg-white/5 transition-all cursor-pointer h-28 hover-lift relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-transparent opacity-30" />
+                <Flame className="w-6 h-6 text-blue-400 mb-3 relative z-10" />
+                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest relative z-10">{data?.streak || 0}d Streak</span>
+              </button>
+            </div>
+          </div>
 
         {/* Predictive Rescue Banner (Phase 7) */}
         {predictiveState?.isRiskActive && (
@@ -440,8 +489,6 @@ export default function DashboardPage() {
             <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-white transition-colors" />
           </div>
         )}
-      </div>
-
       {/* Neurochemical State + Focus Prophecy */}
       {neuroData && (
         <div className="w-full max-w-3xl mx-auto mt-10 space-y-6">
@@ -527,26 +574,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Floating Action Bar (Quick Stats) */}
-      <div className="w-full max-w-3xl mx-auto mt-auto grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10">
-        <button onClick={() => router.push('/log')} className="group flex flex-col items-center justify-center p-4 rounded-3xl web-card hover:bg-white/5 transition-all cursor-pointer h-28 hover-lift">
-          <PenLine className="w-6 h-6 text-zinc-400 group-hover:text-blue-400 mb-3 transition-colors" />
-          <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Reflect</span>
-        </button>
-        <button onClick={() => router.push('/focus')} className="group flex flex-col items-center justify-center p-4 rounded-3xl web-card hover:bg-white/5 transition-all cursor-pointer h-28 hover-lift">
-          <Timer className="w-6 h-6 text-zinc-400 group-hover:text-red-400 mb-3 transition-colors" />
-          <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">{data?.focusHours || 0}h Focus</span>
-        </button>
-        <button onClick={() => router.push('/pulse')} className="group flex flex-col items-center justify-center p-4 rounded-3xl web-card hover:bg-white/5 transition-all cursor-pointer h-28 hover-lift">
-          <Heart className="w-6 h-6 text-zinc-400 group-hover:text-rose-400 mb-3 transition-colors" />
-          <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Pulse</span>
-        </button>
-        <button onClick={() => router.push('/insights')} className="group flex flex-col items-center justify-center p-4 rounded-3xl web-card hover:bg-white/5 transition-all cursor-pointer h-28 hover-lift relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-transparent opacity-30" />
-          <Flame className="w-6 h-6 text-blue-400 mb-3 relative z-10" />
-          <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest relative z-10">{data?.streak || 0}d Streak</span>
-        </button>
-      </div>
+
 
       {/* Spatial Recent Entries */}
       {data && data.recentLogs.length > 0 && (
@@ -569,6 +597,8 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
+      )}
+      </>
       )}
 
       {/* Evening Check-In */}
