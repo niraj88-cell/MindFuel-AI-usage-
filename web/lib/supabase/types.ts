@@ -468,9 +468,10 @@ export interface Database {
           created_at: string
           expires_at: string | null
         }
-        Insert: Omit<Database['public']['Tables']['squad_missions']['Row'], 'id' | 'created_at'> & {
+        Insert: Omit<Database['public']['Tables']['squad_missions']['Row'], 'id' | 'created_at' | 'status'> & {
           id?: string
           created_at?: string
+          status?: string
         }
         Update: Partial<Database['public']['Tables']['squad_missions']['Insert']>
         Relationships: [
