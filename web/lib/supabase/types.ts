@@ -457,6 +457,101 @@ export interface Database {
           }
         ]
       }
+      squad_missions: {
+        Row: {
+          id: string
+          squad_id: string
+          type: string
+          title: string
+          target_value: number
+          status: string
+          created_at: string
+          expires_at: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['squad_missions']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['squad_missions']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: "squad_missions_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      squad_mission_participants: {
+        Row: {
+          mission_id: string
+          user_id: string
+          progress: number
+          completed: boolean
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['squad_mission_participants']['Row'], 'progress' | 'completed' | 'updated_at'> & {
+          progress?: number
+          completed?: boolean
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['squad_mission_participants']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: "squad_mission_participants_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "squad_missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squad_mission_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      squad_pings: {
+        Row: {
+          id: string
+          squad_id: string
+          from_user: string
+          to_user: string
+          ping_type: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['squad_pings']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['squad_pings']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: "squad_pings_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squad_pings_from_user_fkey"
+            columns: ["from_user"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squad_pings_to_user_fkey"
+            columns: ["to_user"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
