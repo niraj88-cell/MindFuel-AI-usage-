@@ -257,7 +257,7 @@ export default function ExpeditionsPage() {
       {/* Empty state hint */}
       {activeChallenges.length === 0 && (
         <div className="text-center py-8 opacity-50">
-          <Sparkles className="w-6 h-6 text-zinc-600 mx-auto mb-3" />
+
           <p className="text-zinc-600 text-sm">Pick an expedition above to start learning about your brain.</p>
         </div>
       )}

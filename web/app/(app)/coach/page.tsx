@@ -273,7 +273,7 @@ export default function CoachPage() {
       <div className="absolute top-0 left-0 right-0 z-20 flex justify-center p-4 md:p-8 pointer-events-none">
         <div className="flex items-center gap-4 bg-zinc-900/60 backdrop-blur-2xl border border-white/10 px-6 py-3 rounded-full shadow-2xl pointer-events-auto">
           <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-white/10 border border-white/20">
-            <Sparkles className="w-4 h-4 text-white" />
+
           </div>
           <div className="flex flex-col">
              <span className="text-sm font-serif font-bold text-white leading-tight">MindFuel AI</span>

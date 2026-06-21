@@ -86,7 +86,7 @@ export default function LoginPage() {
           {/* Features */}
           <div className="space-y-6 stagger-children">
             <FeatureRow icon={<Zap className="w-4 h-4 text-white" />} title="Pattern Discovery" desc="Gently uncover hidden patterns in your daily thoughts" />
-            <FeatureRow icon={<Sparkles className="w-4 h-4 text-white" />} title="Mood Intelligence" desc="Understand how your screen time affects your emotional state" />
+            <FeatureRow icon={<Brain className="w-4 h-4 text-white" />} title="Mood Intelligence" desc="Understand how your screen time affects your emotional state" />
             <FeatureRow icon={<Shield className="w-4 h-4 text-white" />} title="Personal AI Coach" desc="Get guidance to build healthier digital habits" />
           </div>
 

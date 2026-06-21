@@ -180,7 +180,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-1.5">
                 <p className="text-sm font-black text-white truncate">{user?.full_name || 'Explorer'}</p>
                 {user?.tier === 'premium' && (
-                  <Sparkles className="w-3 h-3 text-white fill-white shrink-0" />
+
                 )}
               </div>
               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{user?.tier || 'free'}</p>

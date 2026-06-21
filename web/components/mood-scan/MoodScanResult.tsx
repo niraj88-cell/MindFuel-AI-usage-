@@ -97,7 +97,7 @@ export function MoodScanResult({ result, onScanAnother }: Props) {
               </div>
             </div>
             <div className={`flex items-start gap-3 p-4 rounded-2xl ${trajectory.bg} border ${trajectory.border}`}>
-              <Sparkles className={`w-4 h-4 ${trajectory.color} shrink-0 mt-0.5`} />
+
               <div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Recommended Action</span>
                 <p className={`text-sm font-medium mt-1 ${trajectory.color}`}>{result.recommended_action}</p>

@@ -352,7 +352,7 @@ export function ChatInterface() {
         {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
           <div className="flex gap-3">
             <div className="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <Sparkles className="w-4 h-4 animate-spin" />
+
             </div>
             <div className="bg-slate-800/60 border border-white/5 rounded-2xl rounded-tl-md px-4 py-3">
               <div className="flex gap-1.5 items-center">

@@ -25,7 +25,7 @@ export function CoachBanner({ message, actionItems, onDismiss, onViewMore }: Coa
       <div className="relative flex items-start gap-4">
         {/* Icon */}
         <div className="shrink-0 w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-indigo-400 animate-pulse-ring" />
+
         </div>
 
         {/* Content */}

@@ -65,7 +65,7 @@ export default function WeeklyStoryPage() {
   if (loading || !story) {
     return (
       <div className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center">
-        <Sparkles className="w-10 h-10 text-white/50 animate-pulse mb-6" />
+
         <div className="text-zinc-500 font-black tracking-widest uppercase text-[10px] animate-pulse">Compiling The Story...</div>
       </div>
     )
@@ -76,7 +76,7 @@ export default function WeeklyStoryPage() {
     (
       <div className="flex flex-col items-center justify-center h-full text-center space-y-6 px-6 animate-fade-in-up">
         <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mb-4 border border-white/10 shadow-[0_0_40px_rgba(255,255,255,0.1)]">
-          <Sparkles className="w-10 h-10 text-white" />
+
         </div>
         <h1 className="text-4xl sm:text-6xl font-serif text-white opacity-90 tracking-tight leading-tight">
           Your Weekly <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 to-zinc-500">Story</span>

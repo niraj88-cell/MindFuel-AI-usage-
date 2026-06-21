@@ -152,7 +152,7 @@ export function InteractiveHero() {
       </div>
 
       <div className="flex items-center justify-center gap-2 mt-6 text-xs font-bold text-zinc-500 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-        <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
+
         <span>Free forever · Private by default · No credit card</span>
       </div>
 
@@ -282,7 +282,7 @@ export function InteractiveHero() {
               {/* AI Insight */}
               <div className="p-5 bg-black/40 border border-white/5 rounded-2xl space-y-3">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-3.5 h-3.5 text-white" />
+
                   <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">AI Insight</span>
                 </div>
                 <p className="text-sm text-zinc-300 leading-relaxed">{result.insight}</p>

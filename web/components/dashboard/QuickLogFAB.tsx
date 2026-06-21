@@ -194,7 +194,7 @@ export function QuickLogFAB({ onLogSaved }: QuickLogFABProps) {
 
           <div className="bg-zinc-950/60 backdrop-blur-3xl border border-white/10 rounded-[32px] p-8 shadow-2xl text-center space-y-4 animate-[fadeSlideIn_0.4s_ease-out]">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Sparkles className="w-4 h-4 text-white" />
+
               <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Fuel Insight</span>
             </div>
             

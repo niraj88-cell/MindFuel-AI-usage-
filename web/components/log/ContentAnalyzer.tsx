@@ -512,7 +512,7 @@ export function ContentAnalyzer({ onAnalyzed }: ContentAnalyzerProps) {
           {alternatives.length > 0 && result.is_junk && (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-white" />
+
                 <h4 className="text-sm font-black text-white uppercase tracking-widest">Smart Swap</h4>
                 <span className="text-[9px] font-black text-zinc-500 bg-white/5 px-2 py-0.5 rounded-full border border-white/10 ml-auto">AI Matched</span>
               </div>

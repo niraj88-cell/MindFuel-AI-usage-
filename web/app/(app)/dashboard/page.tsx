@@ -478,7 +478,7 @@ export default function DashboardPage() {
             className="mt-6 max-w-md w-full mx-auto bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-5 text-left cursor-pointer hover:bg-zinc-800/60 hover:border-white/20 transition-all group shadow-xl flex gap-4 items-center"
           >
             <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/10 group-hover:scale-110 transition-transform">
-               <Sparkles className="w-5 h-5 text-white" />
+
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">

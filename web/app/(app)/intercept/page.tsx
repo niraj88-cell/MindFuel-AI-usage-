@@ -542,7 +542,7 @@ function InterceptContent() {
           {smartSwaps.length > 0 && landingSeconds <= 0 && (
             <div className="w-full max-w-sm mb-8 text-left animate-fade-in-up">
               <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-4 h-4 text-indigo-400" />
+
                 <h4 className="text-xs font-black text-indigo-300 uppercase tracking-widest">Smart Swaps</h4>
               </div>
               <div className="space-y-2">

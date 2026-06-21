@@ -90,7 +90,7 @@ export default function SubscriptionPage() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Platinum</span>
-              <Sparkles className="w-5 h-5 text-black" />
+
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">

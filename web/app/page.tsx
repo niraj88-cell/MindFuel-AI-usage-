@@ -92,7 +92,7 @@ export default function LandingPage() {
       <main className="relative z-10 px-4 sm:px-6 pt-20 pb-14">
         <section className="max-w-6xl mx-auto min-h-[calc(100vh-7rem)] flex flex-col items-center justify-center text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-zinc-400 mb-6 animate-fade-in-up">
-            <Sparkles className="w-3 h-3 text-white" />
+
             <span>Private digital wellness tracking</span>
           </div>
 

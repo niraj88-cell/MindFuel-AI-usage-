@@ -205,7 +205,7 @@ export default function InsightsPage() {
            <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500/10 via-purple-600/10 to-transparent rounded-[50px] blur-3xl opacity-50 group-hover:opacity-100 transition-opacity" />
            <div className="relative bg-zinc-950/60 backdrop-blur-3xl border border-white/10 rounded-[40px] overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)]">
               <div className="absolute top-0 right-0 p-10">
-                 <Sparkles className="w-16 h-16 text-white/5 animate-breathe" />
+
               </div>
               <div className="p-8 md:p-12 pb-6 md:pb-8 border-b border-white/5">
                 <div className="flex items-center gap-6">
@@ -248,7 +248,7 @@ export default function InsightsPage() {
                   {data.moodAnalysis.action_items.length > 0 && (
                     <div className="space-y-8">
                       <h4 className="text-[10px] font-black text-emerald-500/80 uppercase tracking-[0.3em] flex items-center gap-3">
-                        <Sparkles className="w-3 h-3" /> Suggested Shifts
+                        Suggested Shifts
                       </h4>
                       <div className="space-y-4">
                         {data.moodAnalysis.action_items.map((item, i) => (
@@ -393,7 +393,7 @@ function BehavioralInsightHero({ insight }: { insight: NonNullable<InsightsData[
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-3xl p-6 flex flex-col justify-center">
             <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-              <Sparkles className="w-3 h-3" /> Recommended Action
+              Recommended Action
             </h4>
             <p className="text-white text-lg font-serif">
               {insight.recommendation}

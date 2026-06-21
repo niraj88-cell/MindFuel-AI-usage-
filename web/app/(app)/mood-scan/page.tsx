@@ -155,7 +155,7 @@ export default function MoodScanPage() {
               {/* Platform Presets */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-3 h-3 text-white" />
+
                   <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Quick Platform Scan</span>
                 </div>
                 <div className="flex flex-wrap gap-2">

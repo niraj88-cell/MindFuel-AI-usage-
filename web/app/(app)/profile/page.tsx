@@ -172,7 +172,7 @@ export default function ProfilePage() {
               </div>
               {isPremium && (
                 <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/40">
-                  <Sparkles className="w-3.5 h-3.5 text-white" />
+
                 </div>
               )}
             </div>
@@ -217,7 +217,7 @@ export default function ProfilePage() {
           <div className="flex items-center justify-between gap-4 relative z-10">
             <div>
               <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-1">
-                Elevate your MindFuel <Sparkles className="w-4 h-4 text-white" />
+                Elevate your MindFuel
               </h3>
               <p className="text-sm text-zinc-400">Get unlimited entries, bespoke habit challenges, and deep psychological insights.</p>
             </div>

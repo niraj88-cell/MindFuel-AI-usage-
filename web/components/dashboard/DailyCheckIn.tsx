@@ -287,7 +287,7 @@ export function DailyCheckIn({ onComplete }: DailyCheckInProps) {
               <Loader2 className="w-4 h-4 animate-spin mx-auto" />
             ) : (
               <div className="flex items-center justify-center gap-2">
-                <Sparkles className="w-4 h-4" />
+
                 Connect to Web
                 <ChevronRight className="w-4 h-4" />
               </div>
