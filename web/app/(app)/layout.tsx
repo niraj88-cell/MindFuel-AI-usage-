@@ -13,11 +13,9 @@ import { AttentionRescue } from '@/components/fuel/AttentionRescue'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Today', icon: LayoutDashboard },
-  { href: '/log', label: 'Log Content', icon: PenLine },
+  { href: '/log', label: 'Log', icon: PenLine },
   { href: '/insights', label: 'Insights', icon: BarChart3 },
   { href: '/coach', label: 'Coach', icon: MessageCircle },
-  { href: '/squads', label: 'Squad', icon: Users },
-  { href: '/profile', label: 'Settings', icon: User },
 ]
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -99,12 +97,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const NotifBell = ({ className = '' }: { className?: string }) => (
     <Link
       href="/notifications"
-      className={`relative text-zinc-400 hover:text-white transition-colors cursor-pointer ${className}`}
+      className={`relative text-gray-400 hover:text-[#111827] transition-colors cursor-pointer ${className}`}
       aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
     >
       <Bell className="w-5 h-5" />
       {unreadCount > 0 && (
-        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 bg-white text-black text-[9px] font-black rounded-full flex items-center justify-center">
+        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 bg-[#4CAF50] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
           {unreadCount > 99 ? '99+' : unreadCount}
         </span>
       )}
@@ -112,38 +110,38 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <div className="min-h-screen bg-black text-zinc-200 flex overflow-hidden">
+    <div className="min-h-screen bg-[#FAF8F4] text-[#111827] flex overflow-hidden">
 
       {/* Sidebar — Desktop */}
-      <aside className="hidden lg:flex flex-col w-72 border-r border-white/10 bg-zinc-950/80 backdrop-blur-2xl z-20 shrink-0">
+      <aside className="hidden lg:flex flex-col w-72 border-r border-black/[0.06] bg-white z-20 shrink-0">
         {/* Logo */}
-        <div className="flex items-center gap-3 px-8 py-10">
-          <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center">
-            <Network className="w-6 h-6 text-black" />
+        <div className="flex items-center gap-3 px-8 py-8">
+          <div className="w-10 h-10 bg-[#111827] rounded-2xl flex items-center justify-center">
+            <Network className="w-6 h-6 text-white" />
           </div>
-          <span className="text-xl font-black tracking-tight text-white">
+          <span className="text-xl font-bold tracking-tight text-[#111827]">
             MindFuel
           </span>
         </div>
 
         {/* Nav */}
         <nav className="flex-1 px-4 space-y-1">
-          <p className="px-4 text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-4">Main</p>
+          <p className="px-4 text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-4">Main</p>
           {NAV_ITEMS.map(item => {
             const active = pathname === item.href
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all duration-200 group relative ${
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ${
                   active
-                    ? 'bg-white text-black'
-                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-[#F5F7F6] text-[#111827] font-semibold'
+                    : 'text-[#4B5563] hover:text-[#111827] hover:bg-[#F5F7F6]'
                 }`}
               >
-                <item.icon className={`w-4.5 h-4.5 ${active ? 'text-black' : 'text-zinc-500 group-hover:text-white'} transition-colors`} />
+                <item.icon className={`w-4.5 h-4.5 ${active ? 'text-[#111827]' : 'text-gray-400 group-hover:text-[#111827]'} transition-colors`} />
                 {item.label}
-                {active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-black/40" />}
+                {active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#4CAF50]" />}
               </Link>
             )
           })}
@@ -151,44 +149,44 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* Notifications nav item */}
           <Link
             href="/notifications"
-            className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all duration-200 group relative ${
+            className={`flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ${
               pathname === '/notifications'
-                ? 'bg-white text-black'
-                : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                ? 'bg-[#F5F7F6] text-[#111827] font-semibold'
+                : 'text-[#4B5563] hover:text-[#111827] hover:bg-[#F5F7F6]'
             }`}
           >
-            <Bell className={`w-4.5 h-4.5 ${pathname === '/notifications' ? 'text-black' : 'text-zinc-500 group-hover:text-white'} transition-colors`} />
+            <Bell className={`w-4.5 h-4.5 ${pathname === '/notifications' ? 'text-[#111827]' : 'text-gray-400 group-hover:text-[#111827]'} transition-colors`} />
             Notifications
             {unreadCount > 0 && (
-              <span className="ml-auto min-w-[20px] h-5 px-1 bg-white text-black text-[9px] font-black rounded-full flex items-center justify-center">
+              <span className="ml-auto min-w-[20px] h-5 px-1 bg-[#4CAF50] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
             {pathname === '/notifications' && unreadCount === 0 && (
-              <div className="ml-auto w-1.5 h-1.5 rounded-full bg-black/40" />
+              <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#4CAF50]" />
             )}
           </Link>
         </nav>
 
         {/* User Card */}
-        <div className="p-4 m-4 bg-zinc-900/60 border border-white/10 rounded-3xl">
+        <div className="p-4 m-4 bg-[#F5F7F6] border border-black/[0.04] rounded-2xl">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-2xl bg-zinc-800 flex items-center justify-center text-white text-sm font-black border border-white/10">
+            <div className="w-10 h-10 rounded-2xl bg-[#EADBC8] flex items-center justify-center text-[#111827] text-sm font-semibold">
               {user?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || '?'}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                <p className="text-sm font-black text-white truncate">{user?.full_name || 'Explorer'}</p>
+                <p className="text-sm font-semibold text-[#111827] truncate">{user?.full_name || 'Explorer'}</p>
                 {user?.tier === 'premium' && (
-                  <Sparkles className="w-3 h-3 text-white fill-white shrink-0" />
+                  <Sparkles className="w-3 h-3 text-[#FFB74D] fill-[#FFB74D] shrink-0" />
                 )}
               </div>
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{user?.tier || 'free'}</p>
+              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{user?.tier || 'free'}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl text-xs font-black bg-zinc-800 text-zinc-400 hover:bg-white hover:text-black transition-all cursor-pointer border border-white/10"
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-semibold bg-white text-gray-500 hover:bg-[#111827] hover:text-white transition-all cursor-pointer border border-black/[0.06]"
           >
             <LogOut className="w-3.5 h-3.5" /> Sign out
           </button>
@@ -198,14 +196,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setSidebarOpen(false)} />
-          <aside className="absolute left-0 top-0 bottom-0 w-[85vw] max-w-[320px] bg-zinc-950 border-r border-white/10 flex flex-col animate-fade-in-up">
-            <div className="flex items-center justify-between px-8 py-8 border-b border-white/10">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+          <aside className="absolute left-0 top-0 bottom-0 w-[85vw] max-w-[320px] bg-white border-r border-black/[0.06] flex flex-col animate-fade-in-up">
+            <div className="flex items-center justify-between px-8 py-8 border-b border-black/[0.06]">
               <div className="flex items-center gap-3">
-                <Network className="w-8 h-8 text-white" />
-                <span className="text-xl font-black text-white">MindFuel</span>
+                <Network className="w-8 h-8 text-[#111827]" />
+                <span className="text-xl font-bold text-[#111827]">MindFuel</span>
               </div>
-              <button onClick={() => setSidebarOpen(false)} className="text-zinc-400 cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2">
+              <button onClick={() => setSidebarOpen(false)} className="text-gray-400 cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -218,14 +216,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     key={item.href}
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-bold transition-all ${
-                      active ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5'
+                    className={`flex items-center gap-4 px-6 py-4 rounded-xl text-sm font-medium transition-all ${
+                      active ? 'bg-[#F5F7F6] text-[#111827] font-semibold' : 'text-[#4B5563] hover:bg-[#F5F7F6] hover:text-[#111827]'
                     }`}
                   >
                     <item.icon className="w-5 h-5" />
                     {item.label}
                     {isNotif && unreadCount > 0 && (
-                      <span className="ml-auto min-w-[20px] h-5 px-1 bg-white text-black text-[9px] font-black rounded-full flex items-center justify-center">
+                      <span className="ml-auto min-w-[20px] h-5 px-1 bg-[#4CAF50] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                         {unreadCount}
                       </span>
                     )}
@@ -238,23 +236,44 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen relative z-10 overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-screen relative overflow-hidden">
         {/* Mobile header */}
-        <header className="lg:hidden flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/80 backdrop-blur-xl sticky top-0 z-40">
-          <button onClick={() => setSidebarOpen(true)} className="text-white cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center -ml-2">
+        <header className="lg:hidden flex items-center justify-between px-6 py-4 border-b border-black/[0.06] bg-white/90 backdrop-blur-xl sticky top-0 z-40">
+          <button onClick={() => setSidebarOpen(true)} className="text-[#111827] cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center -ml-2">
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center gap-2">
-            <Network className="w-6 h-6 text-white" />
-            <span className="font-black text-white">MindFuel</span>
+            <Network className="w-6 h-6 text-[#111827]" />
+            <span className="font-bold text-[#111827]">MindFuel</span>
           </div>
           <NotifBell />
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-12 max-w-7xl w-full mx-auto overflow-y-auto custom-scrollbar scroll-smooth">
+        <main className="flex-1 p-4 sm:p-6 lg:p-10 max-w-7xl w-full mx-auto overflow-y-auto custom-scrollbar scroll-smooth pb-24 lg:pb-10">
           {children}
         </main>
+
+        {/* Bottom Tab Bar — Mobile Only */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-black/[0.06] z-40 pb-safe">
+          <div className="flex items-center justify-around h-16 px-2">
+            {NAV_ITEMS.map(item => {
+              const active = pathname === item.href
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
+                    active ? 'text-[#111827]' : 'text-gray-400 hover:text-[#111827]'
+                  }`}
+                >
+                  <item.icon className={`w-5 h-5 ${active ? 'fill-current text-[#111827]' : 'text-gray-400'}`} />
+                  <span className={`text-[10px] font-medium ${active ? 'text-[#111827]' : 'text-gray-400'}`}>{item.label}</span>
+                </Link>
+              )
+            })}
+          </div>
+        </nav>
 
         {/* Global Attention Rescue Overlay */}
         {rescueSignal && (

@@ -20,21 +20,24 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const sevenDaysAgo = format(subDays(new Date(), 7), 'yyyy-MM-dd')
     const today = format(new Date(), 'yyyy-MM-dd')
 
-    // Fetch data
+    // Fetch data: Get recent data rather than strict 7-day cutoff to allow unlocking at 5 logs regardless of time
     const [
       { data: mentalLogs },
       { data: moodLogs },
       { data: dailySummaries },
       { data: focusSessions }
     ] = await Promise.all([
-      supabase.from('mental_logs').select('*').eq('user_id', user.id).gte('created_at', sevenDaysAgo),
-      supabase.from('mood_logs').select('*').eq('user_id', user.id).gte('created_at', sevenDaysAgo),
-      supabase.from('daily_summaries').select('*').eq('user_id', user.id).gte('date', sevenDaysAgo).order('date', { ascending: false }),
-      supabase.from('focus_sessions').select('*').eq('user_id', user.id).gte('created_at', sevenDaysAgo).eq('completed', true)
+      supabase.from('mental_logs').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(30),
+      supabase.from('mood_logs').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(30),
+      supabase.from('daily_summaries').select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(7),
+      supabase.from('focus_sessions').select('*').eq('user_id', user.id).eq('completed', true).order('created_at', { ascending: false }).limit(20)
     ])
+
+    if (!mentalLogs || mentalLogs.length < 5) {
+      return NextResponse.json({ error: 'Need at least 5 logs to generate a report' }, { status: 400 })
+    }
 
     // Calculate metrics
     let doomscrollMinutes = 0

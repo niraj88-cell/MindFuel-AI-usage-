@@ -17,8 +17,8 @@ const positionStyles: Record<CornerPosition, React.CSSProperties> = {
 };
 
 /**
- * Transforms to orient the filament lines toward the correct corner.
- * Base drawing assumes lines emanate from top-left (0,0).
+ * Transforms to orient the decorative curves toward the correct corner.
+ * Base drawing assumes curves emanate from top-left (0,0).
  */
 const positionTransforms: Record<CornerPosition, string> = {
   'top-left': '',
@@ -30,7 +30,7 @@ const positionTransforms: Record<CornerPosition, string> = {
 export function WebCorner({
   position = 'top-right',
   size = 40,
-  color = 'var(--accent-blue, #3B82F6)',
+  color = '#EADBC8',
   className = '',
 }: WebCornerProps) {
   const transform = positionTransforms[position];
@@ -50,46 +50,40 @@ export function WebCorner({
       }}
     >
       <g transform={transform} style={{ transformOrigin: 'center' }}>
-        {/* Primary filament — shallow angle */}
-        <line
-          x1={0}
-          y1={0}
-          x2={size * 0.95}
-          y2={size * 0.35}
+        {/* Primary curve — gentle arc */}
+        <path
+          d={`M0,0 Q${size * 0.5},${size * 0.1} ${size * 0.95},${size * 0.35}`}
           stroke={color}
           strokeWidth={0.75}
-          opacity={0.2}
+          opacity={0.3}
           strokeLinecap="round"
+          fill="none"
         />
-        {/* Secondary filament — steeper angle */}
-        <line
-          x1={0}
-          y1={0}
-          x2={size * 0.35}
-          y2={size * 0.95}
+        {/* Secondary curve — steeper arc */}
+        <path
+          d={`M0,0 Q${size * 0.1},${size * 0.5} ${size * 0.35},${size * 0.95}`}
           stroke={color}
           strokeWidth={0.75}
-          opacity={0.18}
+          opacity={0.25}
           strokeLinecap="round"
+          fill="none"
         />
-        {/* Tertiary filament — diagonal */}
-        <line
-          x1={0}
-          y1={0}
-          x2={size * 0.7}
-          y2={size * 0.7}
+        {/* Tertiary curve — diagonal arc */}
+        <path
+          d={`M0,0 Q${size * 0.25},${size * 0.4} ${size * 0.7},${size * 0.7}`}
           stroke={color}
           strokeWidth={0.5}
-          opacity={0.15}
+          opacity={0.2}
           strokeLinecap="round"
+          fill="none"
         />
-        {/* Corner node — tiny dot at the origin */}
+        {/* Corner accent — soft dot at the origin */}
         <circle
           cx={1.5}
           cy={1.5}
           r={1.5}
           fill={color}
-          opacity={0.25}
+          opacity={0.3}
         />
       </g>
     </svg>

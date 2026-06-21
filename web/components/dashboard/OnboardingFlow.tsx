@@ -63,7 +63,7 @@ export function OnboardingFlow({ userId, onComplete }: OnboardingFlowProps) {
           <div className="mx-auto w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-4">
             <Brain className="w-6 h-6 text-white" />
           </div>
-          <CardTitle className="text-2xl font-black tracking-tight text-white">
+          <CardTitle className="text-2xl font-semibold tracking-tight text-white">
             Welcome to MindFuel
           </CardTitle>
           <p className="text-zinc-400 text-sm mt-2">

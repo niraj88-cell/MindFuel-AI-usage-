@@ -37,6 +37,7 @@
     "date-fns": "^4.1.0",
     "framer-motion": "^12.40.0",
     "groq-sdk": "^1.1.2",
+    "html2canvas": "^1.4.1",
     "lucide-react": "^1.11.0",
     "mixpanel-browser": "^2.78.0",
     "next": "16.2.4",

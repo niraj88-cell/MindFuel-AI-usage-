@@ -49,7 +49,7 @@ export function SquadDashboard({ squad, showToast }: { squad: any, showToast: an
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white">{squad.name}</h1>
+          <h1 className="text-3xl font-semibold text-white">{squad.name}</h1>
           <div className="flex items-center gap-2 mt-2 text-zinc-400">
             <Users className="w-4 h-4" />
             <span>{squad.members.length} Members</span>

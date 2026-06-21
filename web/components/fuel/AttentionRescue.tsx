@@ -141,7 +141,7 @@ export function AttentionRescue({ appName, minutesSpent, trigger, onClose }: Att
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <Shield className={`w-5 h-5 ${colors.accent}`} />
-            <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Attention Rescue</span>
+            <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Attention Rescue</span>
           </div>
           <button onClick={handleDismiss} className="text-zinc-600 hover:text-zinc-400 transition-colors cursor-pointer p-1">
             <X className="w-5 h-5" />

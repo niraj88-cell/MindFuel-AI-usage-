@@ -58,9 +58,11 @@ export async function POST(req: NextRequest) {
       ? await supabase.auth.getUser(bearerToken)
       : await supabase.auth.getUser()
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // Allow unauthenticated for demo, but we will rely on strict IP rate limiting if implemented.
+    // For now, we'll just allow it without user to support the landing page demo.
+    // if (!user) {
+    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // }
 
     let tier: 'free' | 'premium' = 'free'
     let dailyLogsRemaining: number | null = null

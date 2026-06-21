@@ -56,7 +56,7 @@ function StatPill({ stat, isVisible, delay }: { stat: StatItem; isVisible: boole
         transition: `all 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`,
       }}
     >
-      <span className="text-2xl sm:text-3xl font-black text-white tabular-nums">
+      <span className="text-2xl sm:text-3xl font-semibold text-white tabular-nums">
         {count.toLocaleString()}{stat.suffix}
       </span>
       <span className="text-[10px] sm:text-xs font-bold text-zinc-500 uppercase tracking-wider text-center">

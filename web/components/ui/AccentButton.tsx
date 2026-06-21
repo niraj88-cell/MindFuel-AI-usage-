@@ -26,20 +26,20 @@ const sizeClasses: Record<AccentButtonSize, string> = {
 
 /* ── background styles per variant ───────────────────── */
 const variantBg: Record<AccentButtonVariant, React.CSSProperties> = {
-  red: { backgroundColor: 'var(--accent-red, #DC2626)' },
-  blue: { backgroundColor: 'var(--accent-blue, #3B82F6)' },
+  red: { backgroundColor: '#4CAF50' },
+  blue: { backgroundColor: '#5DADE2' },
   gradient: {
     background:
-      'var(--gradient-brand, linear-gradient(135deg, #DC2626 0%, #3B82F6 100%))',
+      'linear-gradient(135deg, #4CAF50 0%, #5DADE2 100%)',
   },
 };
 
-/* ── glow shadows per variant ────────────────────────── */
-const glowShadow: Record<AccentButtonVariant, string> = {
-  red: '0 0 20px rgba(220, 38, 38, 0.25), 0 0 40px rgba(220, 38, 38, 0.1)',
-  blue: '0 0 20px rgba(59, 130, 246, 0.25), 0 0 40px rgba(59, 130, 246, 0.1)',
+/* ── soft shadows per variant ────────────────────────── */
+const softShadow: Record<AccentButtonVariant, string> = {
+  red: '0 2px 8px rgba(76, 175, 80, 0.2), 0 1px 3px rgba(76, 175, 80, 0.1)',
+  blue: '0 2px 8px rgba(93, 173, 226, 0.2), 0 1px 3px rgba(93, 173, 226, 0.1)',
   gradient:
-    '0 0 20px rgba(220, 38, 38, 0.18), 0 0 40px rgba(59, 130, 246, 0.12)',
+    '0 2px 8px rgba(76, 175, 80, 0.15), 0 1px 3px rgba(93, 173, 226, 0.1)',
 };
 
 /* ── loading spinner ─────────────────────────────────── */
@@ -94,7 +94,7 @@ export function AccentButton({
       disabled={isDisabled}
       className={[
         'relative inline-flex items-center justify-center gap-2',
-        'rounded-full font-bold text-white',
+        'rounded-xl font-bold text-white',
         'select-none outline-none',
         'transition-[filter] duration-200',
         sizeClasses[size],
@@ -105,7 +105,7 @@ export function AccentButton({
         .join(' ')}
       style={{
         ...variantBg[variant],
-        boxShadow: glow && !isDisabled ? glowShadow[variant] : 'none',
+        boxShadow: glow && !isDisabled ? softShadow[variant] : 'none',
       }}
       /* ── hover → brighten ─────────────────────── */
       whileHover={
@@ -113,19 +113,19 @@ export function AccentButton({
           ? undefined
           : {
               scale: 1.02,
-              filter: 'brightness(1.15)',
+              filter: 'brightness(1.08)',
             }
       }
-      /* ── active → spidey-snap bounce ──────────── */
+      /* ── active → gentle press ─────────────────── */
       whileTap={
         isDisabled
           ? undefined
           : {
-              scale: 0.96,
+              scale: 0.97,
               transition: {
                 type: 'spring',
-                stiffness: 500,
-                damping: 15,
+                stiffness: 400,
+                damping: 20,
               },
             }
       }

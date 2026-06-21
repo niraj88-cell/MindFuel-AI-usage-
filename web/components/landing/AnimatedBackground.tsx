@@ -48,43 +48,43 @@ export function AnimatedBackground({ variant = 'landing', className = '' }: Anim
 
   return (
     <div ref={containerRef} className={`absolute inset-0 overflow-hidden pointer-events-auto ${className}`}>
-      {/* Dot grid pattern */}
+      {/* Subtle warm dot pattern */}
       <div 
-        className="absolute inset-0 opacity-[0.03]"
+        className="absolute inset-0 opacity-[0.025]"
         style={{
-          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.4) 1px, transparent 1px)',
           backgroundSize: '32px 32px',
         }}
       />
 
-      {/* Floating gradient orbs */}
+      {/* Floating warm gradient orbs */}
       <div 
         className="absolute w-[600px] h-[600px] rounded-full animate-orb-1 opacity-60"
         style={{
-          background: 'radial-gradient(circle, rgba(120, 130, 255, 0.08) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(234, 219, 200, 0.2) 0%, transparent 70%)',
           top: '-10%',
           left: '-5%',
-          filter: 'blur(40px)',
+          filter: 'blur(60px)',
           willChange: 'transform',
         }}
       />
       <div 
         className="absolute w-[500px] h-[500px] rounded-full animate-orb-2 opacity-60"
         style={{
-          background: 'radial-gradient(circle, rgba(160, 140, 255, 0.06) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(93, 173, 226, 0.08) 0%, transparent 70%)',
           bottom: '-15%',
           right: '-10%',
-          filter: 'blur(50px)',
+          filter: 'blur(60px)',
           willChange: 'transform',
         }}
       />
       <div 
         className="absolute w-[400px] h-[400px] rounded-full animate-orb-3 opacity-60"
         style={{
-          background: 'radial-gradient(circle, rgba(255, 255, 255, 0.04) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(76, 175, 80, 0.06) 0%, transparent 70%)',
           top: '40%',
           left: '50%',
-          filter: 'blur(50px)',
+          filter: 'blur(60px)',
           willChange: 'transform',
         }}
       />
@@ -92,28 +92,28 @@ export function AnimatedBackground({ variant = 'landing', className = '' }: Anim
         <div 
           className="absolute w-[350px] h-[350px] rounded-full animate-orb-4 opacity-60"
           style={{
-            background: 'radial-gradient(circle, rgba(100, 180, 255, 0.05) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(234, 219, 200, 0.12) 0%, transparent 70%)',
             top: '20%',
             right: '10%',
-            filter: 'blur(40px)',
+            filter: 'blur(50px)',
             willChange: 'transform',
           }}
         />
       )}
 
-      {/* Mouse-reactive glow */}
+      {/* Mouse-reactive warm glow */}
       <div 
         ref={glowRef}
         className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full pointer-events-none transition-transform duration-700 ease-out"
         style={{
-          background: 'radial-gradient(circle, rgba(150, 140, 255, 0.06) 0%, transparent 70%)',
-          filter: 'blur(30px)',
+          background: 'radial-gradient(circle, rgba(234, 219, 200, 0.08) 0%, transparent 70%)',
+          filter: 'blur(40px)',
           willChange: 'transform',
         }}
       />
 
-      {/* Top edge fade for depth */}
-      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black to-transparent pointer-events-none" />
+      {/* Top edge subtle warm fade */}
+      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#FAF8F4] to-transparent pointer-events-none opacity-50" />
     </div>
   )
 }

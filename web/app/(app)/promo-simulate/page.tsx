@@ -80,7 +80,7 @@ export default function PromoSimulatePage() {
         </div>
 
         <div>
-          <h1 className="text-3xl font-black text-white mb-3">Promo Video Simulator</h1>
+          <h1 className="text-3xl font-semibold text-white mb-3">Promo Video Simulator</h1>
           <p className="text-zinc-500">
             Click the button below to simulate opening Instagram. After exactly 5 seconds, it will automatically "intercept" you and show the MindFuel Deep Breath screen.
           </p>

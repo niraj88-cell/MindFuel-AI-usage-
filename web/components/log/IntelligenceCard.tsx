@@ -63,13 +63,13 @@ export function IntelligenceCard({ data }: IntelligenceCardProps) {
       {/* Header: Severity + Confidence */}
       <div className="flex items-center justify-between">
         <div
-          className="flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-black"
+          className="flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold"
           style={{ background: sev.bg, border: `1px solid ${sev.border}`, color: sev.color }}
         >
           {sev.label}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Confidence</span>
+          <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest">Confidence</span>
           <div className="w-20 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-1000 ease-out"
@@ -113,7 +113,7 @@ export function IntelligenceCard({ data }: IntelligenceCardProps) {
       {/* Why — Top root cause only, keep it simple */}
       {data.root_causes.length > 0 && (
         <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
-          <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-2">Why this score</p>
+          <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mb-2">Why this score</p>
           <p className="text-sm text-zinc-300 font-medium leading-relaxed">
             {data.root_causes[0].evidence}
           </p>
@@ -128,7 +128,7 @@ export function IntelligenceCard({ data }: IntelligenceCardProps) {
       {/* What to do — Simple action cards */}
       {data.copilot_actions.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">What to do</p>
+          <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest">What to do</p>
           {data.copilot_actions.slice(0, 2).map((action, i) => (
             <div
               key={i}
@@ -142,7 +142,7 @@ export function IntelligenceCard({ data }: IntelligenceCardProps) {
                 <p className="text-xs text-zinc-500 truncate">{action.reason}</p>
               </div>
               {action.impact === 'high' && (
-                <span className="text-[9px] font-black text-white bg-white/10 px-2 py-0.5 rounded-full border border-white/10 shrink-0">
+                <span className="text-[9px] font-semibold text-white bg-white/10 px-2 py-0.5 rounded-full border border-white/10 shrink-0">
                   HIGH IMPACT
                 </span>
               )}
@@ -172,7 +172,7 @@ function ImpactTile({ icon, label, value }: { icon: React.ReactNode; label: stri
     <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3 flex items-center gap-3">
       <div className="text-zinc-500">{icon}</div>
       <div className="min-w-0">
-        <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">{label}</p>
+        <p className="text-[9px] font-semibold text-zinc-600 uppercase tracking-widest">{label}</p>
         <p className="text-xs font-bold text-zinc-300 truncate">{value}</p>
       </div>
     </div>

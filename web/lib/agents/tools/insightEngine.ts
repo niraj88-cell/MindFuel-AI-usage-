@@ -2,7 +2,7 @@ import Groq from 'groq-sdk'
 import { z } from 'zod'
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+  apiKey: process.env.GROQ_API_KEY || 'dummy_key_for_build',
 })
 
 export const BehavioralInsightSchema = z.object({

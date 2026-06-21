@@ -138,7 +138,7 @@ export function InteractiveHero() {
       <div className="w-full max-w-xl mx-auto mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 relative z-10 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
         <button 
           onClick={() => router.push('/signup')}
-          className="w-full sm:w-auto bg-white text-black px-8 py-4 rounded-xl font-black text-sm sm:text-base hover:bg-zinc-200 transition-colors shadow-[0_0_40px_rgba(255,255,255,0.1)] active:scale-95"
+          className="w-full sm:w-auto bg-white text-black px-8 py-4 rounded-xl font-semibold text-sm sm:text-base hover:bg-zinc-200 transition-colors shadow-[0_0_40px_rgba(255,255,255,0.1)] active:scale-95"
         >
           Start free
         </button>
@@ -159,10 +159,10 @@ export function InteractiveHero() {
       {/* Interactive Demo Section */}
       <div id="try-demo" className="w-full max-w-3xl mx-auto mt-20 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-4">
             <Zap className="w-3 h-3" /> Live Demo
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-white">See MindFuel in action</h2>
+          <h2 className="text-2xl sm:text-3xl font-semibold text-white">See MindFuel in action</h2>
           <p className="text-zinc-500 mt-2 text-sm">Click a scenario below or type your own — watch the AI break it down instantly.</p>
         </div>
 
@@ -205,7 +205,7 @@ export function InteractiveHero() {
             <button
               onClick={handleAnalyze}
               disabled={!inputText.trim()}
-              className="mt-4 w-full py-4 bg-white text-black font-black text-sm rounded-2xl hover:bg-zinc-200 transition-all active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="mt-4 w-full py-4 bg-white text-black font-semibold text-sm rounded-2xl hover:bg-zinc-200 transition-all active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <Brain className="w-4 h-4" />
               Analyze with AI
@@ -227,7 +227,7 @@ export function InteractiveHero() {
                   style={{ width: `${progressWidth}%`, transitionDuration: '2000ms' }}
                 />
               </div>
-              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest animate-pulse">Understanding your thoughts...</span>
+              <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest animate-pulse">Understanding your thoughts...</span>
             </div>
           )}
 
@@ -252,14 +252,14 @@ export function InteractiveHero() {
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-lg font-black text-white">{result.score}</span>
+                      <span className="text-lg font-semibold text-white">{result.score}</span>
                     </div>
                   </div>
                   <div>
-                    <p className="text-white font-black text-lg">Mental Score</p>
+                    <p className="text-white font-semibold text-lg">Mental Score</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span
-                        className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full"
+                        className="text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full"
                         style={{ color: result.scoreColor, background: `${result.scoreColor}15` }}
                       >
                         {result.scoreLabel}
@@ -283,7 +283,7 @@ export function InteractiveHero() {
               <div className="p-5 bg-black/40 border border-white/5 rounded-2xl space-y-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-3.5 h-3.5 text-white" />
-                  <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">AI Insight</span>
+                  <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">AI Insight</span>
                 </div>
                 <p className="text-sm text-zinc-300 leading-relaxed">{result.insight}</p>
                 <div className="pt-2 border-t border-white/5">
@@ -295,7 +295,7 @@ export function InteractiveHero() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => router.push('/signup')}
-                  className="flex-1 py-4 bg-white text-black font-black text-sm rounded-2xl hover:bg-zinc-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  className="flex-1 py-4 bg-white text-black font-semibold text-sm rounded-2xl hover:bg-zinc-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                   Start free <ArrowRight className="w-4 h-4" />
                 </button>

@@ -22,12 +22,12 @@ function renderContent(text: string) {
   const lines = text.split('\n')
   return lines.map((line, i) => {
     if (!line.trim()) return <div key={i} className="h-1.5" />
-    if (/^---+$/.test(line.trim())) return <hr key={i} className="border-white/10 my-3" />
+    if (/^---+$/.test(line.trim())) return <hr key={i} className="border-black/[0.06] my-3" />
     if (/^[-*]\s/.test(line)) {
       const content = line.replace(/^[-*]\s/, '')
       return (
         <div key={i} className="flex gap-2 my-0.5">
-          <span className="text-white shrink-0 mt-0.5">•</span>
+          <span className="text-[#111827] shrink-0 mt-0.5">•</span>
           <span>{inlineMd(content)}</span>
         </div>
       )
@@ -40,11 +40,11 @@ function inlineMd(text: string) {
   const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g)
   return parts.map((p, i) => {
     if (p.startsWith('**') && p.endsWith('**'))
-      return <strong key={i} className="text-white font-semibold">{p.slice(2, -2)}</strong>
+      return <strong key={i} className="text-[#111827] font-semibold">{p.slice(2, -2)}</strong>
     if (p.startsWith('*') && p.endsWith('*'))
-      return <em key={i} className="text-zinc-300 italic">{p.slice(1, -1)}</em>
+      return <em key={i} className="text-[#4B5563] italic">{p.slice(1, -1)}</em>
     if (p.startsWith('`') && p.endsWith('`'))
-      return <code key={i} className="bg-zinc-700 text-white px-1.5 py-0.5 rounded text-xs font-mono">{p.slice(1, -1)}</code>
+      return <code key={i} className="bg-[#F5F7F6] text-[#111827] px-1.5 py-0.5 rounded text-xs font-mono">{p.slice(1, -1)}</code>
     return p
   })
 }
@@ -249,13 +249,13 @@ export default function CoachPage() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] gap-6 relative overflow-hidden">
         {/* Ambient background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500/20 blur-[100px] rounded-full" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#F5F7F6] blur-[100px] rounded-full opacity-50" />
         
-        <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shadow-[0_0_60px_rgba(255,255,255,0.05)] relative z-10 backdrop-blur-xl">
-           <div className="absolute inset-0 rounded-full border border-white/20 animate-[spin_4s_linear_infinite]" style={{ borderTopColor: 'transparent', borderLeftColor: 'transparent' }} />
-           <Brain className="w-10 h-10 text-white animate-pulse" />
+        <div className="w-24 h-24 rounded-full bg-[#F5F7F6] border border-black/[0.04] flex items-center justify-center relative z-10">
+           <div className="absolute inset-0 rounded-full border-2 border-[#4CAF50]/30 animate-[spin_4s_linear_infinite]" style={{ borderTopColor: '#4CAF50', borderLeftColor: 'transparent' }} />
+           <Brain className="w-10 h-10 text-[#4CAF50] animate-pulse" />
         </div>
-        <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest relative z-10">Initializing Neural Link</p>
+        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest relative z-10">Initializing Neural Link</p>
       </div>
     )
   }
@@ -266,29 +266,29 @@ export default function CoachPage() {
     <div className="flex flex-col h-[calc(100dvh-7rem)] lg:h-[calc(100dvh-5rem)] w-full max-w-4xl mx-auto relative group/page">
       {/* Ambient background for the entire coach experience */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
-         <div className={`absolute top-[20%] left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-gradient-to-b from-indigo-500/10 via-purple-500/5 to-transparent blur-[120px] rounded-full transition-opacity duration-1000 ${loading ? 'opacity-100 animate-pulse' : 'opacity-40'}`} />
+         <div className={`absolute top-[20%] left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-radial-gradient from-[#F5F7F6] to-transparent blur-[120px] rounded-full transition-opacity duration-1000 ${loading ? 'opacity-40 animate-pulse' : 'opacity-30'}`} />
       </div>
 
       {/* Header - Floating Pill */}
       <div className="absolute top-0 left-0 right-0 z-20 flex justify-center p-4 md:p-8 pointer-events-none">
-        <div className="flex items-center gap-4 bg-zinc-900/60 backdrop-blur-2xl border border-white/10 px-6 py-3 rounded-full shadow-2xl pointer-events-auto">
-          <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-white/10 border border-white/20">
-            <Sparkles className="w-4 h-4 text-white" />
+        <div className="flex items-center gap-4 bg-white/90 backdrop-blur-xl border border-black/[0.06] px-6 py-3 rounded-full shadow-md pointer-events-auto">
+          <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-[#F5F7F6] border border-black/[0.04]">
+            <Sparkles className="w-4 h-4 text-[#4CAF50]" />
           </div>
           <div className="flex flex-col">
-             <span className="text-sm font-serif font-bold text-white leading-tight">MindFuel AI</span>
-             <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest leading-tight">Active Sync</span>
+             <span className="text-sm font-[var(--font-serif)] font-semibold text-[#111827] leading-tight">MindFuel AI</span>
+             <span className="text-[11px] font-medium text-[#4CAF50] uppercase tracking-wider leading-tight">Active Sync</span>
           </div>
         </div>
       </div>
 
       {/* Rate limit banner */}
       {rateLimited && (
-        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-6 py-3 bg-rose-500/10 border border-rose-500/20 backdrop-blur-xl rounded-full text-sm text-rose-300 shadow-2xl animate-fade-in-up whitespace-nowrap">
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-6 py-3 bg-red-50 border border-red-200 rounded-full text-sm text-red-600 shadow-sm animate-fade-in-up whitespace-nowrap">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span className="font-medium">{rateLimited.message}</span>
           {countdown && (
-            <span className="font-mono font-black bg-rose-500/20 px-2 py-0.5 rounded-full text-xs">
+            <span className="font-mono font-semibold bg-red-100 px-2 py-0.5 rounded-full text-xs">
               {countdown}
             </span>
           )}
@@ -307,11 +307,11 @@ export default function CoachPage() {
               {isUser ? (
                 // USER MESSAGE - Floating semi-transparent pill
                 <div className="flex flex-col items-end max-w-[80%] md:max-w-[65%]">
-                  <div className="px-6 py-4 rounded-[32px] rounded-tr-sm bg-white/10 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(255,255,255,0.05)] text-white text-[15px] leading-relaxed">
+                  <div className="px-6 py-4 rounded-[24px] rounded-tr-sm bg-[#111827] text-white text-[15px] leading-relaxed shadow-sm">
                      {renderContent(msg.content)}
                   </div>
                   {msg.ts && (
-                    <span className="text-[10px] text-zinc-500 mt-2 font-medium tracking-wide mr-2">
+                    <span className="text-[10px] text-gray-400 mt-2 font-medium tracking-wide mr-2">
                       {new Date(msg.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   )}
@@ -319,31 +319,30 @@ export default function CoachPage() {
               ) : isSystem ? (
                 // SYSTEM MESSAGE
                 <div className="w-full flex justify-center my-4">
-                   <div className="px-4 py-2 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs italic">
+                   <div className="px-4 py-2 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs italic">
                      {msg.content}
                    </div>
                 </div>
               ) : (
                 // COACH MESSAGE - Immersive spatial text
                 <div className="flex items-start gap-5 max-w-[90%] md:max-w-[75%]">
-                   <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 relative mt-1">
-                      <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-md" />
-                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-400 to-purple-600 rounded-full opacity-20" />
-                      <Brain className="w-5 h-5 text-indigo-300 relative z-10" />
+                   <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 relative mt-1 bg-[#F5F7F6] border border-black/[0.04]">
+                      <div className="absolute inset-0 bg-[#4CAF50]/10 rounded-full" />
+                      <Brain className="w-5 h-5 text-[#4CAF50] relative z-10" />
                    </div>
                    <div className="flex-1">
-                     <div className="text-[16px] md:text-[17px] text-zinc-200 leading-[1.8] font-medium coach-typography">
+                     <div className="text-[15px] md:text-[16px] text-[#111827] leading-[1.8] font-normal coach-typography">
                         {renderContent(msg.content)}
                         {msg.isStreaming && (
-                          <span className="inline-block w-2 h-5 bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)] animate-pulse rounded-sm ml-1 align-middle" />
+                          <span className="inline-block w-2 h-5 bg-[#4CAF50] animate-pulse rounded-sm ml-1 align-middle" />
                         )}
                      </div>
                      {msg.ts && !msg.isStreaming && (
-                        <div className="flex items-center gap-3 mt-4 text-[10px] text-zinc-600 font-medium tracking-wide">
+                        <div className="flex items-center gap-3 mt-4 text-[10px] text-gray-400 font-medium tracking-wide">
                           <span>M.A.I. • {new Date(msg.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                           <button 
                             onClick={() => playNativeVoice(msg.content)}
-                            className="p-1.5 rounded-full hover:bg-white/10 text-zinc-500 hover:text-indigo-400 transition-colors"
+                            className="p-1.5 rounded-full hover:bg-[#F5F7F6] text-gray-400 hover:text-[#4CAF50] transition-colors"
                             title="Listen with native premium voice"
                           >
                             <Volume2 className="w-3.5 h-3.5" />
@@ -360,14 +359,14 @@ export default function CoachPage() {
         {/* Thinking indicator */}
         {loading && messages[messages.length - 1]?.role !== 'assistant' && (
           <div className="flex items-start gap-5 animate-fade-in-up">
-             <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 relative mt-1">
-                <div className="absolute inset-0 bg-indigo-500/40 rounded-full blur-lg animate-pulse" />
-                <Brain className="w-5 h-5 text-indigo-300 relative z-10 animate-pulse" />
+             <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 relative mt-1 bg-[#F5F7F6] border border-black/[0.04]">
+                <div className="absolute inset-0 bg-[#4CAF50]/10 rounded-full" />
+                <Brain className="w-5 h-5 text-[#4CAF50] relative z-10 animate-pulse" />
              </div>
              <div className="flex items-center gap-2 h-10">
-                <span className="text-xs font-medium text-zinc-400 italic mr-2 animate-pulse">Searching semantic memory...</span>
+                <span className="text-xs font-medium text-gray-400 italic mr-2 animate-pulse">Searching semantic memory...</span>
                 {[0, 150, 300].map(d => (
-                  <div key={d} className="w-1.5 h-1.5 rounded-full bg-indigo-400/80 shadow-[0_0_10px_rgba(99,102,241,0.8)] animate-bounce" style={{ animationDelay: `${d}ms` }} />
+                  <div key={d} className="w-1.5 h-1.5 rounded-full bg-[#4CAF50] animate-bounce" style={{ animationDelay: `${d}ms` }} />
                 ))}
              </div>
           </div>
@@ -385,7 +384,7 @@ export default function CoachPage() {
               <button
                 key={p}
                 onClick={() => handleSend(p)}
-                className="text-xs px-5 py-2.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-zinc-300 hover:bg-white/10 hover:text-white transition-all shadow-lg"
+                className="text-xs px-5 py-2.5 rounded-full bg-white border border-black/[0.06] text-[#4B5563] hover:bg-[#F5F7F6] hover:text-[#111827] transition-all shadow-sm"
               >
                 {p}
               </button>
@@ -394,8 +393,7 @@ export default function CoachPage() {
         )}
 
         <div className="relative group/input">
-           <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-indigo-500/20 rounded-[36px] blur-md opacity-50 group-focus-within/input:opacity-100 transition-opacity duration-500" />
-           <div className="relative flex items-end gap-3 bg-zinc-950/80 backdrop-blur-3xl p-2.5 md:p-3 rounded-[32px] border border-white/10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)]">
+           <div className="relative flex items-end gap-3 bg-white border border-black/[0.06] p-2.5 md:p-3 rounded-[24px] shadow-md">
               <div className="flex-1 min-h-[44px] flex items-center pl-4">
                  <textarea
                    ref={inputRef}
@@ -405,14 +403,14 @@ export default function CoachPage() {
                    placeholder={rateLimited ? `Rate limited — retry in ${countdown || '...'}` : 'Message MindFuel AI...'}
                    rows={1}
                    disabled={loading || !!rateLimited}
-                   className="w-full bg-transparent border-none focus:ring-0 text-white placeholder-zinc-500 text-[15px] resize-none max-h-[120px] overflow-y-auto disabled:opacity-50 outline-none leading-relaxed custom-scrollbar py-2"
+                   className="w-full bg-transparent border-none focus:ring-0 text-[#111827] placeholder-gray-400 text-[15px] resize-none max-h-[120px] overflow-y-auto disabled:opacity-50 outline-none leading-relaxed custom-scrollbar py-2"
                  />
               </div>
               <Button
                 type="button"
                 onClick={() => handleSend()}
                 disabled={!input.trim() || loading || !!rateLimited}
-                className="w-12 h-12 rounded-full bg-white hover:bg-indigo-50 hover:scale-105 active:scale-95 text-black shrink-0 shadow-[0_0_20px_rgba(255,255,255,0.2)] p-0 transition-all disabled:opacity-50 disabled:hover:scale-100 disabled:shadow-none"
+                className="w-12 h-12 rounded-full bg-[#111827] hover:bg-[#1f2937] hover:scale-105 active:scale-95 text-white shrink-0 shadow-sm p-0 transition-all disabled:opacity-50 disabled:hover:scale-100 disabled:shadow-none"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 ml-1" />}
               </Button>

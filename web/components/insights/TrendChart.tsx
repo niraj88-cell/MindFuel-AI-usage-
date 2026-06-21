@@ -27,7 +27,7 @@ function ChartTooltip({ active, payload, label }: {
   return (
     <div className="web-card p-4 rounded-[20px] shadow-2xl relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-red-soft)] to-[var(--accent-blue-soft)] opacity-20 pointer-events-none" />
-      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3 relative z-10">{label}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-3 relative z-10">{label}</p>
       <div className="space-y-2 relative z-10">
         {payload.map((p) => (
           <div key={p.dataKey} className="flex items-center justify-between gap-8">
@@ -35,7 +35,7 @@ function ChartTooltip({ active, payload, label }: {
                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color, boxShadow: `0 0 8px ${p.color}` }} />
                <span className="text-xs font-bold text-zinc-300 capitalize">{p.dataKey}:</span>
             </div>
-            <span className="text-sm font-black text-white">{p.value}</span>
+            <span className="text-sm font-semibold text-white">{p.value}</span>
           </div>
         ))}
       </div>
@@ -50,7 +50,7 @@ export function TrendChart({ data, showMood = true }: TrendChartProps) {
         <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-4 border border-white/5">
            <Activity className="w-8 h-8 text-slate-600" />
         </div>
-        <p className="text-sm font-black uppercase tracking-widest text-slate-600">Insufficient Data</p>
+        <p className="text-sm font-semibold uppercase tracking-widest text-slate-600">Insufficient Data</p>
         <p className="text-xs text-slate-700 mt-1 max-w-[200px]">Synchronize more content logs to generate trend intelligence.</p>
       </div>
     )

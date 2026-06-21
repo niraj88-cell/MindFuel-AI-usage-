@@ -61,7 +61,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex relative overflow-hidden">
+    <div className="min-h-screen bg-[#FAF8F4] flex relative overflow-hidden">
       {/* Left Panel - Value Proposition */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         {/* Animated Background */}
@@ -71,37 +71,37 @@ export default function LoginPage() {
           <div className="mb-12 animate-fade-in-up">
             <div className="flex items-center gap-4 mb-8">
               <AnimatedBrain size={60} />
-              <span className="text-3xl font-black tracking-tight text-white">MindFuel</span>
+              <span className="text-3xl font-semibold tracking-tight text-[#111827]">MindFuel</span>
             </div>
             
-            <h2 className="text-5xl font-black text-white leading-tight mb-4">
+            <h2 className="text-5xl font-semibold text-[#111827] leading-tight mb-4">
               Your digital diet<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-500">shapes your mind.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#111827] to-[#6B7280]">shapes your mind.</span>
             </h2>
-            <p className="text-zinc-400 text-lg max-w-md leading-relaxed font-medium">
+            <p className="text-[#4B5563] text-lg max-w-md leading-relaxed font-medium">
               Join thousands who are already optimizing their screen time for better focus, mood, and mental performance.
             </p>
           </div>
 
           {/* Features */}
           <div className="space-y-6 stagger-children">
-            <FeatureRow icon={<Zap className="w-4 h-4 text-white" />} title="Pattern Discovery" desc="Gently uncover hidden patterns in your daily thoughts" />
-            <FeatureRow icon={<Sparkles className="w-4 h-4 text-white" />} title="Mood Intelligence" desc="Understand how your screen time affects your emotional state" />
-            <FeatureRow icon={<Shield className="w-4 h-4 text-white" />} title="Personal AI Coach" desc="Get guidance to build healthier digital habits" />
+            <FeatureRow icon={<Zap className="w-4 h-4 text-[#4CAF50]" />} title="Pattern Discovery" desc="Gently uncover hidden patterns in your daily thoughts" />
+            <FeatureRow icon={<Sparkles className="w-4 h-4 text-[#5DADE2]" />} title="Mood Intelligence" desc="Understand how your screen time affects your emotional state" />
+            <FeatureRow icon={<Shield className="w-4 h-4 text-[#4CAF50]" />} title="Personal AI Coach" desc="Get guidance to build healthier digital habits" />
           </div>
 
           {/* Social proof */}
-          <div className="mt-12 pt-8 border-t border-white/5 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+          <div className="mt-12 pt-8 border-t border-black/[0.06] animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
             <div className="flex items-center gap-4">
               <div className="flex -space-x-3">
                 {['A', 'B', 'C', 'D'].map((letter, i) => (
-                  <div key={letter} className="w-10 h-10 rounded-full bg-zinc-900 border-2 border-black flex items-center justify-center text-xs font-black text-zinc-300 shadow-lg" style={{ zIndex: 10 - i }}>
+                  <div key={letter} className="w-10 h-10 rounded-full bg-[#F5F7F6] border-2 border-[#FAF8F4] flex items-center justify-center text-xs font-semibold text-[#4B5563] shadow-sm" style={{ zIndex: 10 - i }}>
                     {letter}
                   </div>
                 ))}
               </div>
-              <p className="text-sm text-zinc-500 font-medium">
-                <span className="text-white font-bold">500+</span> users tracking their digital wellness
+              <p className="text-sm text-gray-400 font-medium">
+                <span className="text-[#111827] font-bold">500+</span> users tracking their digital wellness
               </p>
             </div>
           </div>
@@ -109,17 +109,17 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative z-10 bg-black">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative z-10 bg-[#FAF8F4]">
         <div className="w-full max-w-[420px] animate-fade-in-up">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-10 flex flex-col items-center gap-4">
             <AnimatedBrain size={50} />
-            <span className="text-2xl font-black text-white">MindFuel</span>
+            <span className="text-2xl font-semibold text-[#111827]">MindFuel</span>
           </div>
 
           <div className="mb-8">
-            <h1 className="text-3xl sm:text-4xl font-black text-white mb-2">Welcome back</h1>
-            <p className="text-zinc-400 font-medium">
+            <h1 className="text-3xl sm:text-4xl font-semibold text-[#111827] mb-2">Welcome back</h1>
+            <p className="text-[#4B5563] font-medium">
               Sign in to continue your wellness journey
             </p>
           </div>
@@ -130,7 +130,7 @@ export default function LoginPage() {
             type="button"
             onClick={handleGoogleLogin}
             disabled={googleLoading}
-            className="w-full h-12 flex items-center justify-center gap-3 bg-zinc-900/40 border border-white/10 rounded-xl text-white font-bold text-sm hover:bg-zinc-800 hover:border-white/20 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-lg"
+            className="w-full h-12 flex items-center justify-center gap-3 bg-white border border-black/[0.08] rounded-xl text-[#111827] font-bold text-sm hover:bg-[#F5F7F6] hover:border-black/[0.12] transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-sm"
           >
             {googleLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -149,16 +149,16 @@ export default function LoginPage() {
 
           {/* Divider */}
           <div className="flex items-center gap-4 my-8">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-[10px] text-zinc-500 font-black tracking-widest uppercase">Or</span>
-            <div className="flex-1 h-px bg-white/10" />
+            <div className="flex-1 h-px bg-black/[0.06]" />
+            <span className="text-[10px] text-gray-400 font-semibold tracking-widest uppercase">Or</span>
+            <div className="flex-1 h-px bg-black/[0.06]" />
           </div>
 
           {/* Form */}
-          <div className="p-6 sm:p-8 bg-zinc-900/30 border border-white/5 rounded-3xl group focus-within:border-white/10 focus-within:bg-zinc-900/50 transition-all shadow-2xl">
+          <div className="p-6 sm:p-8 bg-white border border-black/[0.04] rounded-2xl group focus-within:border-black/[0.08] transition-all shadow-sm">
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-black uppercase tracking-wider text-zinc-500">Email</Label>
+                <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-gray-400">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -167,14 +167,14 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  className="h-12 bg-black/50 border-white/5 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all"
+                  className="h-12 bg-[#F5F7F6] border-black/[0.06] rounded-xl text-[#111827] placeholder:text-gray-400 focus:border-black/[0.12] focus:ring-1 focus:ring-black/[0.08] transition-all"
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-xs font-black uppercase tracking-wider text-zinc-500">Password</Label>
-                  <Link href="/forgot-password" className="text-xs text-zinc-500 hover:text-white transition-colors font-medium">
+                  <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-gray-400">Password</Label>
+                  <Link href="/forgot-password" className="text-xs text-gray-400 hover:text-[#111827] transition-colors font-medium">
                     Forgot?
                   </Link>
                 </div>
@@ -187,12 +187,12 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     autoComplete="current-password"
-                    className="h-12 bg-black/50 border-white/5 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all pr-12"
+                    className="h-12 bg-[#F5F7F6] border-black/[0.06] rounded-xl text-[#111827] placeholder:text-gray-400 focus:border-black/[0.12] focus:ring-1 focus:ring-black/[0.08] transition-all pr-12"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors cursor-pointer w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#111827] transition-colors cursor-pointer w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/[0.03]"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -200,7 +200,7 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400 font-medium">
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600 font-medium">
                   {error}
                 </div>
               )}
@@ -208,7 +208,7 @@ export default function LoginPage() {
               <Button
                 id="login-button"
                 type="submit"
-                className="w-full h-12 bg-white text-black hover:bg-zinc-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] rounded-xl font-black text-sm transition-all active:scale-[0.98] mt-2"
+                className="w-full h-12 bg-[#111827] text-white hover:bg-[#1f2937] hover:shadow-md rounded-xl font-semibold text-sm transition-all active:scale-[0.98] mt-2"
                 disabled={loading}
               >
                 {loading ? (
@@ -223,9 +223,9 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-8 text-center">
-            <p className="text-sm text-zinc-500 font-medium">
+            <p className="text-sm text-gray-400 font-medium">
               Don&apos;t have an account?{' '}
-              <Link href="/signup" className="text-white hover:text-zinc-300 transition-colors font-bold">
+              <Link href="/signup" className="text-[#111827] hover:text-[#4B5563] transition-colors font-bold">
                 Create one free →
               </Link>
             </p>
@@ -233,9 +233,9 @@ export default function LoginPage() {
 
           {/* Trust badges */}
           <div className="mt-12 flex justify-center">
-            <div className="inline-flex items-center gap-6 px-4 py-2 rounded-full bg-white/[0.02] border border-white/5 text-[10px] font-black text-zinc-500 uppercase tracking-widest">
+            <div className="inline-flex items-center gap-6 px-4 py-2 rounded-full bg-[#F5F7F6] border border-black/[0.04] text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
               <span>🔒 Private</span>
-              <span className="w-1 h-1 rounded-full bg-zinc-700" />
+              <span className="w-1 h-1 rounded-full bg-gray-300" />
               <span>🛡️ Encrypted</span>
             </div>
           </div>
@@ -248,12 +248,12 @@ export default function LoginPage() {
 function FeatureRow({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
     <div className="flex items-start gap-5 group">
-      <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center text-white shrink-0 group-hover:bg-white/[0.08] group-hover:scale-110 transition-all">
+      <div className="w-12 h-12 rounded-2xl bg-[#F5F7F6] border border-black/[0.06] flex items-center justify-center shrink-0 group-hover:bg-white group-hover:shadow-sm group-hover:scale-110 transition-all">
         {icon}
       </div>
       <div>
-        <p className="text-base font-bold text-white mb-1">{title}</p>
-        <p className="text-sm text-zinc-400 leading-relaxed">{desc}</p>
+        <p className="text-base font-bold text-[#111827] mb-1">{title}</p>
+        <p className="text-sm text-[#4B5563] leading-relaxed">{desc}</p>
       </div>
     </div>
   )

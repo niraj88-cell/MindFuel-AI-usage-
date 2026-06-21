@@ -116,15 +116,15 @@ export default function FocusPage() {
           {history.length > 0 && (
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-zinc-900 border border-white/10 rounded-xl p-3 sm:p-4 text-center">
-                <p className="text-xl sm:text-2xl font-black text-white">{totalHours}h</p>
+                <p className="text-xl sm:text-2xl font-semibold text-white">{totalHours}h</p>
                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Total Focus</p>
               </div>
               <div className="bg-zinc-900 border border-white/10 rounded-xl p-3 sm:p-4 text-center">
-                <p className="text-xl sm:text-2xl font-black text-white">{completed.length}</p>
+                <p className="text-xl sm:text-2xl font-semibold text-white">{completed.length}</p>
                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Completed</p>
               </div>
               <div className="bg-zinc-900 border border-white/10 rounded-xl p-3 sm:p-4 text-center">
-                <p className="text-xl sm:text-2xl font-black text-white">{completionRate}%</p>
+                <p className="text-xl sm:text-2xl font-semibold text-white">{completionRate}%</p>
                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Success</p>
               </div>
             </div>
@@ -183,7 +183,7 @@ export default function FocusPage() {
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <p className="text-5xl sm:text-6xl font-black text-white tracking-tight font-mono">{mm}:{ss}</p>
+              <p className="text-5xl sm:text-6xl font-semibold text-white tracking-tight font-mono">{mm}:{ss}</p>
               <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mt-2">Remaining</p>
             </div>
           </div>

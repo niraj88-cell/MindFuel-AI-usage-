@@ -3,7 +3,7 @@ import Groq from 'groq-sdk';
 import { createClient } from '@/lib/supabase/server';
 import { checkAnalyzeRateLimit } from '@/lib/rate-limit';
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || 'dummy_key_for_build' });
 
 export async function POST(req: NextRequest) {
   try {

@@ -12,22 +12,16 @@ interface WebPatternProps {
   className?: string;
 }
 
-const densityConfig: Record<WebPatternDensity, { rings: number; radials: number }> = {
-  sparse: { rings: 3, radials: 6 },
-  normal: { rings: 4, radials: 8 },
-  dense: { rings: 5, radials: 8 },
+const densityConfig: Record<WebPatternDensity, { cols: number; rows: number }> = {
+  sparse: { cols: 6, rows: 6 },
+  normal: { cols: 8, rows: 8 },
+  dense: { cols: 10, rows: 10 },
 };
 
 const colorMap: Record<WebPatternColor, string> = {
-  red: 'var(--accent-red, #DC2626)',
-  blue: 'var(--accent-blue, #3B82F6)',
-  neutral: 'var(--web-line, rgba(255, 255, 255, 0.05))',
-};
-
-const nodeColorMap: Record<WebPatternColor, string> = {
-  red: 'var(--accent-red, #DC2626)',
-  blue: 'var(--accent-blue, #3B82F6)',
-  neutral: 'var(--web-node, rgba(255, 255, 255, 0.15))',
+  red: '#4CAF50',
+  blue: '#5DADE2',
+  neutral: '#EADBC8',
 };
 
 export function WebPattern({
@@ -36,33 +30,23 @@ export function WebPattern({
   animated = true,
   className = '',
 }: WebPatternProps) {
-  const { rings, radials } = densityConfig[density];
-  const strokeColor = colorMap[color];
-  const nodeColor = nodeColorMap[color];
+  const { cols, rows } = densityConfig[density];
+  const dotColor = colorMap[color];
 
   const viewSize = 200;
-  const center = viewSize / 2;
-  const maxRadius = center - 4; // small padding
+  const paddingX = 16;
+  const paddingY = 16;
+  const spacingX = (viewSize - paddingX * 2) / (cols - 1);
+  const spacingY = (viewSize - paddingY * 2) / (rows - 1);
 
-  // Generate concentric ring radii evenly spaced
-  const ringRadii = Array.from({ length: rings }, (_, i) =>
-    ((i + 1) / rings) * maxRadius
-  );
-
-  // Generate radial line angles
-  const radialAngles = Array.from({ length: radials }, (_, i) =>
-    (i * 360) / radials
-  );
-
-  // Compute intersection nodes (each radial × each ring)
-  const nodes: { cx: number; cy: number; key: string }[] = [];
-  for (const angle of radialAngles) {
-    const rad = (angle * Math.PI) / 180;
-    for (const r of ringRadii) {
-      nodes.push({
-        cx: center + r * Math.cos(rad),
-        cy: center + r * Math.sin(rad),
-        key: `${angle}-${r}`,
+  // Generate dot positions in a soft grid
+  const dots: { cx: number; cy: number; key: string }[] = [];
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      dots.push({
+        cx: paddingX + col * spacingX,
+        cy: paddingY + row * spacingY,
+        key: `${row}-${col}`,
       });
     }
   }
@@ -82,49 +66,17 @@ export function WebPattern({
       preserveAspectRatio="xMidYMid slice"
       fill="none"
     >
-      {/* Concentric rings */}
-      {ringRadii.map((r, i) => (
-        <circle
-          key={`ring-${i}`}
-          cx={center}
-          cy={center}
-          r={r}
-          stroke={strokeColor}
-          strokeWidth={0.6}
-          opacity={0.04 + i * 0.005}
-        />
-      ))}
-
-      {/* Radial lines from center to edge */}
-      {radialAngles.map((angle, i) => {
-        const rad = (angle * Math.PI) / 180;
-        const x2 = center + maxRadius * Math.cos(rad);
-        const y2 = center + maxRadius * Math.sin(rad);
-        return (
-          <line
-            key={`radial-${i}`}
-            x1={center}
-            y1={center}
-            x2={x2}
-            y2={y2}
-            stroke={strokeColor}
-            strokeWidth={0.5}
-            opacity={0.035}
-          />
-        );
-      })}
-
-      {/* Intersection nodes */}
-      {nodes.map((node, i) =>
+      {/* Soft dot grid */}
+      {dots.map((dot, i) =>
         animated ? (
           <motion.circle
-            key={node.key}
-            cx={node.cx}
-            cy={node.cy}
-            r={1.5}
-            fill={nodeColor}
-            initial={{ opacity: 0.03 }}
-            animate={{ opacity: [0.03, 0.06, 0.03] }}
+            key={dot.key}
+            cx={dot.cx}
+            cy={dot.cy}
+            r={1}
+            fill={dotColor}
+            initial={{ opacity: 0.04 }}
+            animate={{ opacity: [0.04, 0.08, 0.04] }}
             transition={{
               duration: 4 + (i % 3),
               repeat: Infinity,
@@ -134,12 +86,12 @@ export function WebPattern({
           />
         ) : (
           <circle
-            key={node.key}
-            cx={node.cx}
-            cy={node.cy}
-            r={1.5}
-            fill={nodeColor}
-            opacity={0.04}
+            key={dot.key}
+            cx={dot.cx}
+            cy={dot.cy}
+            r={1}
+            fill={dotColor}
+            opacity={0.06}
           />
         )
       )}

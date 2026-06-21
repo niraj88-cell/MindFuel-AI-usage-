@@ -90,7 +90,7 @@ export function MoodScanResult({ result, onScanAnother }: Props) {
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Mood Verdict</span>
+                  <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Mood Verdict</span>
                   <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
                 </div>
                 <p className="text-lg text-white font-bold leading-relaxed">{result.mood_verdict}</p>
@@ -99,7 +99,7 @@ export function MoodScanResult({ result, onScanAnother }: Props) {
             <div className={`flex items-start gap-3 p-4 rounded-2xl ${trajectory.bg} border ${trajectory.border}`}>
               <Sparkles className={`w-4 h-4 ${trajectory.color} shrink-0 mt-0.5`} />
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Recommended Action</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Recommended Action</span>
                 <p className={`text-sm font-medium mt-1 ${trajectory.color}`}>{result.recommended_action}</p>
               </div>
             </div>
@@ -118,11 +118,11 @@ export function MoodScanResult({ result, onScanAnother }: Props) {
                 <Heart className={`w-5 h-5 ${polarity.color}`} />
               </div>
               <div>
-                <h3 className="text-sm font-black text-white">Emotional Valence</h3>
+                <h3 className="text-sm font-semibold text-white">Emotional Valence</h3>
                 <span className={`text-[10px] font-bold uppercase tracking-widest ${polarity.color}`}>{polarity.label}</span>
               </div>
               <div className="ml-auto">
-                <div className={`px-3 py-1 rounded-full text-xs font-black ${polarity.bg} ${polarity.color} border ${polarity.border}`}>
+                <div className={`px-3 py-1 rounded-full text-xs font-semibold ${polarity.bg} ${polarity.color} border ${polarity.border}`}>
                   {result.emotional_valence.intensity}/10
                 </div>
               </div>
@@ -145,7 +145,7 @@ export function MoodScanResult({ result, onScanAnother }: Props) {
                 <Zap className="w-5 h-5 text-amber-400" />
               </div>
               <div>
-                <h3 className="text-sm font-black text-white">Energy Signature</h3>
+                <h3 className="text-sm font-semibold text-white">Energy Signature</h3>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400">
                   {result.energy_signature.type.replace('-', ' ')}
                 </span>
@@ -155,7 +155,7 @@ export function MoodScanResult({ result, onScanAnother }: Props) {
             <div className="mb-3">
               <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
                 <span>Meditative</span>
-                <span className="text-amber-400 font-black">{result.energy_signature.level}/10</span>
+                <span className="text-amber-400 font-semibold">{result.energy_signature.level}/10</span>
                 <span>High-Stim</span>
               </div>
               <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
@@ -188,7 +188,7 @@ export function MoodScanResult({ result, onScanAnother }: Props) {
                 <Eye className="w-5 h-5 text-violet-400" />
               </div>
               <div>
-                <h3 className="text-sm font-black text-white">Psychological Themes</h3>
+                <h3 className="text-sm font-semibold text-white">Psychological Themes</h3>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400">
                   Dominant: {result.psychological_themes.dominant_theme}
                 </span>
@@ -212,7 +212,7 @@ export function MoodScanResult({ result, onScanAnother }: Props) {
                 <TrajectoryIcon className={`w-5 h-5 ${trajectory.color}`} />
               </div>
               <div>
-                <h3 className="text-sm font-black text-white">Mood Trajectory</h3>
+                <h3 className="text-sm font-semibold text-white">Mood Trajectory</h3>
                 <span className={`text-[10px] font-bold uppercase tracking-widest ${trajectory.color}`}>{trajectory.label}</span>
               </div>
               <Badge variant="outline" className="ml-auto text-[10px] bg-slate-800/50 text-slate-400 border-white/10">
@@ -233,7 +233,7 @@ export function MoodScanResult({ result, onScanAnother }: Props) {
                 <Shield className={`w-5 h-5 ${risk.color}`} />
               </div>
               <div>
-                <h3 className="text-sm font-black text-white">Consumption Pattern Risk</h3>
+                <h3 className="text-sm font-semibold text-white">Consumption Pattern Risk</h3>
                 <span className={`text-[10px] font-bold uppercase tracking-widest ${risk.color}`}>{risk.label}</span>
               </div>
             </div>

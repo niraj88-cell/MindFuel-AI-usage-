@@ -206,8 +206,8 @@ export function ContentAnalyzer({ onAnalyzed }: ContentAnalyzerProps) {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Zap className="w-3 h-3 text-indigo-400" />
-            <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Quick Scan</span>
-            <span className="text-[9px] font-black text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">One-Tap</span>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Quick Scan</span>
+            <span className="text-[9px] font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">One-Tap</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {QUICK_CATEGORIES.map(cat => (
@@ -347,7 +347,7 @@ export function ContentAnalyzer({ onAnalyzed }: ContentAnalyzerProps) {
                 <div className="flex-1 space-y-6 text-center md:text-left">
                   <div>
                     <div className="flex items-center justify-center md:justify-start gap-3 mb-3">
-                       <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
+                       <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-[0.3em] bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
                          {result.media_metadata.provider || 'Acoustic Aura'}
                        </span>
                        <span className={`category-pill category-${result.category}`}>
@@ -364,14 +364,14 @@ export function ContentAnalyzer({ onAnalyzed }: ContentAnalyzerProps) {
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/bridge:translate-x-full transition-transform duration-1000" />
                     <div className="flex items-center justify-between relative z-10">
                       <div className="text-center flex-1">
-                         <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-1">Impact</span>
+                         <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest block mb-1">Impact</span>
                          <span className="text-sm font-bold text-white capitalize">{result.impact_analysis.mood_shift.replace('_', ' ')}</span>
                       </div>
                       <div className="px-4">
                          <ArrowRight className="w-5 h-5 text-zinc-600" />
                       </div>
                       <div className="text-center flex-1">
-                         <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-1">Cognitive Load</span>
+                         <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest block mb-1">Cognitive Load</span>
                          <span className="text-sm font-bold text-white capitalize">{result.impact_analysis.cognitive_load}</span>
                       </div>
                     </div>
@@ -402,7 +402,7 @@ export function ContentAnalyzer({ onAnalyzed }: ContentAnalyzerProps) {
                      <div className="absolute inset-0 rounded-full blur-md" style={{ background: `${getScoreColor(result.mental_score)}30` }} />
                      <span className="text-4xl font-serif text-white relative z-10">{result.mental_score}</span>
                   </div>
-                  <span className="text-[10px] font-black text-white uppercase tracking-widest">{getScoreLabel(result.mental_score)}</span>
+                  <span className="text-[10px] font-semibold text-white uppercase tracking-widest">{getScoreLabel(result.mental_score)}</span>
                 </div>
               </div>
               
@@ -410,7 +410,7 @@ export function ContentAnalyzer({ onAnalyzed }: ContentAnalyzerProps) {
                 <div className="mt-4 bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 text-sm text-zinc-300 font-medium leading-relaxed shadow-2xl relative z-10 animate-fade-in-up">
                   <div className="flex items-center gap-2 mb-3">
                      <Brain className="w-4 h-4 text-indigo-400" />
-                     <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">AI Synthesis</span>
+                     <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">AI Synthesis</span>
                   </div>
                   {result.root_causes && result.root_causes.map((cause, idx) => (
                     <div key={idx} className="mb-2 last:mb-0">
@@ -464,7 +464,7 @@ export function ContentAnalyzer({ onAnalyzed }: ContentAnalyzerProps) {
                 {/* Mental Impact Bar */}
                 <div className="mb-6 bg-white/5 p-5 rounded-[24px] border border-white/5">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Cognitive State Flow</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Cognitive State Flow</span>
                     <span className="text-xs font-bold" style={{ color: getScoreColor(result.mental_score) }}>
                       {result.mental_score}/100
                     </span>
@@ -513,8 +513,8 @@ export function ContentAnalyzer({ onAnalyzed }: ContentAnalyzerProps) {
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-white" />
-                <h4 className="text-sm font-black text-white uppercase tracking-widest">Smart Swap</h4>
-                <span className="text-[9px] font-black text-zinc-500 bg-white/5 px-2 py-0.5 rounded-full border border-white/10 ml-auto">AI Matched</span>
+                <h4 className="text-sm font-semibold text-white uppercase tracking-widest">Smart Swap</h4>
+                <span className="text-[9px] font-semibold text-zinc-500 bg-white/5 px-2 py-0.5 rounded-full border border-white/10 ml-auto">AI Matched</span>
               </div>
               <div className="grid gap-2">
                 {alternatives.map((alt, i) => {

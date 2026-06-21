@@ -39,7 +39,7 @@ export function SquadPulse({ members, pings }: { members: any[], pings: any[] })
         <div>
           <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Collective Focus</p>
           <div className="flex items-end gap-2">
-            <span className={`text-5xl font-black ${textColor} leading-none`}>{avgScore}</span>
+            <span className={`text-5xl font-semibold ${textColor} leading-none`}>{avgScore}</span>
             <span className="text-lg font-bold text-zinc-500 mb-1">/100</span>
           </div>
         </div>
@@ -48,7 +48,7 @@ export function SquadPulse({ members, pings }: { members: any[], pings: any[] })
           <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Combined Streak</p>
           <div className="flex items-center gap-2">
             <Zap className="w-8 h-8 text-amber-500" />
-            <span className="text-4xl font-black text-white leading-none">{totalStreak}</span>
+            <span className="text-4xl font-semibold text-white leading-none">{totalStreak}</span>
           </div>
         </div>
       </div>

@@ -28,7 +28,7 @@ const STR_COLORS = ['', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-emer
 
 function Rule({ met, label }: { met: boolean; label: string }) {
   return (
-    <li className={`flex items-center gap-2 text-xs ${met ? 'text-emerald-400' : 'text-zinc-600'}`}>
+    <li className={`flex items-center gap-2 text-xs ${met ? 'text-emerald-600' : 'text-gray-400'}`}>
       {met ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
       {label}
     </li>
@@ -96,20 +96,20 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center px-4">
-        <div className="text-center p-10 max-w-md rounded-3xl bg-zinc-900/50 border border-white/10 animate-fade-in-up">
-          <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-6">
-            <Check className="w-8 h-8 text-emerald-400" />
+      <div className="min-h-screen bg-[#FAF8F4] flex items-center justify-center px-4">
+        <div className="text-center p-10 max-w-md rounded-2xl bg-white border border-black/[0.04] shadow-sm animate-fade-in-up">
+          <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-6">
+            <Check className="w-8 h-8 text-emerald-600" />
           </div>
-          <h2 className="text-2xl font-black text-white mb-3">Check your email! 📧</h2>
-          <p className="text-sm text-zinc-400 leading-relaxed">
-            We sent a confirmation link to <span className="text-white font-bold">{email}</span>. Click the link to activate your account and start your journey.
+          <h2 className="text-2xl font-semibold text-[#111827] mb-3">Check your email! 📧</h2>
+          <p className="text-sm text-[#4B5563] leading-relaxed">
+            We sent a confirmation link to <span className="text-[#111827] font-bold">{email}</span>. Click the link to activate your account and start your journey.
           </p>
           <div className="mt-8 space-y-3">
-            <Button onClick={() => router.push('/login')} className="w-full h-11 bg-white text-black hover:bg-zinc-200 rounded-xl font-bold">
+            <Button onClick={() => router.push('/login')} className="w-full h-11 bg-[#111827] text-white hover:bg-[#1f2937] rounded-xl font-bold">
               Back to Login
             </Button>
-            <p className="text-xs text-zinc-600">Didn&apos;t receive it? Check your spam folder.</p>
+            <p className="text-xs text-gray-400">Didn&apos;t receive it? Check your spam folder.</p>
           </div>
         </div>
       </div>
@@ -117,7 +117,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex relative overflow-hidden">
+    <div className="min-h-screen bg-[#FAF8F4] flex relative overflow-hidden">
       {/* Left Panel - Value Proposition */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         {/* Animated Background */}
@@ -127,44 +127,44 @@ export default function SignupPage() {
           <div className="mb-12 animate-fade-in-up">
             <div className="flex items-center gap-4 mb-8">
               <AnimatedBrain size={60} />
-              <span className="text-3xl font-black tracking-tight text-white">MindFuel</span>
+              <span className="text-3xl font-semibold tracking-tight text-[#111827]">MindFuel</span>
             </div>
             
-            <h2 className="text-5xl font-black text-white leading-tight mb-4">
+            <h2 className="text-5xl font-semibold text-[#111827] leading-tight mb-4">
               Start optimizing your<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-500">digital nutrition today.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#111827] to-[#6B7280]">digital nutrition today.</span>
             </h2>
-            <p className="text-zinc-400 text-lg max-w-md leading-relaxed font-medium">
+            <p className="text-[#4B5563] text-lg max-w-md leading-relaxed font-medium">
               It takes 30 seconds to create an account. No credit card required.
             </p>
           </div>
 
           {/* Privacy Promise */}
           <div className="mb-12 stagger-children">
-            <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 relative overflow-hidden group hover:border-white/10 transition-colors">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="p-6 rounded-2xl bg-white/80 border border-black/[0.04] relative overflow-hidden group hover:border-black/[0.08] transition-colors shadow-sm">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/30 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                  <Shield className="w-4 h-4 text-emerald-400" />
+                <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center">
+                  <Shield className="w-4 h-4 text-emerald-600" />
                 </div>
-                <h3 className="text-white font-bold">Your Privacy Matters</h3>
+                <h3 className="text-[#111827] font-bold">Your Privacy Matters</h3>
               </div>
-              <p className="text-zinc-400 text-sm leading-relaxed">
+              <p className="text-[#4B5563] text-sm leading-relaxed">
                 Our thoughtful AI runs quietly in the background strictly to help you uncover your own patterns. Your thoughts are encrypted, private, and always yours.
               </p>
             </div>
           </div>
 
           {/* Testimonial */}
-          <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-            <p className="text-sm text-zinc-400 italic leading-relaxed mb-4">
+          <div className="p-6 rounded-2xl bg-white/80 border border-black/[0.04] shadow-sm animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <p className="text-sm text-[#4B5563] italic leading-relaxed mb-4 font-[var(--font-serif)]">
               &ldquo;MindFuel helped me realize I was spending 4 hours daily on content that drained my energy. Now I&apos;m more intentional about what I consume.&rdquo;
             </p>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-400">S</div>
+              <div className="w-8 h-8 rounded-full bg-[#F5F7F6] flex items-center justify-center text-xs font-bold text-[#4B5563]">S</div>
               <div>
-                <p className="text-xs font-bold text-white">Sarah K.</p>
-                <p className="text-[10px] text-zinc-600">Product Designer</p>
+                <p className="text-xs font-bold text-[#111827]">Sarah K.</p>
+                <p className="text-[10px] text-gray-400">Product Designer</p>
               </div>
             </div>
           </div>
@@ -172,17 +172,17 @@ export default function SignupPage() {
       </div>
 
       {/* Right Panel - Signup Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative z-10 bg-black">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative z-10 bg-[#FAF8F4]">
         <div className="w-full max-w-[420px] animate-fade-in-up">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-10 flex flex-col items-center gap-4">
             <AnimatedBrain size={50} />
-            <span className="text-2xl font-black text-white">MindFuel</span>
+            <span className="text-2xl font-semibold text-[#111827]">MindFuel</span>
           </div>
 
           <div className="mb-8">
-            <h1 className="text-3xl sm:text-4xl font-black text-white mb-2">Create your account</h1>
-            <p className="text-zinc-400 font-medium">
+            <h1 className="text-3xl sm:text-4xl font-semibold text-[#111827] mb-2">Create your account</h1>
+            <p className="text-[#4B5563] font-medium">
               Free forever. No credit card needed.
             </p>
           </div>
@@ -207,7 +207,7 @@ export default function SignupPage() {
               }
             }}
             disabled={googleLoading}
-            className="w-full h-12 flex items-center justify-center gap-3 bg-zinc-900/40 border border-white/10 rounded-xl text-white font-bold text-sm hover:bg-zinc-800 hover:border-white/20 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-lg"
+            className="w-full h-12 flex items-center justify-center gap-3 bg-white border border-black/[0.08] rounded-xl text-[#111827] font-bold text-sm hover:bg-[#F5F7F6] hover:border-black/[0.12] transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-sm"
           >
             {googleLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -226,16 +226,16 @@ export default function SignupPage() {
 
           {/* Divider */}
           <div className="flex items-center gap-4 my-8">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-[10px] text-zinc-500 font-black tracking-widest uppercase">Or</span>
-            <div className="flex-1 h-px bg-white/10" />
+            <div className="flex-1 h-px bg-black/[0.06]" />
+            <span className="text-[10px] text-gray-400 font-semibold tracking-widest uppercase">Or</span>
+            <div className="flex-1 h-px bg-black/[0.06]" />
           </div>
 
           {/* Form */}
-          <div className="p-6 sm:p-8 bg-zinc-900/30 border border-white/5 rounded-3xl group focus-within:border-white/10 focus-within:bg-zinc-900/50 transition-all shadow-2xl">
+          <div className="p-6 sm:p-8 bg-white border border-black/[0.04] rounded-2xl group focus-within:border-black/[0.08] transition-all shadow-sm">
             <form onSubmit={handleSignup} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-xs font-black uppercase tracking-wider text-zinc-500">Full Name</Label>
+                <Label htmlFor="name" className="text-xs font-semibold uppercase tracking-wider text-gray-400">Full Name</Label>
                 <Input
                   id="name"
                   type="text"
@@ -244,12 +244,12 @@ export default function SignupPage() {
                   onChange={(e) => setName(e.target.value)}
                   required
                   autoComplete="name"
-                  className="h-12 bg-black/50 border-white/5 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all"
+                  className="h-12 bg-[#F5F7F6] border-black/[0.06] rounded-xl text-[#111827] placeholder:text-gray-400 focus:border-black/[0.12] focus:ring-1 focus:ring-black/[0.08] transition-all"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="signup-email" className="text-xs font-black uppercase tracking-wider text-zinc-500">Email</Label>
+                <Label htmlFor="signup-email" className="text-xs font-semibold uppercase tracking-wider text-gray-400">Email</Label>
                 <Input
                   id="signup-email"
                   type="email"
@@ -258,12 +258,12 @@ export default function SignupPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  className="h-12 bg-black/50 border-white/5 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all"
+                  className="h-12 bg-[#F5F7F6] border-black/[0.06] rounded-xl text-[#111827] placeholder:text-gray-400 focus:border-black/[0.12] focus:ring-1 focus:ring-black/[0.08] transition-all"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="signup-password" className="text-xs font-black uppercase tracking-wider text-zinc-500">Password</Label>
+                <Label htmlFor="signup-password" className="text-xs font-semibold uppercase tracking-wider text-gray-400">Password</Label>
                 <div className="relative">
                   <Input
                     id="signup-password"
@@ -274,12 +274,12 @@ export default function SignupPage() {
                     required
                     autoComplete="new-password"
                     minLength={8}
-                    className="h-12 bg-black/50 border-white/5 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all pr-12"
+                    className="h-12 bg-[#F5F7F6] border-black/[0.06] rounded-xl text-[#111827] placeholder:text-gray-400 focus:border-black/[0.12] focus:ring-1 focus:ring-black/[0.08] transition-all pr-12"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors cursor-pointer w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#111827] transition-colors cursor-pointer w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/[0.03]"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -289,7 +289,7 @@ export default function SignupPage() {
                 {password.length > 0 && (
                   <div className="space-y-3 pt-2">
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden flex gap-0.5">
+                      <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden flex gap-0.5">
                         {[1, 2, 3, 4, 5].map((i) => (
                           <div
                             key={i}
@@ -299,8 +299,8 @@ export default function SignupPage() {
                           />
                         ))}
                       </div>
-                      <span className={`text-[10px] font-black uppercase tracking-widest ${
-                        strength >= 4 ? 'text-emerald-400' : strength >= 3 ? 'text-yellow-400' : 'text-zinc-600'
+                      <span className={`text-[10px] font-semibold uppercase tracking-widest ${
+                        strength >= 4 ? 'text-emerald-600' : strength >= 3 ? 'text-yellow-600' : 'text-gray-400'
                       }`}>
                         {STR_LABELS[strength]}
                       </span>
@@ -317,7 +317,7 @@ export default function SignupPage() {
               </div>
 
               {error && (
-                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400 font-medium">
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600 font-medium">
                   {error}
                 </div>
               )}
@@ -325,7 +325,7 @@ export default function SignupPage() {
               <Button
                 id="signup-button"
                 type="submit"
-                className="w-full h-12 bg-white text-black hover:bg-zinc-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] rounded-xl font-black text-sm transition-all active:scale-[0.98] mt-2"
+                className="w-full h-12 bg-[#111827] text-white hover:bg-[#1f2937] hover:shadow-md rounded-xl font-semibold text-sm transition-all active:scale-[0.98] mt-2"
                 disabled={loading}
               >
                 {loading ? (
@@ -337,16 +337,16 @@ export default function SignupPage() {
                 )}
               </Button>
 
-              <p className="text-[10px] text-zinc-600 text-center leading-relaxed mt-4">
+              <p className="text-[10px] text-gray-400 text-center leading-relaxed mt-4">
                 By signing up, you agree to our Terms of Service and Privacy Policy.
               </p>
             </form>
           </div>
 
           <div className="mt-8 text-center">
-            <p className="text-sm text-zinc-500 font-medium">
+            <p className="text-sm text-gray-400 font-medium">
               Already have an account?{' '}
-              <Link href="/login" className="text-white hover:text-zinc-300 transition-colors font-bold">
+              <Link href="/login" className="text-[#111827] hover:text-[#4B5563] transition-colors font-bold">
                 Sign in →
               </Link>
             </p>

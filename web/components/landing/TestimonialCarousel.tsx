@@ -62,7 +62,7 @@ export function TestimonialCarousel() {
 
           {/* Author */}
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-sm font-black text-zinc-400">
+            <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-sm font-semibold text-zinc-400">
               {t.initial}
             </div>
             <div>

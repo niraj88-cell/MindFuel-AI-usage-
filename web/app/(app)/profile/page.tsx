@@ -29,12 +29,12 @@ function StatCard({ icon: Icon, color, bg, value, label }: {
   icon: any; color: string; bg: string; value: number | string; label: string
 }) {
   return (
-    <div className={`flex flex-col items-center justify-center p-4 sm:p-6 rounded-2xl sm:rounded-3xl ${bg} border border-white/10 text-center`}>
-      <div className={`w-11 h-11 rounded-2xl ${bg} border border-white/10 flex items-center justify-center mb-3`}>
+    <div className={`flex flex-col items-center justify-center p-4 sm:p-6 rounded-2xl bg-white border border-black/[0.04] shadow-sm text-center`}>
+      <div className={`w-11 h-11 rounded-2xl bg-[#F5F7F6] border border-black/[0.06] flex items-center justify-center mb-3`}>
         <Icon className={`w-5 h-5 ${color}`} />
       </div>
-      <div className="text-2xl sm:text-3xl font-black text-white mb-1">{value}</div>
-      <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest">{label}</div>
+      <div className="text-2xl sm:text-3xl font-semibold text-[#111827] mb-1">{value}</div>
+      <div className="text-xs text-gray-400 font-bold uppercase tracking-widest">{label}</div>
     </div>
   )
 }
@@ -141,7 +141,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#111827]" />
       </div>
     )
   }
@@ -153,25 +153,24 @@ export default function ProfilePage() {
     <div className="max-w-2xl mx-auto space-y-8 pb-20 stagger-children">
       {/* Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-3">
-          <User className="w-7 h-7 text-white" />
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight flex items-center gap-3 text-[#111827]">
+          <User className="w-7 h-7 text-[#111827]" />
           Profile
         </h1>
-        <p className="text-zinc-400 text-sm mt-1">Your account, stats, and data settings.</p>
+        <p className="text-[#4B5563] text-sm mt-1">Your account, stats, and data settings.</p>
       </div>
 
       {/* Identity Card */}
       <div className="relative">
-        <div className="absolute -inset-px bg-gradient-to-r from-white/10 to-white/5 rounded-[28px] blur-sm" />
-        <div className="relative bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-[28px] p-6">
+        <div className="bg-white border border-black/[0.04] rounded-2xl p-6 shadow-sm">
           <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5">
             {/* Avatar */}
             <div className="relative">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center text-3xl font-black text-zinc-300">
+              <div className="w-20 h-20 rounded-2xl bg-[#EADBC8] border border-black/[0.06] flex items-center justify-center text-3xl font-semibold text-[#111827]">
                 {initials}
               </div>
               {isPremium && (
-                <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/40">
+                <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-xl bg-[#FFB74D] flex items-center justify-center shadow-md">
                   <Sparkles className="w-3.5 h-3.5 text-white" />
                 </div>
               )}
@@ -180,20 +179,20 @@ export default function ProfilePage() {
             {/* Info */}
             <div className="flex-1 min-w-0 text-center sm:text-left">
               <div className="flex items-center gap-3 mb-1">
-                <h2 className="text-xl font-black text-white truncate">{data?.fullName}</h2>
-                <span className={`shrink-0 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                <h2 className="text-xl font-semibold text-[#111827] truncate">{data?.fullName}</h2>
+                <span className={`shrink-0 px-2.5 py-1 rounded-full text-[9px] font-semibold uppercase tracking-widest border ${
                   isPremium
-                    ? 'bg-white/5 text-white border-amber-500/30'
-                    : 'bg-zinc-700/50 text-zinc-400 border-white/10'
+                    ? 'bg-amber-50 text-amber-600 border-amber-200'
+                    : 'bg-[#F5F7F6] text-[#4B5563] border-black/[0.06]'
                 }`}>
                   {data?.subscriptionTier}
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 text-sm text-zinc-400 mb-1">
+              <div className="flex items-center gap-1.5 text-sm text-[#4B5563] mb-1">
                 <Mail className="w-3.5 h-3.5" />
                 <span className="truncate">{data?.email}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+              <div className="flex items-center gap-1.5 text-xs text-gray-400">
                 <Clock className="w-3 h-3" />
                 Member since {data?.joinedAt}
               </div>
@@ -204,24 +203,24 @@ export default function ProfilePage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
-        <StatCard icon={Brain} color="text-white" bg="bg-white/5" value={data?.totalLogs || 0} label="Logs" />
-        <StatCard icon={Flame} color="text-rose-400" bg="bg-rose-500/5" value={data?.highestStreak || 0} label="Best Streak" />
-        <StatCard icon={BarChart3} color="text-white" bg="bg-white/5" value={`${data?.avgScore || 0}/100`} label="Avg Score" />
-        <StatCard icon={Award} color="text-white" bg="bg-amber-500/5" value={data?.totalMoodEntries || 0} label="Mood Checks" />
+        <StatCard icon={Brain} color="text-[#111827]" bg="bg-[#F5F7F6]" value={data?.totalLogs || 0} label="Logs" />
+        <StatCard icon={Flame} color="text-red-500" bg="bg-red-50" value={data?.highestStreak || 0} label="Best Streak" />
+        <StatCard icon={BarChart3} color="text-[#111827]" bg="bg-[#F5F7F6]" value={`${data?.avgScore || 0}/100`} label="Avg Score" />
+        <StatCard icon={Award} color="text-amber-600" bg="bg-amber-50" value={data?.totalMoodEntries || 0} label="Mood Checks" />
       </div>
 
       {/* Premium Upgrade Teaser */}
       {!isPremium && (
-        <Link href="/subscription" className="group block bg-gradient-to-r from-zinc-900 to-black border border-white/10 hover:border-white/20 rounded-3xl p-6 relative overflow-hidden transition-all shadow-[0_0_30px_rgba(255,255,255,0.03)] hover:shadow-[0_0_40px_rgba(255,255,255,0.06)]">
-          <div className="absolute inset-0 bg-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <Link href="/subscription" className="group block bg-white border border-black/[0.06] hover:border-black/[0.12] rounded-2xl p-6 relative overflow-hidden transition-all shadow-sm hover:shadow-md">
+          <div className="absolute inset-0 bg-black/[0.01] opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex items-center justify-between gap-4 relative z-10">
             <div>
-              <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-1">
-                Elevate your MindFuel <Sparkles className="w-4 h-4 text-white" />
+              <h3 className="text-xl font-bold text-[#111827] flex items-center gap-2 mb-1">
+                Elevate your MindFuel <Sparkles className="w-4 h-4 text-amber-500" />
               </h3>
-              <p className="text-sm text-zinc-400">Get unlimited entries, bespoke habit challenges, and deep psychological insights.</p>
+              <p className="text-sm text-[#4B5563]">Get unlimited entries, bespoke habit challenges, and deep psychological insights.</p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <div className="w-10 h-10 rounded-full bg-[#111827] text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
               <ChevronRight className="w-5 h-5" />
             </div>
           </div>
@@ -229,17 +228,17 @@ export default function ProfilePage() {
       )}
 
       {/* Data Export */}
-      <div className="bg-zinc-900/50 border border-white/10 rounded-3xl p-6 space-y-4">
+      <div className="bg-white border border-black/[0.04] rounded-2xl p-6 space-y-4 shadow-sm">
         <div className="flex items-center gap-3 mb-2">
-          <Download className="w-5 h-5 text-white" />
+          <Download className="w-5 h-5 text-[#111827]" />
           <div>
-            <h3 className="text-sm font-black text-white">Export My Data</h3>
-            <p className="text-xs text-zinc-500">Download your last 90 days of data (5 exports/day)</p>
+            <h3 className="text-sm font-semibold text-[#111827]">Export My Data</h3>
+            <p className="text-xs text-gray-400">Download your last 90 days of data (5 exports/day)</p>
           </div>
         </div>
 
         {exportError && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-xs text-red-400">
+          <div className="p-3 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-500">
             {exportError}
           </div>
         )}
@@ -248,52 +247,52 @@ export default function ProfilePage() {
           <button
             onClick={() => handleExport('json')}
             disabled={exporting !== null}
-            className="flex items-center gap-2.5 p-4 rounded-2xl bg-zinc-800/50 border border-white/10 hover:border-white/10 hover:bg-indigo-500/5 transition-all cursor-pointer disabled:opacity-50 group"
+            className="flex items-center gap-2.5 p-4 rounded-2xl bg-[#F5F7F6] border border-black/[0.06] hover:border-black/[0.12] hover:bg-[#4CAF50]/5 transition-all cursor-pointer disabled:opacity-50 group"
           >
             {exporting === 'json'
-              ? <Loader2 className="w-5 h-5 text-white animate-spin" />
-              : <FileJson className="w-5 h-5 text-white" />}
+              ? <Loader2 className="w-5 h-5 text-[#111827] animate-spin" />
+              : <FileJson className="w-5 h-5 text-[#111827]" />}
             <div className="text-left">
-              <div className="text-xs font-black text-white">JSON</div>
-              <div className="text-[10px] text-zinc-500">Full data</div>
+              <div className="text-xs font-semibold text-[#111827]">JSON</div>
+              <div className="text-[10px] text-gray-400">Full data</div>
             </div>
           </button>
 
           <button
             onClick={() => handleExport('csv')}
             disabled={exporting !== null}
-            className="flex items-center gap-2.5 p-4 rounded-2xl bg-zinc-800/50 border border-white/10 hover:border-emerald-500/30 hover:bg-white/5 transition-all cursor-pointer disabled:opacity-50 group"
+            className="flex items-center gap-2.5 p-4 rounded-2xl bg-[#F5F7F6] border border-black/[0.06] hover:border-[#4CAF50]/30 hover:bg-[#F5F7F6] transition-all cursor-pointer disabled:opacity-50 group"
           >
             {exporting === 'csv'
-              ? <Loader2 className="w-5 h-5 text-white animate-spin" />
-              : <FileText className="w-5 h-5 text-white" />}
+              ? <Loader2 className="w-5 h-5 text-[#111827] animate-spin" />
+              : <FileText className="w-5 h-5 text-[#111827]" />}
             <div className="text-left">
-              <div className="text-xs font-black text-white">CSV</div>
-              <div className="text-[10px] text-zinc-500">Spreadsheet</div>
+              <div className="text-xs font-semibold text-[#111827]">CSV</div>
+              <div className="text-[10px] text-gray-400">Spreadsheet</div>
             </div>
           </button>
         </div>
       </div>
 
       {/* Developer API */}
-      <div className="bg-zinc-900/50 border border-white/10 rounded-3xl p-6 space-y-4">
+      <div className="bg-white border border-black/[0.04] rounded-2xl p-6 space-y-4 shadow-sm">
         <div className="flex items-center gap-3 mb-2">
-          <Terminal className="w-5 h-5 text-emerald-400" />
+          <Terminal className="w-5 h-5 text-[#4CAF50]" />
           <div>
-            <h3 className="text-sm font-black text-white">Fuel API (V3 Beta)</h3>
-            <p className="text-xs text-zinc-500">Connect MindFuel to external apps and trackers</p>
+            <h3 className="text-sm font-semibold text-[#111827]">Fuel API (V3 Beta)</h3>
+            <p className="text-xs text-gray-400">Connect MindFuel to external apps and trackers</p>
           </div>
         </div>
 
-        <div className="bg-zinc-950 border border-white/10 rounded-2xl p-4 relative group overflow-hidden">
-          <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="bg-[#F5F7F6] border border-black/[0.06] rounded-2xl p-4 relative group overflow-hidden">
+          <div className="absolute inset-0 bg-[#4CAF50]/5 opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="flex items-center gap-3 mb-3 relative z-10">
-            <Key className="w-4 h-4 text-zinc-500" />
-            <div className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Your Private Key</div>
+            <Key className="w-4 h-4 text-gray-400" />
+            <div className="text-xs font-bold text-[#4B5563] uppercase tracking-widest">Your Private Key</div>
           </div>
           
-          <div className="flex items-center justify-between gap-4 bg-zinc-900/80 rounded-xl p-3 border border-white/5 relative z-10">
-            <code className="text-sm font-mono text-emerald-400/80 tracking-wider truncate">
+          <div className="flex items-center justify-between gap-4 bg-white rounded-xl p-3 border border-black/[0.04] relative z-10">
+            <code className="text-sm font-mono text-[#4CAF50]/80 tracking-wider truncate">
               mf_live_xxxxxxxxxxxxxxxxxxxxxxxx
             </code>
             <button 
@@ -302,42 +301,42 @@ export default function ProfilePage() {
                 setCopiedKey(true)
                 setTimeout(() => setCopiedKey(false), 2000)
               }}
-              className="shrink-0 w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-colors"
+              className="shrink-0 w-8 h-8 rounded-lg bg-black/[0.03] hover:bg-black/[0.06] border border-black/[0.06] flex items-center justify-center transition-colors"
             >
-              {copiedKey ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-zinc-400 hover:text-white" />}
+              {copiedKey ? <Check className="w-4 h-4 text-[#4CAF50]" /> : <Copy className="w-4 h-4 text-[#4B5563] hover:text-[#111827]" />}
             </button>
           </div>
-          <p className="text-[10px] text-zinc-500 mt-3 relative z-10">Keep this key secret. You can use it to POST events to <code className="text-zinc-400 bg-zinc-800 px-1 py-0.5 rounded">/api/fuel/ingest</code>.</p>
+          <p className="text-[10px] text-gray-400 mt-3 relative z-10">Keep this key secret. You can use it to POST events to <code className="text-[#4B5563] bg-gray-100 px-1 py-0.5 rounded">/api/fuel/ingest</code>.</p>
         </div>
       </div>
 
       {/* Security */}
-      <div className="bg-zinc-900/50 border border-white/10 rounded-3xl p-6 space-y-1">
+      <div className="bg-white border border-black/[0.04] rounded-2xl p-6 space-y-1 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <Shield className="w-5 h-5 text-white" />
-          <h3 className="text-sm font-black text-white">Security</h3>
+          <Shield className="w-5 h-5 text-[#111827]" />
+          <h3 className="text-sm font-semibold text-[#111827]">Security</h3>
         </div>
 
-        <Link href="/forgot-password" className="flex items-center justify-between p-4 rounded-2xl bg-zinc-800/30 border border-white/10 hover:border-white/10 hover:bg-zinc-800/60 transition-all group">
+        <Link href="/forgot-password" className="flex items-center justify-between p-4 rounded-2xl bg-[#F5F7F6] border border-black/[0.04] hover:border-black/[0.08] hover:bg-gray-100 transition-all group">
           <div className="flex items-center gap-3">
-            <Lock className="w-4 h-4 text-zinc-400" />
+            <Lock className="w-4 h-4 text-[#4B5563]" />
             <div>
-              <div className="text-sm font-bold text-white">Change Password</div>
-              <div className="text-xs text-zinc-500">Send a secure reset link to your email</div>
+              <div className="text-sm font-bold text-[#111827]">Change Password</div>
+              <div className="text-xs text-gray-400">Send a secure reset link to your email</div>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#4B5563] transition-colors" />
         </Link>
 
-        <div className="flex items-center justify-between p-4 rounded-2xl bg-zinc-800/30 border border-white/10 mt-1">
+        <div className="flex items-center justify-between p-4 rounded-2xl bg-[#F5F7F6] border border-black/[0.04] mt-1">
           <div className="flex items-center gap-3">
-            <Shield className="w-4 h-4 text-white" />
+            <Shield className="w-4 h-4 text-[#111827]" />
             <div>
-              <div className="text-sm font-bold text-white">Data Encryption</div>
-              <div className="text-xs text-zinc-500">All data encrypted at rest via Supabase</div>
+              <div className="text-sm font-bold text-[#111827]">Data Encryption</div>
+              <div className="text-xs text-gray-400">All data encrypted at rest via Supabase</div>
             </div>
           </div>
-          <span className="text-[10px] font-black text-white bg-white/5 border border-white/10 px-2 py-1 rounded-full">ACTIVE</span>
+          <span className="text-[10px] font-semibold text-[#4CAF50] bg-green-50 border border-green-200 px-2 py-1 rounded-full">ACTIVE</span>
         </div>
 
         <div className="mt-1">
@@ -347,15 +346,15 @@ export default function ProfilePage() {
 
       {/* Upgrade CTA for free users */}
       {!isPremium && (
-        <div className="relative overflow-hidden rounded-3xl">
-          <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/[0.03]" />
+        <div className="relative overflow-hidden rounded-2xl">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#F5F7F6] to-[#FAF8F4]" />
           <div className="relative p-6 flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-black text-white uppercase tracking-widest mb-1">Unlock Premium</p>
-              <p className="text-sm font-bold text-white">Unlimited logs, 500 coach messages/hr, priority AI</p>
+              <p className="text-xs font-semibold text-[#111827] uppercase tracking-widest mb-1">Unlock Premium</p>
+              <p className="text-sm font-bold text-[#4B5563]">Unlimited logs, 500 coach messages/hr, priority AI</p>
             </div>
             <Link href="/subscription">
-              <Button size="sm" className="shrink-0 bg-white hover:bg-zinc-200 text-black shadow-lg shadow-white/10">
+              <Button size="sm" className="shrink-0 bg-[#111827] hover:bg-[#1f2937] text-white shadow-sm">
                 Upgrade
               </Button>
             </Link>
@@ -364,11 +363,11 @@ export default function ProfilePage() {
       )}
 
       {/* Sign Out & Danger Zone */}
-      <div className="space-y-3 pt-6 border-t border-white/5">
+      <div className="space-y-3 pt-6 border-t border-black/[0.04]">
         <button
           onClick={handleSignOut}
           disabled={signingOut}
-          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10 transition-all font-black text-sm cursor-pointer disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-[#F5F7F6] border border-black/[0.04] text-[#4B5563] hover:bg-[#111827] hover:text-white transition-all font-semibold text-sm cursor-pointer disabled:opacity-50"
         >
           {signingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
           {signingOut ? 'Signing out...' : 'Sign Out'}
@@ -377,7 +376,7 @@ export default function ProfilePage() {
         <button
           onClick={handleDeleteAccount}
           disabled={deleting}
-          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-rose-500/5 border border-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all font-black text-sm cursor-pointer disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-red-50 border border-red-200 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all font-semibold text-sm cursor-pointer disabled:opacity-50"
         >
           {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
           {deleting ? 'Deleting account...' : 'Permanently Delete Account'}

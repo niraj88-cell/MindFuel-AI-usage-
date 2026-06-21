@@ -149,7 +149,7 @@ export function DailyCheckIn({ onComplete }: DailyCheckInProps) {
             <CheckCircle2 className="w-6 h-6 text-emerald-400" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-white">Thread Spun ✨</h3>
+            <h3 className="text-lg font-semibold text-white">Thread Spun ✨</h3>
             <p className="text-sm text-zinc-400">Your web is connected. See you tomorrow!</p>
           </div>
         </div>
@@ -171,7 +171,7 @@ export function DailyCheckIn({ onComplete }: DailyCheckInProps) {
               <Network className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-white">Spin Your Thread</h3>
+              <h3 className="text-lg font-semibold text-white">Spin Your Thread</h3>
               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">End of day reflection</p>
             </div>
           </div>
@@ -187,7 +187,7 @@ export function DailyCheckIn({ onComplete }: DailyCheckInProps) {
         {todayStats && todayStats.totalLogs > 0 && (
           <div className="bg-white/5 border border-white/5 rounded-2xl p-4 mb-8 flex items-center gap-4 relative z-10">
             <div className="flex-1">
-              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Today's Web</p>
+              <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest mb-1">Today's Web</p>
               <p className="text-sm text-zinc-300">
                 <span className="text-white font-bold">{todayStats.totalLogs}</span> nodes connected · Avg score{' '}
                 <span className={`font-bold ${todayStats.avgScore >= 60 ? 'text-blue-400' : todayStats.avgScore >= 40 ? 'text-amber-400' : 'text-red-400'}`}>
@@ -218,7 +218,7 @@ export function DailyCheckIn({ onComplete }: DailyCheckInProps) {
               <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Energy Level</span>
               <div className="flex items-center gap-2">
                 <Sun className="w-4 h-4 text-amber-400" />
-                <span className="text-lg font-black text-white tabular-nums">{energy}</span>
+                <span className="text-lg font-semibold text-white tabular-nums">{energy}</span>
               </div>
             </div>
             <input
@@ -236,7 +236,7 @@ export function DailyCheckIn({ onComplete }: DailyCheckInProps) {
                   <Brain className="w-3 h-3 text-blue-400" />
                   <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Pattern Match</span>
                 </div>
-                <span className="text-[9px] font-black text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">Spidey Sense</span>
+                <span className="text-[9px] font-semibold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">Spidey Sense</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {suggestions.map(s => {

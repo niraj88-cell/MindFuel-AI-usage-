@@ -329,7 +329,7 @@ export function ChatInterface() {
           <Clock className="w-4 h-4 shrink-0" />
           <span className="flex-1">{rateLimit.message || 'Rate limit reached.'}</span>
           {countdown && (
-            <span className="font-mono font-black text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full text-xs">
+            <span className="font-mono font-semibold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full text-xs">
               {countdown}
             </span>
           )}

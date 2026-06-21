@@ -153,7 +153,7 @@ export function ActiveMissionCard({ mission, members, squadId, onRefresh }: { mi
           </div>
         </div>
         <div className="text-right flex flex-col items-end gap-2">
-          <span className="text-3xl font-black text-white">{percentComplete}%</span>
+          <span className="text-3xl font-semibold text-white">{percentComplete}%</span>
           {currentUserId && !mission.squad_mission_participants?.some(p => p.user_id === currentUserId) && (
             <Button size="sm" onClick={handleJoin} disabled={isJoining} className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-7 px-3 rounded-full">
               {isJoining ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}

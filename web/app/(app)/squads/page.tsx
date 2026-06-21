@@ -126,7 +126,7 @@ export default function SquadsPage() {
         <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-6 backdrop-blur-xl border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.1)]">
           <Network className="w-10 h-10 text-white" />
         </div>
-        <h1 className="text-5xl font-black tracking-tighter text-white mb-6">Create a small private circle for daily check-ins and support.</h1>
+        <h1 className="text-5xl font-semibold tracking-tighter text-white mb-6">Create a small private circle for daily check-ins and support.</h1>
         <p className="text-xl text-zinc-400 max-w-xl mx-auto leading-relaxed">
           Share your daily reflection, support friends, and tackle simple missions together in a high-trust environment.
         </p>

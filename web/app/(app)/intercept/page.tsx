@@ -246,7 +246,7 @@ function InterceptContent() {
                     intervention.severity === 'critical' ? 'text-red-400' : 
                     intervention.severity === 'severe' ? 'text-orange-400' : 'text-zinc-400'
                   }`} />
-                  <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Interceptor</span>
+                  <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Interceptor</span>
                 </div>
                 <p className="text-white font-bold text-sm leading-relaxed mb-2">{intervention.message}</p>
                 <p className="text-zinc-500 text-xs italic">{intervention.algorithm_callout}</p>
@@ -489,11 +489,11 @@ function InterceptContent() {
             <div className="pt-6 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-zinc-900 border border-white/10 rounded-xl p-3 sm:p-4 text-center">
-                  <p className="text-xl sm:text-2xl font-black text-white">{todayCount}</p>
+                  <p className="text-xl sm:text-2xl font-semibold text-white">{todayCount}</p>
                   <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Today&apos;s Intercepts</p>
                 </div>
                 <div className="bg-zinc-900 border border-white/10 rounded-xl p-3 sm:p-4 text-center">
-                  <p className="text-xl sm:text-2xl font-black text-white">{disconnectRate}%</p>
+                  <p className="text-xl sm:text-2xl font-semibold text-white">{disconnectRate}%</p>
                   <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Disconnect Rate</p>
                 </div>
               </div>
@@ -543,7 +543,7 @@ function InterceptContent() {
             <div className="w-full max-w-sm mb-8 text-left animate-fade-in-up">
               <div className="flex items-center gap-2 mb-3">
                 <Sparkles className="w-4 h-4 text-indigo-400" />
-                <h4 className="text-xs font-black text-indigo-300 uppercase tracking-widest">Smart Swaps</h4>
+                <h4 className="text-xs font-semibold text-indigo-300 uppercase tracking-widest">Smart Swaps</h4>
               </div>
               <div className="space-y-2">
                 {smartSwaps.map((alt, i) => (

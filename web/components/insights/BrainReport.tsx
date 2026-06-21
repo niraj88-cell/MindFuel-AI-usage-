@@ -206,7 +206,7 @@ export function BrainReport({
 
               {/* Center content */}
               <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-                <span className={`text-5xl font-black bg-gradient-to-br ${scoreGradient} bg-clip-text text-transparent`}>
+                <span className={`text-5xl font-semibold bg-gradient-to-br ${scoreGradient} bg-clip-text text-transparent`}>
                   {score}
                 </span>
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.15em] mt-1">

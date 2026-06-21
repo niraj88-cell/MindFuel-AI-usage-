@@ -33,20 +33,14 @@ import { NutritionBreakdown } from '@/components/dashboard/NutritionBreakdown'
 import { CoachBanner } from '@/components/dashboard/CoachBanner'
 import { QuickLogFAB } from '@/components/dashboard/QuickLogFAB'
 import { DailyCheckIn } from '@/components/dashboard/DailyCheckIn'
-import { WebRing } from '@/components/dashboard/WebRing'
+import { PWAInstallPrompt } from '@/components/dashboard/PWAInstallPrompt'
+import { ShareButton } from '@/components/share/ShareButton'
 
 import { OnboardingFlow } from '@/components/dashboard/OnboardingFlow'
-import { JarvisAssistant } from '@/components/dashboard/JarvisAssistant'
-import { FuelOrb } from '@/components/fuel/FuelOrb'
-import { getDashboardGreeting, getFuelState } from '@/lib/fuel/personalityEngine'
 import { createClient } from '@/lib/supabase/client'
-import { formatRelativeTime, getCategoryEmoji, getScoreColor } from '@/lib/utils'
+import { formatRelativeTime, getCategoryEmoji, getScoreColor, getScoreContext } from '@/lib/utils'
 import { format } from 'date-fns'
 import { trackEvent } from '@/lib/mixpanel'
-import { calculatePredictiveHealth, PredictiveHealthMetrics } from '@/lib/agents/tools/predictiveHealth'
-import { checkPredictiveRisk, PredictiveState } from '@/lib/fuel/predictiveEngine'
-
-// Native voice synthesis removed for calmer experience
 
 interface DashboardData {
   todayScore: number
@@ -63,7 +57,6 @@ interface DashboardData {
   onboardingCompleted: boolean
   contentLove: string | null
   contentRegret: string | null
-  predictiveHealth: PredictiveHealthMetrics | null
 }
 
 interface NeuroData {
@@ -87,13 +80,11 @@ interface NeuroData {
 export default function DashboardPage() {
   const router = useRouter()
   const [data, setData] = useState<DashboardData | null>(null)
-  const [neuroData, setNeuroData] = useState<NeuroData | null>(null)
   const [loading, setLoading] = useState(true)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showWelcomeBack, setShowWelcomeBack] = useState(false)
   const [daysSinceLastLog, setDaysSinceLastLog] = useState(0)
   const [userId, setUserId] = useState<string | null>(null)
-  const [predictiveState, setPredictiveState] = useState<PredictiveState | null>(null)
 
   const loadDashboard = useCallback(async () => {
     const supabase = createClient()
@@ -102,12 +93,7 @@ export default function DashboardPage() {
 
     const today = format(new Date(), 'yyyy-MM-dd')
 
-    // Check predictive risk on load
-    const pState = checkPredictiveRisk()
-    setPredictiveState(pState)
-
     try {
-      // Run ALL independent queries in parallel instead of sequentially
       const [
         { data: profile },
         { data: summary },
@@ -123,7 +109,7 @@ export default function DashboardPage() {
       // 1. Profile
       supabase
         .from('profiles')
-        .select('subscription_tier, onboarding_completed, content_love, content_regret')
+        .select('subscription_tier, onboarding_completed, content_love, content_regret, full_name')
         .eq('id', user.id)
         .maybeSingle(),
       // 2. Daily summary
@@ -218,6 +204,18 @@ export default function DashboardPage() {
       }
     }
 
+    // Proactively generate daily coach insight if we didn't fetch one
+    if (!insight) {
+      fetch('/api/coach/generate-daily', { method: 'POST' })
+        .then(res => res.json())
+        .then(resData => {
+          if (resData.insight) {
+             setData(prev => prev ? { ...prev, coachInsight: { body: resData.insight.body, action_items: resData.insight.action_items } } : prev)
+          }
+        })
+        .catch(err => console.error('Failed to gen coach insight', err))
+    }
+
     // Build category breakdown
     const catMap = new Map<string, { count: number; totalScore: number }>()
     const allLogs = (todayLogs || []) as Array<{ category: string; mental_score: number }>
@@ -267,18 +265,7 @@ export default function DashboardPage() {
       onboardingCompleted: profile?.onboarding_completed || false,
       contentLove: profile?.content_love || null,
       contentRegret: profile?.content_regret || null,
-      predictiveHealth: calculatePredictiveHealth(sevenDayLogs || [])
     })
-
-    // Fetch neuro state asynchronously (non-blocking) without awaiting it for setLoading
-    fetch('/api/neuro')
-      .then(res => res.ok ? res.json() : null)
-      .then(neuroJson => {
-        if (neuroJson) setNeuroData(neuroJson)
-      })
-      .catch(() => { /* silent */ })
-
-    // Removed automated voice greeting to keep the dashboard calm
 
     setLoading(false)
 
@@ -296,21 +283,23 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="space-y-8 animate-pulse">
-        <div className="h-12 w-64 bg-zinc-900 rounded-xl" />
+        <div className="h-12 w-64 bg-[#F5F7F6] rounded-2xl" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[1, 2, 3].map((i) => <div key={i} className="h-64 bg-zinc-900 rounded-[32px]" />)}
+          {[1, 2, 3].map((i) => <div key={i} className="h-64 bg-[#F5F7F6] rounded-2xl" />)}
         </div>
       </div>
     )
   }
 
+  const scoreContext = data ? getScoreContext(data.todayScore) : null
+
   return (
     <div className="relative min-h-[85vh] flex flex-col pb-24 max-w-4xl mx-auto stagger-children animate-fade-in-up">
-      {/* Dynamic Ambient Background Glow */}
+      {/* Subtle Warm Ambient Background */}
       <div 
         className="fixed inset-0 pointer-events-none transition-colors duration-1000 ease-in-out -z-10"
         style={{
-          background: `radial-gradient(circle at 50% -20%, ${getScoreColor(data?.todayScore || 50)}15 0%, transparent 60%)`
+          background: `radial-gradient(circle at 50% -20%, var(--accent-green-soft, rgba(76,175,80,0.06)) 0%, transparent 60%)`
         }}
       />
 
@@ -335,26 +324,26 @@ export default function DashboardPage() {
 
       {/* Welcome Back Banner */}
       {showWelcomeBack && (
-        <div className="bg-zinc-900/60 backdrop-blur-xl border border-white/10 rounded-3xl p-6 relative shadow-2xl mb-12">
+        <div className="bg-white border border-black/[0.04] rounded-2xl p-6 relative shadow-sm mb-12">
           <button 
             onClick={() => {
               if (userId) localStorage.setItem(`welcome_dismissed_${userId}`, 'true');
               setShowWelcomeBack(false);
             }} 
-            className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors cursor-pointer"
+            className="absolute top-4 right-4 text-gray-400 hover:text-[#111827] transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center shrink-0 border border-white/10">
-              <Heart className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-[#F5F7F6] rounded-2xl flex items-center justify-center shrink-0 border border-black/[0.04]">
+              <Heart className="w-6 h-6 text-[#E57373]" />
             </div>
             <div className="flex-1 text-center sm:text-left">
-              <h3 className="text-xl font-bold text-white">Welcome back.</h3>
-              <p className="text-zinc-400 mt-1 mb-4">No streak to worry about. No guilt. Ready when you are.</p>
+              <h3 className="text-xl font-semibold text-[#111827]">Welcome back.</h3>
+              <p className="text-[#4B5563] mt-1 mb-4">No streak to worry about. No guilt. Ready when you are.</p>
               <button 
                 onClick={() => router.push('/log')}
-                className="px-6 py-2 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition-colors cursor-pointer"
+                className="px-6 py-2 bg-[#111827] text-white font-bold rounded-xl hover:bg-[#1f2937] transition-colors cursor-pointer"
               >
                 Reflect on your day
               </button>
@@ -365,109 +354,147 @@ export default function DashboardPage() {
 
       {data && data.totalLogs === 0 && data.recentLogs.length === 0 && data.focusSessions === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center pt-16 pb-24 relative px-4 z-10 animate-fade-in-up">
-          <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-8 border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.05)]">
-            <Brain className="w-10 h-10 text-white/50" />
+          <div className="w-24 h-24 bg-[#F5F7F6] rounded-full flex items-center justify-center mb-8 border border-black/[0.04]">
+            <Brain className="w-10 h-10 text-gray-300" />
           </div>
-          <h1 className="text-4xl sm:text-5xl font-serif text-white opacity-90 tracking-tight text-center mb-4">
-            Your digital brain is a blank canvas.
+          <h1 className="text-4xl sm:text-5xl font-[var(--font-serif)] text-[#111827] tracking-tight text-center mb-4">
+            What have you been scrolling today?
           </h1>
-          <p className="text-zinc-400 text-center max-w-md mb-12 leading-relaxed">
-            MindFuel learns from your habits. Start by logging what you're doing right now, or jump straight into a deep work sprint.
+          <p className="text-[#4B5563] text-center max-w-md mb-12 leading-relaxed">
+            Log your first piece of content and we'll show you how it affects your mood. Takes 10 seconds.
           </p>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
-            <button onClick={() => router.push('/log')} className="group flex flex-col items-center justify-center p-6 rounded-3xl bg-zinc-900/50 hover:bg-zinc-800/80 border border-white/5 hover:border-white/20 transition-all cursor-pointer hover-lift shadow-xl">
-              <PenLine className="w-8 h-8 text-zinc-400 group-hover:text-blue-400 mb-4 transition-colors" />
-              <span className="text-sm font-bold text-white uppercase tracking-widest">Log Activity</span>
-              <span className="text-xs text-zinc-500 mt-2 text-center">Capture a moment</span>
-            </button>
-            <button onClick={() => router.push('/focus')} className="group flex flex-col items-center justify-center p-6 rounded-3xl bg-zinc-900/50 hover:bg-zinc-800/80 border border-white/5 hover:border-white/20 transition-all cursor-pointer hover-lift shadow-xl">
-              <Timer className="w-8 h-8 text-zinc-400 group-hover:text-red-400 mb-4 transition-colors" />
-              <span className="text-sm font-bold text-white uppercase tracking-widest">Focus Sprint</span>
-              <span className="text-xs text-zinc-500 mt-2 text-center">Start a timer</span>
-            </button>
+          <div className="space-y-4 w-full max-w-lg">
+            <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider text-center">Quick log</p>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+              {[
+                { id: 'instagram', label: 'Instagram', emoji: '📸' },
+                { id: 'youtube', label: 'YouTube', emoji: '▶️' },
+                { id: 'tiktok', label: 'TikTok', emoji: '🎵' },
+                { id: 'twitter', label: 'Twitter/X', emoji: '💬' },
+                { id: 'reddit', label: 'Reddit', emoji: '🔗' },
+              ].map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => router.push(`/log?preset=${p.id}`)}
+                  className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-white border border-black/[0.04] hover:border-black/[0.1] hover:shadow-sm transition-all group cursor-pointer"
+                >
+                  <span className="text-xl group-hover:scale-110 transition-transform">{p.emoji}</span>
+                  <span className="text-[10px] font-medium text-gray-400 group-hover:text-[#111827] transition-colors">{p.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       ) : (
         <>
-          {/* Hero Section: The Ambient Mirror */}
+          {/* Greeting + Date */}
           <div className="flex-1 flex flex-col items-center justify-center pt-8 pb-8 relative">
             <div className="text-center mb-10 z-10 animate-fade-in-up">
-              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-3">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-3">
                 {format(new Date(), 'EEEE, MMMM do')}
               </p>
-              <h1 className="text-3xl sm:text-4xl font-serif text-white opacity-90 tracking-tight">
-                {data?.todayScore ? 'The web is active today.' : 'Quiet neighborhood right now.'}
+              <h1 className="text-3xl sm:text-4xl font-[var(--font-serif)] text-[#111827] tracking-tight">
+                {new Date().getHours() < 12 ? 'Good morning.' : new Date().getHours() < 18 ? 'Good afternoon.' : 'Good evening.'}
               </h1>
             </div>
 
-            {/* The WebRing (Spatial UI visualization of score) */}
-            <div className="w-full max-w-md mx-auto mb-10">
-              {data ? (
-                <WebRing score={data.todayScore} />
+            {/* Score Ring */}
+            <div className="w-full max-w-xs mx-auto mb-6 flex flex-col items-center">
+              {data && scoreContext ? (
+                <>
+                  <div id="dashboard-score-card" className="flex flex-col items-center bg-[#FAF8F4] p-6 rounded-3xl pb-8">
+                    <div className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-4">Today's Score</div>
+                    <ScoreRing score={data.todayScore} size={200} strokeWidth={16} />
+                    <div className="mt-4 flex items-center gap-2">
+                      <span className="text-xl">{scoreContext.emoji}</span>
+                      <span 
+                        className="text-lg font-semibold"
+                        style={{ color: scoreContext.color }}
+                      >
+                        {data.todayScore} · {scoreContext.label}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-4" data-html2canvas-ignore>
+                    <ShareButton 
+                      targetId="dashboard-score-card"
+                      title="My MindFuel Score"
+                      text={`My digital wellness score today is ${data.todayScore} (${scoreContext.label}). Check out MindFuel to track your screen time impact!`}
+                    />
+                  </div>
+                </>
               ) : (
-                 <div className="w-48 h-48 mx-auto rounded-full bg-white/5 animate-pulse" />
+               <div className="w-48 h-48 mx-auto rounded-full bg-[#F5F7F6] animate-pulse" />
               )}
             </div>
-
-            {/* Floating Action Bar (Quick Stats) MOVED UP */}
-            <div className="w-full max-w-3xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10 px-4">
-              <button onClick={() => router.push('/log')} className="group flex flex-col items-center justify-center p-4 rounded-3xl web-card hover:bg-white/5 transition-all cursor-pointer h-28 hover-lift">
-                <PenLine className="w-6 h-6 text-zinc-400 group-hover:text-blue-400 mb-3 transition-colors" />
-                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Reflect</span>
-              </button>
-              <button onClick={() => router.push('/focus')} className="group flex flex-col items-center justify-center p-4 rounded-3xl web-card hover:bg-white/5 transition-all cursor-pointer h-28 hover-lift">
-                <Timer className="w-6 h-6 text-zinc-400 group-hover:text-red-400 mb-3 transition-colors" />
-                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">{data?.focusHours || 0}h Focus</span>
-              </button>
-              <button onClick={() => router.push('/pulse')} className="group flex flex-col items-center justify-center p-4 rounded-3xl web-card hover:bg-white/5 transition-all cursor-pointer h-28 hover-lift">
-                <Heart className="w-6 h-6 text-zinc-400 group-hover:text-rose-400 mb-3 transition-colors" />
-                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Pulse</span>
-              </button>
-              <button onClick={() => router.push('/insights')} className="group flex flex-col items-center justify-center p-4 rounded-3xl web-card hover:bg-white/5 transition-all cursor-pointer h-28 hover-lift relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-transparent opacity-30" />
-                <Flame className="w-6 h-6 text-blue-400 mb-3 relative z-10" />
-                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest relative z-10">{data?.streak || 0}d Streak</span>
-              </button>
-            </div>
           </div>
-
-        {/* Predictive Rescue Banner (Phase 7) */}
-        {predictiveState?.isRiskActive && (
-          <div className="mt-8 bg-zinc-950/60 backdrop-blur-3xl border border-amber-500/20 rounded-[32px] p-6 shadow-2xl relative overflow-hidden animate-fade-in-up">
-            <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-transparent pointer-events-none" />
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center border border-amber-500/20">
-                  <AlertTriangle className="w-6 h-6 text-amber-500" />
-                </div>
-                <div>
-                  <h3 className="text-white font-bold text-lg">{predictiveState.triggerContext}</h3>
-                  <p className="text-zinc-400 text-sm">{predictiveState.voiceLine}</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => router.push('/focus')}
-                className="w-full sm:w-auto px-6 py-3 bg-red-600 text-white font-black uppercase tracking-widest text-xs rounded-xl hover:bg-red-500 transition-colors shrink-0 tap-effect"
-              >
-                Accept Mission
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* AI Insight (The Narrative) */}
         {data?.coachInsight && (
-          <div className="mt-8 max-w-xl mx-auto text-center px-4">
-            <p className="text-lg sm:text-xl text-zinc-300 font-serif leading-relaxed italic opacity-80">
+          <div className="mb-10 max-w-xl mx-auto text-center px-4">
+            <p className="text-lg sm:text-xl text-[#4B5563] font-[var(--font-serif)] leading-relaxed italic">
               "{data.coachInsight.body}"
             </p>
             <button 
               onClick={() => router.push('/coach')}
-              className="mt-6 mx-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-white/5 border border-white/10 rounded-full text-xs font-bold text-zinc-300 hover:bg-white/10 hover:text-white transition-all cursor-pointer"
+              className="mt-6 mx-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-[#F5F7F6] border border-black/[0.04] rounded-full text-xs font-bold text-[#4B5563] hover:bg-[#111827] hover:text-white transition-all cursor-pointer"
             >
               <Brain className="w-4 h-4" /> Go deeper
             </button>
+          </div>
+        )}
+
+        {/* Quick Log */}
+        <div className="space-y-4 mb-10 px-4">
+          <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Quick log</p>
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+            {[
+              { id: 'instagram', label: 'Instagram', emoji: '📸' },
+              { id: 'youtube', label: 'YouTube', emoji: '▶️' },
+              { id: 'tiktok', label: 'TikTok', emoji: '🎵' },
+              { id: 'twitter', label: 'Twitter/X', emoji: '💬' },
+              { id: 'reddit', label: 'Reddit', emoji: '🔗' },
+            ].map(p => (
+              <button
+                key={p.id}
+                onClick={() => router.push(`/log?preset=${p.id}`)}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-white border border-black/[0.04] hover:border-black/[0.1] hover:shadow-sm transition-all group cursor-pointer"
+              >
+                <span className="text-xl group-hover:scale-110 transition-transform">{p.emoji}</span>
+                <span className="text-[10px] font-medium text-gray-400 group-hover:text-[#111827] transition-colors">{p.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Activation Progress Bar ("3 logs -> first insight") */}
+        {data && data.totalLogs < 5 && (
+          <div className="bg-white border border-black/[0.04] rounded-2xl p-5 shadow-sm mb-10 mx-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-medium text-[#111827]">Unlock your content pattern</p>
+              <span className="text-xs font-medium text-gray-400">{data.totalLogs}/5 logs</span>
+            </div>
+            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-[#4CAF50] rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, (data.totalLogs / 5) * 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              {data.totalLogs < 3 
+                ? `${3 - data.totalLogs} more log${3 - data.totalLogs === 1 ? '' : 's'} to see your first insight`
+                : data.totalLogs < 5 
+                ? `${5 - data.totalLogs} more to unlock your weekly report`
+                : ''}
+            </p>
+          </div>
+        )}
+
+        {/* PWA Install Prompt */}
+        {data && data.totalLogs > 0 && (
+          <div className="mb-10 mx-4 max-w-lg">
+            <PWAInstallPrompt />
           </div>
         )}
 
@@ -475,121 +502,35 @@ export default function DashboardPage() {
         {data?.behavioralInsight && (
           <div 
             onClick={() => router.push('/insights')}
-            className="mt-6 max-w-md w-full mx-auto bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-5 text-left cursor-pointer hover:bg-zinc-800/60 hover:border-white/20 transition-all group shadow-xl flex gap-4 items-center"
+            className="mb-10 max-w-md w-full mx-auto bg-white border border-black/[0.04] rounded-2xl p-5 text-left cursor-pointer hover:shadow-md transition-all group shadow-sm flex gap-4 items-center"
           >
-            <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/10 group-hover:scale-110 transition-transform">
-               <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-2xl bg-[#F5F7F6] flex items-center justify-center shrink-0 border border-black/[0.04] group-hover:scale-110 transition-transform">
+               <Sparkles className="w-5 h-5 text-[#4CAF50]" />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">{data.behavioralInsight.pattern}</span>
+                <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 bg-[#F5F7F6] px-2 py-0.5 rounded-full border border-black/[0.04]">{data.behavioralInsight.pattern}</span>
               </div>
-              <p className="text-sm font-serif text-white opacity-90 leading-snug line-clamp-2">{data.behavioralInsight.headline}</p>
+              <p className="text-sm font-[var(--font-serif)] text-[#111827] leading-snug line-clamp-2">{data.behavioralInsight.headline}</p>
             </div>
-            <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-white transition-colors" />
+            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#111827] transition-colors" />
           </div>
         )}
-      {/* Neurochemical State + Focus Prophecy */}
-      {neuroData && (
-        <div className="w-full max-w-3xl mx-auto mt-10 space-y-6">
-          {/* Focus Prophecy */}
-          <div className={`relative overflow-hidden rounded-[32px] p-6 border backdrop-blur-xl ${
-            neuroData.prophecy.trajectory === 'crash_incoming' ? 'bg-red-500/5 border-red-500/15' :
-            neuroData.prophecy.trajectory === 'declining' ? 'bg-orange-500/5 border-orange-500/10' :
-            neuroData.prophecy.trajectory === 'peak_day' ? 'bg-emerald-500/5 border-emerald-500/15' :
-            neuroData.prophecy.trajectory === 'improving' ? 'bg-sky-500/5 border-sky-500/10' :
-            'bg-zinc-900/40 border-white/10'
-          }`}>
-            <div className="flex items-center gap-2 mb-3">
-              <Zap className={`w-4 h-4 ${
-                neuroData.prophecy.trajectory === 'crash_incoming' ? 'text-red-400' :
-                neuroData.prophecy.trajectory === 'peak_day' ? 'text-emerald-400' : 'text-zinc-400'
-              }`} />
-              <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Focus Prophecy</span>
-              <span className={`ml-auto text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
-                neuroData.prophecy.trajectory === 'crash_incoming' ? 'text-red-400 bg-red-500/10 border-red-500/20' :
-                neuroData.prophecy.trajectory === 'declining' ? 'text-orange-400 bg-orange-500/10 border-orange-500/20' :
-                neuroData.prophecy.trajectory === 'peak_day' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' :
-                neuroData.prophecy.trajectory === 'improving' ? 'text-sky-400 bg-sky-500/10 border-sky-500/20' :
-                'text-zinc-400 bg-white/5 border-white/10'
-              }`}>{neuroData.prophecy.trajectory.replace('_', ' ')}</span>
-            </div>
-            <p className="text-white font-serif text-lg leading-snug mb-3">{neuroData.prophecy.prophecy}</p>
-            <div className="flex flex-col sm:flex-row gap-3 text-xs">
-              <div className="flex-1 bg-black/20 rounded-xl p-3 border border-white/5">
-                <span className="text-zinc-500 font-bold block mb-1">⚠️ Risk Window</span>
-                <span className="text-zinc-300">{neuroData.prophecy.risk_window}</span>
-              </div>
-              <div className="flex-1 bg-black/20 rounded-xl p-3 border border-white/5">
-                <span className="text-zinc-500 font-bold block mb-1">⚡ Pivot Action</span>
-                <span className="text-zinc-300">{neuroData.prophecy.pivot_action}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Neurochemical Bars */}
-          <div className="rounded-[32px] bg-zinc-950/60 backdrop-blur-xl border border-white/8 p-6">
-            <div className="flex items-center gap-2 mb-5">
-              <Brain className="w-4 h-4 text-zinc-400" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Neural State</span>
-              <span className={`ml-auto text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
-                neuroData.neuroState.overall_state === 'thriving' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' :
-                neuroData.neuroState.overall_state === 'good' ? 'text-sky-400 bg-sky-500/10 border-sky-500/20' :
-                neuroData.neuroState.overall_state === 'strained' ? 'text-orange-400 bg-orange-500/10 border-orange-500/20' :
-                neuroData.neuroState.overall_state === 'crisis' ? 'text-red-400 bg-red-500/10 border-red-500/20' :
-                'text-zinc-400 bg-white/5 border-white/10'
-              }`}>{neuroData.neuroState.overall_state}</span>
-            </div>
-
-            <div className="space-y-4">
-              {[
-                { label: 'Dopamine', data: neuroData.neuroState.dopamine, color: 'bg-violet-400', icon: '⚡' },
-                { label: 'Cortisol', data: neuroData.neuroState.cortisol, color: 'bg-rose-400', icon: '🔥', inverted: true },
-                { label: 'Serotonin', data: neuroData.neuroState.serotonin, color: 'bg-amber-400', icon: '☀️' },
-                { label: 'Focus', data: neuroData.neuroState.focus_capacity, color: 'bg-cyan-400', icon: '🎯' },
-              ].map(({ label, data: d, color, icon, inverted }) => (
-                <div key={label} className="group">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs">{icon}</span>
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{label}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {d.trend === 'rising' && <ArrowUp className={`w-3 h-3 ${inverted ? 'text-rose-400' : 'text-emerald-400'}`} />}
-                      {d.trend === 'falling' && <ArrowDown className={`w-3 h-3 ${inverted ? 'text-emerald-400' : 'text-rose-400'}`} />}
-                      {d.trend === 'stable' && <Minus className="w-3 h-3 text-zinc-600" />}
-                      <span className="text-xs font-black text-white">{d.percentage}%</span>
-                    </div>
-                  </div>
-                  <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full transition-all duration-1000 ease-out ${color}`} style={{ width: `${d.percentage}%` }} />
-                  </div>
-                  <p className="text-[10px] text-zinc-600 mt-1 group-hover:text-zinc-400 transition-colors line-clamp-1">{d.driver}</p>
-                </div>
-              ))}
-            </div>
-
-            <p className="text-xs text-zinc-500 mt-4 font-medium text-center">{neuroData.neuroState.summary}</p>
-          </div>
-        </div>
-      )}
-
-
 
       {/* Spatial Recent Entries */}
       {data && data.recentLogs.length > 0 && (
-        <div className="mt-12 max-w-3xl mx-auto w-full space-y-4">
+        <div className="mt-4 max-w-3xl mx-auto w-full space-y-4 px-4">
           <div className="flex items-center justify-between px-2 mb-2">
-             <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest">Recent Clarities</h3>
-             <button onClick={() => router.push('/insights')} className="text-xs font-bold text-zinc-400 hover:text-white transition-colors uppercase tracking-widest">See all</button>
+             <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Recent Clarities</h3>
+             <button onClick={() => router.push('/insights')} className="text-xs font-medium text-gray-400 hover:text-[#111827] transition-colors uppercase tracking-wider">See all</button>
           </div>
           <div className="space-y-3">
             {data.recentLogs.slice(0, 3).map((log) => (
-              <div key={log.id} className="group p-6 rounded-3xl bg-zinc-900/20 backdrop-blur-md border border-white/5 hover:bg-zinc-800/40 hover:border-white/10 transition-all flex items-start gap-5 cursor-pointer" onClick={() => router.push('/insights')}>
-                <div className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 shadow-[0_0_10px_rgba(255,255,255,0.2)]" style={{ backgroundColor: getScoreColor(log.mental_score) }} />
+              <div key={log.id} className="group p-5 rounded-2xl bg-white border border-black/[0.04] hover:shadow-sm transition-all flex items-start gap-5 cursor-pointer" onClick={() => router.push('/insights')}>
+                <div className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: getScoreColor(log.mental_score) }} />
                 <div className="flex-1">
-                  <p className="text-base font-serif text-zinc-300 leading-relaxed group-hover:text-white transition-colors line-clamp-2">{log.content}</p>
-                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mt-3 flex items-center gap-2">
+                  <p className="text-base font-[var(--font-serif)] text-[#4B5563] leading-relaxed group-hover:text-[#111827] transition-colors line-clamp-2">{log.content}</p>
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mt-3 flex items-center gap-2">
                     <Clock className="w-3 h-3" /> {formatRelativeTime(log.created_at)}
                   </p>
                 </div>
@@ -607,37 +548,6 @@ export default function DashboardPage() {
       </div>
 
       <QuickLogFAB onLogSaved={() => loadDashboard()} />
-
-      {/* Fuel — Living Digital Companion */}
-      {neuroData ? (
-        <FuelOrb
-          thought={`"${getDashboardGreeting({
-            hour: new Date().getHours(),
-            mood: null,
-            energy: null,
-            focusMinutes: data?.focusHours ? data.focusHours * 60 : 0,
-            doomscrollMinutes: 0,
-            streak: data?.streak || 0,
-            todayScore: data?.todayScore || 50,
-            isFocusActive: false,
-            totalLogsToday: data?.totalLogs || 0,
-          }, neuroData.prophecy.prophecy)}"`}
-          autoSpeak={getDashboardGreeting({
-            hour: new Date().getHours(),
-            mood: null,
-            energy: null,
-            focusMinutes: data?.focusHours ? data.focusHours * 60 : 0,
-            doomscrollMinutes: 0,
-            streak: data?.streak || 0,
-            todayScore: data?.todayScore || 50,
-            isFocusActive: false,
-            totalLogsToday: data?.totalLogs || 0,
-          }, neuroData.prophecy.prophecy)}
-          riskLevel={predictiveState?.riskLevel || 'safe'}
-        />
-      ) : (
-        <FuelOrb riskLevel={predictiveState?.riskLevel || 'safe'} />
-      )}
     </div>
   )
 }

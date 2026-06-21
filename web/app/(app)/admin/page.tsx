@@ -70,7 +70,7 @@ export default function AdminDashboard() {
       <div className="flex-1 flex items-center justify-center min-h-[60vh] px-4">
         <div className="bg-rose-500/10 border border-rose-500/20 p-8 rounded-3xl text-center max-w-md">
           <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto mb-4" />
-          <h1 className="text-xl font-black text-rose-500 mb-2">ACCESS DENIED</h1>
+          <h1 className="text-xl font-semibold text-rose-500 mb-2">ACCESS DENIED</h1>
           <p className="text-sm text-rose-400/80 mb-6">{error}</p>
           <button onClick={() => router.push('/dashboard')} className="px-6 py-2 bg-rose-500/20 text-rose-300 text-sm font-bold rounded-xl hover:bg-rose-500/30 transition-colors">
             Return to Safety
@@ -88,7 +88,7 @@ export default function AdminDashboard() {
           <Lock className="w-5 h-5 text-indigo-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-white">CEO Control Center</h1>
+          <h1 className="text-2xl font-semibold text-white">CEO Control Center</h1>
           <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Clearance Level: Maximum</p>
         </div>
       </div>
@@ -100,7 +100,7 @@ export default function AdminDashboard() {
             <Users className="w-24 h-24 text-white" />
           </div>
           <p className="text-sm font-bold text-zinc-400 mb-2">Total Active Users</p>
-          <div className="text-5xl font-black text-white mb-2">{stats?.totalUsers || 0}</div>
+          <div className="text-5xl font-semibold text-white mb-2">{stats?.totalUsers || 0}</div>
           <div className="flex items-center gap-1 text-xs font-bold text-emerald-400">
             <ArrowUp className="w-3 h-3" /> <span>Real-time global sync</span>
           </div>
@@ -111,7 +111,7 @@ export default function AdminDashboard() {
             <Activity className="w-24 h-24 text-emerald-500" />
           </div>
           <p className="text-sm font-bold text-zinc-400 mb-2">Mental Intercepts Logged</p>
-          <div className="text-5xl font-black text-white mb-2">{stats?.totalLogs || 0}</div>
+          <div className="text-5xl font-semibold text-white mb-2">{stats?.totalLogs || 0}</div>
           <div className="flex items-center gap-1 text-xs font-bold text-zinc-500">
             <span>Aggregated across all squads</span>
           </div>
@@ -122,7 +122,7 @@ export default function AdminDashboard() {
             <Clock className="w-24 h-24 text-indigo-500" />
           </div>
           <p className="text-sm font-bold text-zinc-400 mb-2">Total Focus Hours</p>
-          <div className="text-5xl font-black text-white mb-2">{stats?.totalFocusHours || 0}</div>
+          <div className="text-5xl font-semibold text-white mb-2">{stats?.totalFocusHours || 0}</div>
           <div className="flex items-center gap-1 text-xs font-bold text-zinc-500">
             <span>Doomscrolling prevented globally</span>
           </div>
@@ -131,7 +131,7 @@ export default function AdminDashboard() {
 
       {/* Global Activity Feed */}
       <div>
-        <h2 className="text-lg font-black text-white mb-6 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
           <Zap className="w-5 h-5 text-amber-500" /> Live Global Activity (Anonymized)
         </h2>
         
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
               </div>
               <div className="flex items-center gap-6 sm:pl-6 border-t sm:border-t-0 sm:border-l border-white/5 pt-4 sm:pt-0">
                 <div className="text-center">
-                  <div className="text-xl font-black text-white">{log.mental_score}</div>
+                  <div className="text-xl font-semibold text-white">{log.mental_score}</div>
                   <div className="text-[9px] font-bold uppercase tracking-widest text-zinc-600">Score</div>
                 </div>
                 <div className="text-xs text-zinc-500 font-medium">

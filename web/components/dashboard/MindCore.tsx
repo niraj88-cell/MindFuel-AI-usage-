@@ -43,8 +43,8 @@ export function MindCore({ score, category }: MindCoreProps) {
         
         {/* Value Display */}
         <div className="relative z-10 flex flex-col items-center justify-center">
-          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">State</span>
-          <span className="text-5xl font-black text-white drop-shadow-md">{score}</span>
+          <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-[0.2em] mb-1">State</span>
+          <span className="text-5xl font-semibold text-white drop-shadow-md">{score}</span>
         </div>
       </div>
 

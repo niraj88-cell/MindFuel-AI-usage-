@@ -195,7 +195,7 @@ export function QuickLogFAB({ onLogSaved }: QuickLogFABProps) {
           <div className="bg-zinc-950/60 backdrop-blur-3xl border border-white/10 rounded-[32px] p-8 shadow-2xl text-center space-y-4 animate-[fadeSlideIn_0.4s_ease-out]">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Sparkles className="w-4 h-4 text-white" />
-              <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Fuel Insight</span>
+              <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">Fuel Insight</span>
             </div>
             
             <p className="text-xl font-serif text-white opacity-90 leading-relaxed">
@@ -225,7 +225,7 @@ export function QuickLogFAB({ onLogSaved }: QuickLogFABProps) {
               <Brain className="w-5 h-5 text-black" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-white">Fuel Check-In</h2>
+              <h2 className="text-lg font-semibold text-white">Fuel Check-In</h2>
               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Sync your state</p>
             </div>
           </div>
@@ -242,7 +242,7 @@ export function QuickLogFAB({ onLogSaved }: QuickLogFABProps) {
               <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">How are you feeling?</span>
               <div className="flex items-center gap-2">
                 <span className="text-2xl transition-all duration-200">{getMoodEmoji(mood)}</span>
-                <span className="text-lg font-black tabular-nums w-6 text-center text-white">{mood}</span>
+                <span className="text-lg font-semibold tabular-nums w-6 text-center text-white">{mood}</span>
               </div>
             </div>
             <input
@@ -344,7 +344,7 @@ export function QuickLogFAB({ onLogSaved }: QuickLogFABProps) {
                 <div className="absolute w-12 h-12 bg-white/20 rounded-full animate-pulse" style={{ animationDuration: '2s' }} />
                 <div className="w-8 h-8 bg-white rounded-full shadow-[0_0_20px_rgba(255,255,255,0.5)]" />
               </div>
-              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest animate-pulse">Processing...</span>
+              <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest animate-pulse">Processing...</span>
             </div>
           </div>
         )}

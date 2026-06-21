@@ -116,7 +116,7 @@ export default function ExpeditionsPage() {
           <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center animate-pulse">
             <Compass className="w-6 h-6 text-zinc-500" />
           </div>
-          <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Loading expeditions...</p>
+          <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest">Loading expeditions...</p>
         </div>
       </div>
     )
@@ -138,7 +138,7 @@ export default function ExpeditionsPage() {
       {/* Active Expeditions */}
       {activeChallenges.length > 0 && (
         <div className="space-y-4">
-          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Active Expeditions</p>
+          <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">Active Expeditions</p>
           {activeChallenges.map((challenge) => {
             const progress = (challenge.completed_days / challenge.target_days) * 100
             const expMatch = EXPEDITIONS.find(e => e.title === challenge.title)
@@ -160,7 +160,7 @@ export default function ExpeditionsPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <MapPin className="w-4 h-4 text-white" />
-                      <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${difficultyColor(expMatch?.difficulty || 'medium')}`}>
+                      <span className={`text-[9px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full border ${difficultyColor(expMatch?.difficulty || 'medium')}`}>
                         {expMatch?.difficulty || 'medium'}
                       </span>
                     </div>
@@ -168,8 +168,8 @@ export default function ExpeditionsPage() {
                     <p className="text-sm text-zinc-500 mt-1">{challenge.description}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-2xl font-black text-white">{challenge.completed_days}<span className="text-zinc-600 text-lg">/{challenge.target_days}</span></p>
-                    <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Days</p>
+                    <p className="text-2xl font-semibold text-white">{challenge.completed_days}<span className="text-zinc-600 text-lg">/{challenge.target_days}</span></p>
+                    <p className="text-[9px] font-semibold text-zinc-600 uppercase tracking-widest">Days</p>
                   </div>
                 </div>
 
@@ -204,7 +204,7 @@ export default function ExpeditionsPage() {
 
       {/* Discover Expeditions */}
       <div className="space-y-4">
-        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Discover Expeditions</p>
+        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">Discover Expeditions</p>
         <div className="grid grid-cols-1 gap-4">
           {EXPEDITIONS.map((exp) => {
             const isActive = activeChallenges.some(c => c.title === exp.title)
@@ -219,10 +219,10 @@ export default function ExpeditionsPage() {
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${difficultyColor(exp.difficulty)}`}>
+                      <span className={`text-[9px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full border ${difficultyColor(exp.difficulty)}`}>
                         {exp.difficulty}
                       </span>
-                      <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">
+                      <span className="text-[9px] font-semibold text-zinc-600 uppercase tracking-widest">
                         {exp.target_days} days
                       </span>
                     </div>

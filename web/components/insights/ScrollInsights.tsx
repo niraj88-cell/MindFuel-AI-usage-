@@ -78,7 +78,7 @@ export function ScrollInsights({ stats = DEFAULT_STATS }: ScrollInsightsProps) {
             <div className="flex-1">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-bold text-white">{stat.category}</span>
-                <span className="text-xs font-black" style={{ color: stat.color }}>{stat.hours}h</span>
+                <span className="text-xs font-semibold" style={{ color: stat.color }}>{stat.hours}h</span>
               </div>
               
               {/* Web Strand Progress Bar */}

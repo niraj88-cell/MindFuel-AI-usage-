@@ -15,11 +15,19 @@ export function getScoreColor(score: number): string {
 }
 
 export function getScoreLabel(score: number): string {
-  if (score >= 85) return 'Excellent'
-  if (score >= 65) return 'Good'
-  if (score >= 45) return 'Neutral'
-  if (score >= 25) return 'Low'
+  if (score >= 80) return 'Excellent'
+  if (score >= 60) return 'Nourishing'
+  if (score >= 40) return 'Neutral'
+  if (score >= 20) return 'Draining'
   return 'Harmful'
+}
+
+export function getScoreContext(score: number): { label: string; color: string; emoji: string } {
+  if (score >= 80) return { label: 'Excellent', color: '#4CAF50', emoji: '💚' }
+  if (score >= 60) return { label: 'Nourishing', color: '#66BB6A', emoji: '🟢' }
+  if (score >= 40) return { label: 'Neutral', color: '#FFB74D', emoji: '🟡' }
+  if (score >= 20) return { label: 'Draining', color: '#EF5350', emoji: '🟠' }
+  return { label: 'Harmful', color: '#D32F2F', emoji: '🔴' }
 }
 
 export function getCategoryEmoji(category: string): string {

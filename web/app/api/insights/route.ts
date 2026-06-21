@@ -206,15 +206,42 @@ export async function GET(req: NextRequest) {
       trendData.push({ date: format(new Date(), 'MMM d'), score: 0, logs: 0 })
     }
 
+    // For Life in Pixels, fetch up to 90 days of daily summaries
+    const ninetyDaysAgo = format(subDays(new Date(), 90), 'yyyy-MM-dd')
+    const { data: pixelSummaries } = await supabase
+      .from('daily_summaries')
+      .select('date, average_score')
+      .eq('user_id', user.id)
+      .gte('date', ninetyDaysAgo)
+      .order('date', { ascending: true })
+
+    const pixelData = pixelSummaries ? pixelSummaries.map(s => ({
+      date: s.date,
+      score: s.average_score
+    })) : []
+
+    // Calculate a mock community percentile based on their avg score
+    let communityPercentile = 0 // 0 means not enough data
+    const avgScore = contentLogs?.length
+            ? Math.round(contentLogs.reduce((sum, l) => sum + l.mental_score, 0) / contentLogs.length)
+            : 0
+    if (avgScore > 0) {
+      if (avgScore > 50) {
+         communityPercentile = Math.max(1, 50 - Math.round(((avgScore - 50) / 50) * 45)) // top X%
+      } else {
+         communityPercentile = Math.min(99, 50 + Math.round(((50 - avgScore) / 50) * 45)) // bottom X%
+      }
+    }
+
     return NextResponse.json(
       {
         trendData,
+        pixelData,
+        communityPercentile,
         moodAnalysis,
         stats: {
           totalLogs: contentLogs?.length || 0,
-          avgScore: contentLogs?.length
-            ? Math.round(contentLogs.reduce((sum, l) => sum + l.mental_score, 0) / contentLogs.length)
-            : 0,
+          avgScore,
           moodEntries: moodLogs?.length || 0,
         },
         behavioralInsight,

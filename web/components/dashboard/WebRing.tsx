@@ -176,7 +176,7 @@ export const WebRing = React.memo(function WebRing({
 
       {/* Center Content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center z-20 pointer-events-none">
-        <span className="text-5xl font-black tabular-nums tracking-tight leading-none text-transparent bg-clip-text bg-gradient-to-br from-[var(--accent-red)] to-[var(--accent-blue)]">
+        <span className="text-5xl font-semibold tabular-nums tracking-tight leading-none text-transparent bg-clip-text bg-gradient-to-br from-[var(--accent-red)] to-[var(--accent-blue)]">
           {displayScore}
         </span>
         

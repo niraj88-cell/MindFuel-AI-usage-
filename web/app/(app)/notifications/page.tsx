@@ -19,30 +19,30 @@ interface Notification {
 const TYPE_CONFIG = {
   daily_coach: {
     icon: BrainCircuit,
-    color: 'text-white',
-    bg: 'bg-white/5',
-    border: 'border-white/10',
+    color: 'text-[#4CAF50]',
+    bg: 'bg-green-50',
+    border: 'border-green-200',
     label: 'Daily Coach',
   },
   swap_suggestion: {
     icon: RefreshCw,
-    color: 'text-white',
-    bg: 'bg-white/5',
-    border: 'border-white/10',
+    color: 'text-[#5DADE2]',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
     label: 'Content Swap',
   },
   challenge: {
     icon: Trophy,
-    color: 'text-white',
-    bg: 'bg-white/5',
-    border: 'border-white/10',
+    color: 'text-amber-600',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
     label: 'Challenge',
   },
   streak: {
     icon: TrendingUp,
-    color: 'text-rose-400',
-    bg: 'bg-rose-500/10',
-    border: 'border-rose-500/20',
+    color: 'text-rose-500',
+    bg: 'bg-rose-50',
+    border: 'border-rose-200',
     label: 'Streak',
   },
 }
@@ -111,11 +111,11 @@ export default function NotificationsPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-3">
-            <Bell className="w-7 h-7 text-white" />
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight flex items-center gap-3 text-[#111827]">
+            <Bell className="w-7 h-7 text-[#111827]" />
             Notifications
           </h1>
-          <p className="text-zinc-400 text-sm mt-1">
+          <p className="text-[#4B5563] text-sm mt-1">
             {notifications.length === 0
               ? 'All caught up!'
               : `${notifications.length} notification${notifications.length !== 1 ? 's' : ''}`}
@@ -125,7 +125,7 @@ export default function NotificationsPage() {
         {notifications.length > 0 && (
           <button
             onClick={clearAll}
-            className="text-xs text-zinc-500 hover:text-rose-400 transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-800/50 border border-white/10 hover:border-rose-500/20 cursor-pointer"
+            className="text-xs text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F5F7F6] border border-black/[0.06] hover:border-red-200 cursor-pointer"
           >
             <X className="w-3 h-3" />
             Clear All
@@ -140,10 +140,10 @@ export default function NotificationsPage() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all cursor-pointer ${
+              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-widest transition-all cursor-pointer ${
                 filter === f
-                  ? 'bg-white text-black text-white shadow-lg shadow-none'
-                  : 'bg-zinc-800/50 text-zinc-400 border border-white/10 hover:text-white'
+                  ? 'bg-[#111827] text-white shadow-sm'
+                  : 'bg-[#F5F7F6] text-[#4B5563] border border-black/[0.06] hover:text-[#111827]'
               }`}
             >
               {f}
@@ -159,7 +159,7 @@ export default function NotificationsPage() {
       {loading && (
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-24 rounded-3xl bg-zinc-800/30 animate-shimmer" />
+            <div key={i} className="h-24 rounded-2xl bg-gray-100 animate-shimmer" />
           ))}
         </div>
       )}
@@ -167,13 +167,13 @@ export default function NotificationsPage() {
       {/* Empty state */}
       {!loading && filtered.length === 0 && (
         <div className="text-center py-20">
-          <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6">
-            <Bell className="w-10 h-10 text-white opacity-50" />
+          <div className="w-20 h-20 rounded-full bg-[#F5F7F6] border border-black/[0.06] flex items-center justify-center mx-auto mb-6">
+            <Bell className="w-10 h-10 text-gray-300" />
           </div>
-          <h3 className="text-xl font-black text-zinc-300 mb-2">
+          <h3 className="text-xl font-semibold text-[#111827] mb-2">
             {filter === 'unread' ? 'All caught up!' : 'No notifications yet'}
           </h3>
-          <p className="text-zinc-500 text-sm">
+          <p className="text-gray-400 text-sm">
             {filter === 'unread'
               ? 'You have no unread notifications.'
               : 'Your daily coach updates and insights will appear here.'}
@@ -195,10 +195,10 @@ export default function NotificationsPage() {
             return (
               <div
                 key={notif.id}
-                className={`relative group flex gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all duration-300 animate-fade-in-up ${
+                className={`relative group flex gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl border transition-all duration-300 animate-fade-in-up ${
                   !notif.is_read
-                    ? `${config.bg} ${config.border}`
-                    : 'bg-zinc-900/40 border-white/10'
+                    ? `bg-white ${config.border} border-l-2 shadow-sm`
+                    : 'bg-white border-black/[0.04]'
                 }`}
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
@@ -211,23 +211,23 @@ export default function NotificationsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div>
-                      <span className={`text-[9px] font-black uppercase tracking-widest ${config.color} mr-2`}>
+                      <span className={`text-[9px] font-semibold uppercase tracking-widest ${config.color} mr-2`}>
                         {config.label}
                       </span>
                       {!notif.is_read && (
-                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle" />
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#4CAF50] align-middle" />
                       )}
                     </div>
-                    <span className="text-[10px] text-zinc-600 shrink-0">{timeAgo}</span>
+                    <span className="text-[10px] text-gray-400 shrink-0">{timeAgo}</span>
                   </div>
-                  <p className="text-sm font-bold text-white mb-1">{notif.title}</p>
-                  <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3">{notif.body}</p>
+                  <p className="text-sm font-bold text-[#111827] mb-1">{notif.title}</p>
+                  <p className="text-xs text-[#4B5563] leading-relaxed line-clamp-3">{notif.body}</p>
                 </div>
 
                 {/* Delete button */}
                 <button
                   onClick={() => deleteNotification(notif.id)}
-                  className="absolute top-3 right-3 sm:top-4 sm:right-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity w-7 h-7 sm:w-6 sm:h-6 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 rounded-lg bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-rose-500/50 cursor-pointer"
+                  className="absolute top-3 right-3 sm:top-4 sm:right-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity w-7 h-7 sm:w-6 sm:h-6 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 cursor-pointer"
                 >
                   <X className="w-3 h-3" />
                 </button>
