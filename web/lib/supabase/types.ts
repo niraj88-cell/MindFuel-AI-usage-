@@ -50,6 +50,22 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>
         Relationships: []
       }
+      waitlist: {
+        Row: {
+          id: string
+          email: string
+          note: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          note?: string | null
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['waitlist']['Insert']>
+        Relationships: []
+      }
       mental_logs: {
         Row: {
           id: string
