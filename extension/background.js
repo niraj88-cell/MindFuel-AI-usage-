@@ -1,27 +1,32 @@
-// background.js - Manages interception and passive tracking
+// background.js — SatyaShift ambient tracker.
+// Principle: passive, domain-only, zero manual input. Track how long the active tab's
+// DOMAIN is focused, queue it locally, and flush a batch to /api/ingest every 5 minutes
+// using the user's Supabase session (read from the app's auth cookie). We never read page
+// content or full URLs, and we never block navigation.
+//
+// MV3 note: the service worker can unload at any time, so ALL state (the active tab and
+// the pending batch) is persisted in chrome.storage.session, never in memory.
 
-// --- CONFIGURATION ---
-const MIN_DWELL_TIME_MS = 2 * 60 * 1000; // 2 minutes before logging passive content
 const PRODUCTION_URL = 'https://getmindfuel.vercel.app';
 const DEV_URL = 'http://localhost:3000';
+const PROJECT_REF = 'sztvvvphpawuxvvmuddm';
 
-// Auto-detect environment: use production by default, dev only when explicitly set
-let BASE_URL = PRODUCTION_URL;
-chrome.storage.local.get(['mindfuel_env'], (result) => {
-  if (result.mindfuel_env === 'dev') BASE_URL = DEV_URL;
-});
+const MIN_DWELL_S = 15;          // ignore tab flicks shorter than this
+const MAX_QUEUE = 2000;          // bound local storage if the user is logged out
+const MAX_BATCH = 500;           // endpoint accepts up to 500 events per batch
+const FLUSH_MINUTES = 5;
+const FLUSH_ALARM = 'satyashift_flush';
 
-// Doomscroll sites that trigger an intercept
-const INTERCEPT_TARGETS = [
-  { host: 'tiktok.com', path: '/' },
-  { host: 'instagram.com', path: '/reels' },
-  { host: 'youtube.com', path: '/shorts' },
-  { host: 'reddit.com', path: '/' },
-  { host: 'twitter.com', path: '/' },
-  { host: 'x.com', path: '/' }
-];
+const QUEUE_KEY = 'satyashift_queue';   // chrome.storage.local — survives browser restarts
+const ACTIVE_KEY = 'active';             // chrome.storage.session — current tab being timed
+const PENDING_KEY = 'pending_batch';     // chrome.storage.session — in-flight batch (for retries)
 
-// Sensitive domains — NEVER track these for privacy
+async function getBaseUrl() {
+  const { satyashift_env } = await chrome.storage.local.get('satyashift_env');
+  return satyashift_env === 'dev' ? DEV_URL : PRODUCTION_URL;
+}
+
+// Domains we never track, for privacy.
 const SENSITIVE_DOMAINS = [
   'bank', 'chase', 'wellsfargo', 'paypal', 'venmo',
   'health', 'doctor', 'patient', 'medical',
@@ -29,125 +34,124 @@ const SENSITIVE_DOMAINS = [
   'password', '1password', 'lastpass', 'bitwarden'
 ];
 
-// State tracking
-let activeTabInfo = {
-  id: null,
-  url: null,
-  startTime: null
-};
+// Lightweight local heuristic (the "local Ext heuristics first" rule).
+const DOOMSCROLL_DOMAINS = ['tiktok.com', 'instagram.com', 'youtube.com', 'reddit.com', 'twitter.com', 'x.com'];
 
-function isSensitiveDomain(hostname) {
-  return SENSITIVE_DOMAINS.some(s => hostname.includes(s));
+function hostnameOf(url) {
+  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
+}
+function isSensitive(h) { return !!h && SENSITIVE_DOMAINS.some((s) => h.includes(s)); }
+function isOwnApp(h) { return !!h && (h.includes('getmindfuel.vercel.app') || h === 'localhost'); }
+function categoryFor(h) { return DOOMSCROLL_DOMAINS.some((d) => h.includes(d)) ? 'doomscroll' : 'neutral'; }
+
+// --- Persisted active-tab state (survives service-worker unloads) ---
+async function getActive() {
+  const { [ACTIVE_KEY]: a } = await chrome.storage.session.get(ACTIVE_KEY);
+  return a || { domain: null, startTime: null };
+}
+async function setActive(a) {
+  await chrome.storage.session.set({ [ACTIVE_KEY]: a });
 }
 
-// --- INTERCEPT LOGIC ---
-chrome.webNavigation.onBeforeNavigate.addListener((details) => {
-  // Only intercept main frame navigation
-  if (details.frameId !== 0) return;
+// --- Queue a finished dwell ---
+async function enqueue(domain, durationS) {
+  if (!domain || durationS < MIN_DWELL_S) return;
+  const { [QUEUE_KEY]: q = [] } = await chrome.storage.local.get(QUEUE_KEY);
+  q.push({ domain, duration_s: Math.round(durationS), category: categoryFor(domain) });
+  const trimmed = q.length > MAX_QUEUE ? q.slice(q.length - MAX_QUEUE) : q;
+  await chrome.storage.local.set({ [QUEUE_KEY]: trimmed });
+}
 
-  let url;
-  try {
-    url = new URL(details.url);
-  } catch { return; } // Invalid URL, skip
-
-  // Skip MindFuel pages, chrome pages, and sensitive domains
-  if (url.hostname === 'localhost' || url.hostname.includes('getmindfuel.vercel.app')) return;
-  if (url.protocol === 'chrome:' || url.protocol === 'edge:' || url.protocol === 'about:') return;
-  if (isSensitiveDomain(url.hostname)) return;
-
-  // Check if URL matches any intercept targets
-  const isTarget = INTERCEPT_TARGETS.some(target => 
-    url.hostname.includes(target.host) && url.pathname.startsWith(target.path)
-  );
-
-  if (isTarget) {
-    chrome.storage.local.get(['intercept_bypass'], (result) => {
-      const bypass = result.intercept_bypass || {};
-      const now = Date.now();
-      
-      // If bypassed within the last 15 minutes, allow it
-      if (bypass[url.hostname] && (now - bypass[url.hostname] < 15 * 60 * 1000)) {
-        return; 
-      }
-
-      // Redirect to intercept page
-      const interceptUrl = `${BASE_URL}/intercept?target=${encodeURIComponent(details.url)}`;
-      chrome.tabs.update(details.tabId, { url: interceptUrl });
-    });
+async function finalizeActive() {
+  const a = await getActive();
+  if (a.domain && a.startTime) {
+    await enqueue(a.domain, (Date.now() - a.startTime) / 1000);
   }
-});
+}
 
-// --- PASSIVE TRACKING LOGIC ---
-chrome.tabs.onActivated.addListener(async (activeInfo) => {
-  await handleTabChange(activeInfo.tabId);
-});
-
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'complete' && tab.active) {
-    await handleTabChange(tabId);
-  }
-});
-
-async function handleTabChange(tabId) {
+async function handleTab(tabId) {
   try {
     const tab = await chrome.tabs.get(tabId);
-    if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('edge://')) return;
+    const h = hostnameOf(tab.url || '');
 
-    // Never track sensitive domains
-    try {
-      const tabUrl = new URL(tab.url);
-      if (isSensitiveDomain(tabUrl.hostname)) return;
-      // Never track incognito
-      if (tab.incognito) return;
-    } catch { return; }
+    // Finalize whatever we were timing before switching context.
+    await finalizeActive();
 
-    const now = Date.now();
-
-    // Process previous tab if it was active long enough
-    if (activeTabInfo.id && activeTabInfo.id !== tabId && activeTabInfo.startTime) {
-      const dwellTime = now - activeTabInfo.startTime;
-      if (dwellTime >= MIN_DWELL_TIME_MS) {
-        await logPassiveContent(activeTabInfo.id, activeTabInfo.url, dwellTime);
-      }
+    if (!h || tab.incognito || isSensitive(h) || isOwnApp(h)) {
+      await setActive({ domain: null, startTime: null });
+      return;
     }
-
-    // Update active tab tracking
-    activeTabInfo = {
-      id: tabId,
-      url: tab.url,
-      startTime: now
-    };
-  } catch (err) {
-    // Tab may have been closed, that's fine
-  }
-}
-
-async function logPassiveContent(tabId, url, durationMs) {
-  try {
-    chrome.tabs.sendMessage(tabId, { action: "extract_content_context" }, async (context) => {
-      if (chrome.runtime.lastError || !context) return;
-      
-      context.duration_minutes = Math.round(durationMs / 60000);
-      
-      chrome.storage.local.get(['mindfuel_api_key'], async (result) => {
-        const apiKey = result.mindfuel_api_key;
-        if (!apiKey) return;
-
-        try {
-          await fetch(`${BASE_URL}/api/track/passive`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify(context)
-          });
-        } catch {
-          // Network error, silent fail — don't break the extension
-        }
-      });
-    });
+    await setActive({ domain: h, startTime: Date.now() });
   } catch {
-    // Tab closed or inaccessible, silent fail
+    /* tab was closed mid-lookup — ignore */
   }
 }
+
+chrome.tabs.onActivated.addListener(({ tabId }) => handleTab(tabId));
+chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
+  if (info.status === 'complete' && tab.active) handleTab(tabId);
+});
+
+// --- Read the Supabase access token from the app's auth cookie ---
+async function getAccessToken() {
+  try {
+    const cookies = await chrome.cookies.getAll({ domain: 'getmindfuel.vercel.app' });
+    // @supabase/ssr stores the session in `sb-<ref>-auth-token`, sometimes chunked (.0/.1).
+    const parts = cookies
+      .filter((c) => c.name.startsWith(`sb-${PROJECT_REF}-auth-token`))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (!parts.length) return null;
+
+    let raw = parts.map((c) => c.value).join('');
+    if (raw.startsWith('base64-')) raw = atob(raw.slice('base64-'.length));
+    const session = JSON.parse(raw);
+    return session?.access_token || null;
+  } catch {
+    return null;
+  }
+}
+
+// --- Flush the queue as one idempotent batch ---
+async function flush() {
+  // Capture the in-progress dwell, then restart its timer so we don't double-count it.
+  await finalizeActive();
+  const a = await getActive();
+  if (a.domain) await setActive({ domain: a.domain, startTime: Date.now() });
+
+  const { [QUEUE_KEY]: q = [] } = await chrome.storage.local.get(QUEUE_KEY);
+  if (!q.length) return;
+
+  const token = await getAccessToken();
+  if (!token) return; // not signed in — keep the queue and try next cycle
+
+  // Reuse a pending batch_id across retries so the server can dedupe a lost-response
+  // delivery via the processed_batches primary key. Only mint a new one when none is pending.
+  const { [PENDING_KEY]: pending } = await chrome.storage.session.get(PENDING_KEY);
+  const batch_id = pending?.batch_id || crypto.randomUUID();
+  const count = pending?.count || Math.min(q.length, MAX_BATCH);
+  const events = q.slice(0, count);
+  if (!pending) await chrome.storage.session.set({ [PENDING_KEY]: { batch_id, count } });
+
+  try {
+    const res = await fetch(`${await getBaseUrl()}/api/ingest`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ batch_id, events }),
+    });
+    if (res.ok) {
+      // Success (or server-side duplicate no-op): drop the sent events and clear the pending marker.
+      const { [QUEUE_KEY]: current = [] } = await chrome.storage.local.get(QUEUE_KEY);
+      await chrome.storage.local.set({ [QUEUE_KEY]: current.slice(count) });
+      await chrome.storage.session.remove(PENDING_KEY);
+    }
+    // On non-OK (401 expired token, 429 rate limited) keep queue + pending and retry next cycle.
+  } catch {
+    /* offline — keep queue + pending */
+  }
+}
+
+chrome.alarms.create(FLUSH_ALARM, { periodInMinutes: FLUSH_MINUTES });
+chrome.alarms.onAlarm.addListener((a) => { if (a.name === FLUSH_ALARM) flush(); });

@@ -288,9 +288,20 @@ export interface Database {
         Row: {
           id: string
           user_id: string
+          // Legacy MindFuel columns (renamed to mf_* in the live DB). Kept required so
+          // un-migrated MindFuel code compiles unchanged until Phase E retires it.
           duration_minutes: number
           completed: boolean
           created_at: string
+          // SatyaShift proof-layer columns (current DB) — optional during the transition.
+          mf_duration_minutes?: number
+          mf_completed?: boolean
+          squad_id?: string | null
+          intention?: string | null
+          status?: string
+          duration_s?: number | null
+          session_quality?: string | null
+          distraction_pct?: number | null
         }
         Insert: Omit<Database['public']['Tables']['focus_sessions']['Row'], 'id' | 'created_at'> & {
           id?: string
@@ -553,6 +564,64 @@ export interface Database {
           }
         ]
       }
+      domain_logs: {
+        Row: {
+          id: string
+          user_id: string
+          domain: string
+          duration_s: number
+          category: string
+          batch_id: string | null
+          jitai_fired: boolean
+          jitai_outcome: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          domain: string
+          duration_s: number
+          category?: string
+          batch_id?: string | null
+          jitai_fired?: boolean
+          jitai_outcome?: string | null
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['domain_logs']['Insert']>
+        Relationships: []
+      }
+      processed_batches: {
+        Row: {
+          id: string
+          user_id: string
+          row_count: number
+          received_at: string
+        }
+        Insert: {
+          id: string
+          user_id: string
+          row_count: number
+          received_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['processed_batches']['Insert']>
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          user_id: string
+          endpoint: string
+          window_start: string
+          count: number
+        }
+        Insert: {
+          user_id: string
+          endpoint: string
+          window_start?: string
+          count?: number
+        }
+        Update: Partial<Database['public']['Tables']['rate_limits']['Insert']>
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -571,6 +640,14 @@ export interface Database {
           metadata: Json
           similarity: number
         }[]
+      }
+      check_rate_limit: {
+        Args: {
+          p_user_id: string
+          p_endpoint: string
+          p_max_calls: number
+        }
+        Returns: boolean
       }
     }
     Enums: {

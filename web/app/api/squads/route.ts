@@ -6,7 +6,7 @@ export async function POST(req: Request) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -49,16 +49,16 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 1. Get all squads the user is a member of
+    // 1. Squads the user belongs to
     const { data: memberships } = await supabase
       .from('squad_members')
       .select('squad_id')
@@ -68,9 +68,9 @@ export async function GET(req: Request) {
       return NextResponse.json({ squads: [] })
     }
 
-    const squadIds = memberships.map(m => m.squad_id)
+    const squadIds = memberships.map((m) => m.squad_id)
 
-    // 2. Fetch the squad details and their members
+    // 2. Squad details + members
     const { data: squadsData, error: squadsError } = await supabase
       .from('squads')
       .select(`
@@ -85,46 +85,42 @@ export async function GET(req: Request) {
 
     if (squadsError) throw squadsError
 
-    // 3. For each member in each squad, fetch their current daily summary (today's score & streak)
-    // We do this by fetching all relevant daily summaries for today
-    const today = new Date().toISOString().split('T')[0]
-    
-    const allMemberIds = new Set<string>()
-    squadsData.forEach(s => s.squad_members.forEach(m => allMemberIds.add(m.user_id)))
+    // 3. Supportive status (NOT a leaderboard): who has a verified focus session today.
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
 
-    let summaries: any[] = []
-    if (allMemberIds.size > 0) {
-      const { data } = await supabase
-        .from('daily_summaries')
-        .select('user_id, total_score, streak_days')
-        .eq('date', today)
-        .in('user_id', Array.from(allMemberIds))
-      summaries = data || []
+    const memberIds = [
+      ...new Set(squadsData.flatMap((s) => s.squad_members.map((m: any) => m.user_id))),
+    ]
+
+    const checkedIn = new Set<string>()
+    if (memberIds.length > 0) {
+      const { data: sessions } = await supabase
+        .from('focus_sessions')
+        .select('user_id, status, created_at')
+        .in('user_id', memberIds)
+        .gte('created_at', startOfToday.toISOString())
+
+      sessions?.forEach((s) => {
+        if (s.status === 'completed' || s.status === 'mixed') checkedIn.add(s.user_id)
+      })
     }
 
-    const summaryMap = summaries.reduce((acc, curr) => {
-      acc[curr.user_id] = { score: curr.total_score, streak: curr.streak_days }
-      return acc
-    }, {} as Record<string, { score: number, streak: number }>)
-
-    // Format the response
-    const formattedSquads = squadsData.map(squad => {
-      const members = squad.squad_members.map((m: any) => ({
-        id: m.user_id,
-        name: m.profiles?.full_name || 'Anonymous User',
-        avatar: m.profiles?.avatar_url,
-        today_score: summaryMap[m.user_id]?.score || 0,
-        streak: summaryMap[m.user_id]?.streak || 0,
-      })).sort((a, b) => b.today_score - a.today_score) // Sort by highest score today
-
-      return {
-        id: squad.id,
-        name: squad.name,
-        invite_code: squad.invite_code,
-        created_at: squad.created_at,
-        members
-      }
-    })
+    // 4. Format — human statuses, ordered by name. No scores, no ranking.
+    const formattedSquads = squadsData.map((squad) => ({
+      id: squad.id,
+      name: squad.name,
+      invite_code: squad.invite_code,
+      created_at: squad.created_at,
+      members: squad.squad_members
+        .map((m: any) => ({
+          id: m.user_id,
+          name: m.profiles?.full_name || 'Member',
+          avatar: m.profiles?.avatar_url ?? null,
+          status: checkedIn.has(m.user_id) ? 'checked_in' : 'quiet',
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    }))
 
     return NextResponse.json({ squads: formattedSquads })
   } catch (error: any) {

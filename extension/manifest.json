@@ -1,36 +1,22 @@
 {
   "manifest_version": 3,
-  "name": "MindFuel AI - Digital Nutrition",
-  "version": "1.0.0",
-  "description": "Passive content intelligence and intercept layer for MindFuel.",
+  "name": "SatyaShift — Ambient Focus",
+  "version": "2.0.0",
+  "description": "Passive, domain-only attention tracking. Zero manual logging, ever.",
   "permissions": [
     "storage",
-    "webNavigation",
     "tabs",
-    "scripting",
-    "alarms"
+    "alarms",
+    "cookies"
   ],
   "host_permissions": [
-    "*://*.youtube.com/*",
-    "*://*.tiktok.com/*",
-    "*://*.instagram.com/*",
-    "*://*.twitter.com/*",
-    "*://*.x.com/*",
-    "*://*.reddit.com/*",
     "http://localhost:3000/*",
     "https://getmindfuel.vercel.app/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "run_at": "document_idle"
-    }
-  ],
   "action": {
-    "default_title": "MindFuel Status"
+    "default_title": "SatyaShift"
   }
 }
