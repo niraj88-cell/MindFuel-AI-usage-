@@ -81,9 +81,12 @@ export async function proxy(request: NextRequest) {
   // This will refresh the session if expired and set the new cookies on the response
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Basic route protection
+  // Basic route protection (default-deny: anything not explicitly public requires a session).
+  // PRIVATE DEV PHASE: '/signup' is intentionally NOT public — the app is invite-only while
+  // we iterate, so the signup surface is closed at the edge (belt-and-suspenders with
+  // Supabase "allow new sign-ups" being off). Re-add '/signup' here to reopen public signup.
   const { pathname } = request.nextUrl
-  const isPublicRoute = ['/', '/login', '/signup', '/forgot-password', '/sitemap.xml', '/robots.txt'].includes(pathname)
+  const isPublicRoute = ['/', '/login', '/forgot-password', '/sitemap.xml', '/robots.txt'].includes(pathname)
   const isStatic = pathname.startsWith('/_next') || /\.(ico|png|jpg|jpeg|svg|css|js|xml|txt)$/.test(pathname)
 
   if (!user && !isPublicRoute && !isApiRoute && !isStatic) {
