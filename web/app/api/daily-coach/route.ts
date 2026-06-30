@@ -10,9 +10,11 @@ export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
   try {
-    // Verify cron secret (Vercel sends this header)
+    // Verify cron secret (Vercel sends this header). Reject if the secret is unset —
+    // otherwise the template would become "Bearer undefined" and be guessable.
+    const cronSecret = process.env.CRON_SECRET
     const authHeader = req.headers.get('authorization')
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
