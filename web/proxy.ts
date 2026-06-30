@@ -4,6 +4,11 @@ import { checkIPRateLimit } from '@/lib/rate-limit'
 import { getRequestFingerprint } from '@/lib/security'
 
 export async function proxy(request: NextRequest) {
+  if (process.env.MAINTENANCE_MODE === 'true') {
+    if (!request.nextUrl.pathname.startsWith('/api') && !request.nextUrl.pathname.startsWith('/maintenance') && !request.nextUrl.pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js)$/)) {
+      return NextResponse.rewrite(new URL('/maintenance', request.url))
+    }
+  }
   let supabaseResponse = NextResponse.next({
     request: {
       headers: request.headers,
@@ -22,32 +27,30 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // CSRF protection for mutating API requests
+  // CSRF protection for mutating API requests.
+  // CSRF only threatens COOKIE-authenticated requests, because the browser attaches
+  // cookies automatically on cross-site requests. Requests authenticated with a Bearer
+  // token (Chrome extension, mobile app, server-to-server) cannot be forged cross-site —
+  // an attacker page can neither read the token nor set the Authorization header. The
+  // Stripe webhook is verified by signature. Both are exempt; everything else (the
+  // cookie-based web app) must present a same-origin Origin header.
   if (isApiRoute && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
-    const origin = request.headers.get('origin')
-    const host = request.headers.get('host')
+    const hasBearer = request.headers.get('authorization')?.startsWith('Bearer ')
+    const isStripeWebhook = request.nextUrl.pathname.startsWith('/api/stripe/webhook')
 
-    if (origin) {
-      // If Origin is present (e.g. from a browser), it MUST match the host
+    if (!hasBearer && !isStripeWebhook) {
+      const origin = request.headers.get('origin')
+      const host = request.headers.get('host')
+
+      if (!origin) {
+        return NextResponse.json({ error: 'Forbidden: Missing origin' }, { status: 403 })
+      }
       try {
-        const originUrl = new URL(origin)
-        if (originUrl.host !== host) {
+        if (new URL(origin).host !== host) {
           return NextResponse.json({ error: 'Forbidden: Origin mismatch' }, { status: 403 })
         }
       } catch {
         return NextResponse.json({ error: 'Forbidden: Invalid origin' }, { status: 403 })
-      }
-    } else {
-      // No Origin header (could be mobile app, cURL, or webhook)
-      const isStripeWebhook = request.nextUrl.pathname.startsWith('/api/stripe/webhook')
-      const authHeader = request.headers.get('authorization')
-      const hasBearer = authHeader?.startsWith('Bearer ')
-      const isMobileApp = request.headers.get('x-mindfuel-mobile') === 'true'
-
-      // Only allow requests without Origin if it's a Stripe webhook or an authenticated mobile request
-      // We rely on 'x-mindfuel-mobile' to verify intent, but authentication is validated below.
-      if (!isStripeWebhook && !(isMobileApp && hasBearer)) {
-        return NextResponse.json({ error: 'Forbidden: Missing origin' }, { status: 403 })
       }
     }
   }
@@ -81,7 +84,6 @@ export async function proxy(request: NextRequest) {
   // Basic route protection
   const { pathname } = request.nextUrl
   const isPublicRoute = ['/', '/login', '/signup', '/forgot-password', '/sitemap.xml', '/robots.txt'].includes(pathname)
-  const isAuthCallback = pathname.startsWith('/api/auth/callback')
   const isStatic = pathname.startsWith('/_next') || /\.(ico|png|jpg|jpeg|svg|css|js|xml|txt)$/.test(pathname)
 
   if (!user && !isPublicRoute && !isApiRoute && !isStatic) {

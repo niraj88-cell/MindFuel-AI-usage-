@@ -41,7 +41,7 @@
       "bundler": "metro"
     },
     "notification": {
-      "vapidPublicKey": "BBMxV5N-86J4VvBxxBw4Q67vG_3t_H4H2Q-HwA3YnZzBv1O6Z2aH2hA3-XyZ1v_7M-R2Fz9R9h1_H7A6qE0EwHw",
+      "vapidPublicKey": "BJx3wVFJiE1K1gaga_3CZ6Wnhh4T815MqJdbcStobmUw_N_cLv99Mku0dICP-31tVN4wAWeZyK0-j3kGDTypyu0",
       "serviceWorkerPath": "/dummy-sw.js"
     },
     "plugins": [

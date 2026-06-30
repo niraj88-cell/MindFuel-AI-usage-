@@ -24,6 +24,10 @@
 .DS_Store
 *.pem
 
+# secrets — never commit raw keys
+vapid.txt
+*.key
+
 # debug
 npm-debug.log*
 yarn-debug.log*
