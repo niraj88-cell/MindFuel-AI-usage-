@@ -7,7 +7,7 @@
 // MV3 note: the service worker can unload at any time, so ALL state (the active tab and
 // the pending batch) is persisted in chrome.storage.session, never in memory.
 
-const PRODUCTION_URL = 'https://getmindfuel.vercel.app';
+const PRODUCTION_URL = 'https://satyashift.vercel.app';
 const DEV_URL = 'http://localhost:3000';
 const PROJECT_REF = 'sztvvvphpawuxvvmuddm';
 
@@ -41,8 +41,9 @@ function hostnameOf(url) {
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
 }
 function isSensitive(h) { return !!h && SENSITIVE_DOMAINS.some((s) => h.includes(s)); }
-function isOwnApp(h) { return !!h && (h.includes('getmindfuel.vercel.app') || h === 'localhost'); }
-function categoryFor(h) { return DOOMSCROLL_DOMAINS.some((d) => h.includes(d)) ? 'doomscroll' : 'neutral'; }
+function isOwnApp(h) { return !!h && (h.includes('satyashift.vercel.app') || h === 'localhost'); }
+// domain_logs.category only allows 'distraction' | 'productive' | 'neutral'.
+function categoryFor(h) { return DOOMSCROLL_DOMAINS.some((d) => h.includes(d)) ? 'distraction' : 'neutral'; }
 
 // --- Persisted active-tab state (survives service-worker unloads) ---
 async function getActive() {

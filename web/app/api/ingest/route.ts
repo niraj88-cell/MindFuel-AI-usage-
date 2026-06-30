@@ -106,11 +106,14 @@ export async function POST(req: NextRequest) {
   }
 
   // 5. Insert the domain-only rows.
+  // domain_logs.category CHECK allows only these — clamp anything else to 'neutral'
+  // so a single bad value from a client can never fail the whole batch insert.
+  const ALLOWED_CATEGORIES = new Set(['distraction', 'productive', 'neutral'])
   const rows = events.map((e) => ({
     user_id: user.id,
     domain: normalizeDomain(e.domain),
     duration_s: e.duration_s,
-    category: e.category ?? 'neutral',
+    category: e.category && ALLOWED_CATEGORIES.has(e.category) ? e.category : 'neutral',
     batch_id,
     jitai_fired: e.jitai_fired ?? false,
     jitai_outcome: e.jitai_outcome ?? null,
