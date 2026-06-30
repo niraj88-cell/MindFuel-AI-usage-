@@ -1,22 +1,31 @@
-// app/(app)/layout.tsx — App shell with live notification badge + real-time unread count
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  Network, LayoutDashboard, PenLine, BarChart3,
-  MessageCircle, User, LogOut, Menu, X, Bell, Sparkles, Users
+  Bell,
+  CalendarDays,
+  LogOut,
+  Menu,
+  Shield,
+  Target,
+  User,
+  Users,
+  X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { AttentionRescue } from '@/components/fuel/AttentionRescue'
+import { SatyaMark } from '@/components/brand/SatyaMark'
 
-const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Today', icon: LayoutDashboard },
-  { href: '/log', label: 'Log Content', icon: PenLine },
-  { href: '/insights', label: 'Insights', icon: BarChart3 },
-  { href: '/coach', label: 'Coach', icon: MessageCircle },
+const PRIMARY_NAV = [
+  { href: '/dashboard', label: 'Today', icon: CalendarDays },
+  { href: '/focus', label: 'Focus', icon: Target },
   { href: '/squads', label: 'Squad', icon: Users },
+]
+
+const SECONDARY_NAV = [
+  { href: '/notifications', label: 'Reminders', icon: Bell },
   { href: '/profile', label: 'Settings', icon: User },
 ]
 
@@ -24,70 +33,74 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [user, setUser] = useState<{ email?: string; full_name?: string; tier?: string } | null>(null)
+  const [authChecked, setAuthChecked] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [user, setUser] = useState<{ email?: string; name?: string; tier?: string } | null>(null)
   const [rescueSignal, setRescueSignal] = useState<{ app: string; minutes: number } | null>(null)
 
-  // Listen for Attention Rescue signals from the Chrome extension
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       if (event.data?.type === 'MINDFUEL_DOOMSCROLL_ALERT') {
-        const { appName, minutesSpent } = event.data
-        setRescueSignal({ app: appName, minutes: minutesSpent })
+        setRescueSignal({ app: event.data.appName, minutes: event.data.minutesSpent })
       }
     }
+
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
   }, [])
 
   const loadUser = useCallback(async () => {
     const supabase = createClient()
-    const { data: { user: u } } = await supabase.auth.getUser()
-    if (!u) { router.push('/login'); return }
+    const { data: { user: activeUser } } = await supabase.auth.getUser()
+
+    if (!activeUser) {
+      setAuthChecked(true)
+      router.replace('/login')
+      return
+    }
 
     const [profileRes, notifRes] = await Promise.all([
       supabase
         .from('profiles')
         .select('subscription_tier')
-        .eq('id', u.id)
+        .eq('id', activeUser.id)
         .maybeSingle(),
       supabase
         .from('notifications')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', u.id)
-        .eq('is_read', false)
+        .eq('user_id', activeUser.id)
+        .eq('is_read', false),
     ])
 
     setUser({
-      email: u.email,
-      full_name: u.user_metadata?.full_name,
+      email: activeUser.email,
+      name: activeUser.user_metadata?.full_name,
       tier: profileRes.data?.subscription_tier || 'free',
     })
-
     setUnreadCount(notifRes.count || 0)
+    setAuthChecked(true)
   }, [router])
 
   useEffect(() => {
     loadUser()
   }, [loadUser])
 
-  // Refresh unread count when navigating away from notifications
   useEffect(() => {
-    if (pathname !== '/notifications') {
-      const supabase = createClient()
-      supabase.auth.getUser().then(async ({ data: { user: u } }) => {
-        if (!u) return
-        const { count } = await supabase
-          .from('notifications')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', u.id)
-          .eq('is_read', false)
-        setUnreadCount(count || 0)
-      })
-    } else {
-      // Visiting notifications page — mark all read visually immediately
+    if (pathname === '/notifications') {
       setUnreadCount(0)
+      return
     }
+
+    const supabase = createClient()
+    supabase.auth.getUser().then(async ({ data: { user: activeUser } }) => {
+      if (!activeUser) return
+      const { count } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', activeUser.id)
+        .eq('is_read', false)
+      setUnreadCount(count || 0)
+    })
   }, [pathname])
 
   async function handleLogout() {
@@ -96,167 +109,133 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     window.location.href = '/login'
   }
 
-  const NotifBell = ({ className = '' }: { className?: string }) => (
-    <Link
-      href="/notifications"
-      className={`relative text-zinc-400 hover:text-white transition-colors cursor-pointer ${className}`}
-      aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-    >
-      <Bell className="w-5 h-5" />
-      {unreadCount > 0 && (
-        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 bg-white text-black text-[9px] font-black rounded-full flex items-center justify-center">
-          {unreadCount > 99 ? '99+' : unreadCount}
-        </span>
-      )}
-    </Link>
-  )
+  function NavLink({ item, compact = false }: { item: { href: string; label: string; icon: React.ComponentType<{ className?: string }> }, compact?: boolean }) {
+    const active = pathname === item.href
+    const Icon = item.icon
+    const isNotif = item.href === '/notifications'
+
+    return (
+      <Link
+        href={item.href}
+        onClick={() => setSidebarOpen(false)}
+        className={`relative flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors ${
+          active
+            ? 'bg-[#111827] text-white'
+            : 'text-[#4B5563] hover:bg-black/[0.04] hover:text-[#111827]'
+        } ${compact ? 'justify-center px-3' : ''}`}
+      >
+        <Icon className="h-[18px] w-[18px]" />
+        {!compact && <span>{item.label}</span>}
+        {isNotif && unreadCount > 0 && (
+          <span className={`${compact ? 'absolute -right-1 top-1' : 'ml-auto'} flex h-5 min-w-5 items-center justify-center rounded-full bg-[#4CAF50] px-1 text-[10px] font-bold text-white`}>
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+      </Link>
+    )
+  }
+
+  if (!authChecked) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#FAF8F4] text-[#111827]">
+        <div className="text-center">
+          <div className="mx-auto mb-5 flex h-11 w-11 animate-pulse items-center justify-center rounded-2xl bg-[#111827] text-white">
+            <SatyaMark size={20} />
+          </div>
+          <p className="text-sm font-semibold text-[#6B7280]">Opening SatyaShift</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-black text-zinc-200 flex overflow-hidden">
-
-      {/* Sidebar — Desktop */}
-      <aside className="hidden lg:flex flex-col w-72 border-r border-white/10 bg-zinc-950/80 backdrop-blur-2xl z-20 shrink-0">
-        {/* Logo */}
-        <div className="flex items-center gap-3 px-8 py-10">
-          <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center">
-            <Network className="w-6 h-6 text-black" />
-          </div>
-          <span className="text-xl font-black tracking-tight text-white">
-            MindFuel
+    <div className="min-h-screen bg-[#FAF8F4] text-[#111827]">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-black/[0.07] bg-white/80 px-4 py-5 backdrop-blur-xl lg:flex">
+        <Link href="/dashboard" className="mb-8 flex items-center gap-3 px-3 py-2">
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#111827] text-white">
+            <SatyaMark size={20} />
           </span>
-        </div>
+          <div>
+            <p className="text-lg font-bold tracking-tight">SatyaShift</p>
+            <p className="text-xs font-medium text-[#6B7280]">Focus, verified</p>
+          </div>
+        </Link>
 
-        {/* Nav */}
-        <nav className="flex-1 px-4 space-y-1">
-          <p className="px-4 text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-4">Main</p>
-          {NAV_ITEMS.map(item => {
-            const active = pathname === item.href
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all duration-200 group relative ${
-                  active
-                    ? 'bg-white text-black'
-                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <item.icon className={`w-4.5 h-4.5 ${active ? 'text-black' : 'text-zinc-500 group-hover:text-white'} transition-colors`} />
-                {item.label}
-                {active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-black/40" />}
-              </Link>
-            )
-          })}
-
-          {/* Notifications nav item */}
-          <Link
-            href="/notifications"
-            className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all duration-200 group relative ${
-              pathname === '/notifications'
-                ? 'bg-white text-black'
-                : 'text-zinc-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Bell className={`w-4.5 h-4.5 ${pathname === '/notifications' ? 'text-black' : 'text-zinc-500 group-hover:text-white'} transition-colors`} />
-            Notifications
-            {unreadCount > 0 && (
-              <span className="ml-auto min-w-[20px] h-5 px-1 bg-white text-black text-[9px] font-black rounded-full flex items-center justify-center">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
-            )}
-            {pathname === '/notifications' && unreadCount === 0 && (
-              <div className="ml-auto w-1.5 h-1.5 rounded-full bg-black/40" />
-            )}
-          </Link>
+        <nav className="space-y-1">
+          <p className="mb-2 px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9CA3AF]">Core loop</p>
+          {PRIMARY_NAV.map((item) => <NavLink key={item.href} item={item} />)}
         </nav>
 
-        {/* User Card */}
-        <div className="p-4 m-4 bg-zinc-900/60 border border-white/10 rounded-3xl">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-2xl bg-zinc-800 flex items-center justify-center text-white text-sm font-black border border-white/10">
-              {user?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || '?'}
+        <div className="my-6 h-px bg-black/[0.06]" />
+
+        <nav className="space-y-1">
+          <p className="mb-2 px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9CA3AF]">Support</p>
+          {SECONDARY_NAV.map((item) => <NavLink key={item.href} item={item} />)}
+        </nav>
+
+        <div className="mt-auto rounded-3xl border border-black/[0.07] bg-[#FAF8F4] p-4">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-sm font-bold shadow-sm">
+              {user?.name?.[0] || user?.email?.[0]?.toUpperCase() || '?'}
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <p className="text-sm font-black text-white truncate">{user?.full_name || 'Explorer'}</p>
-                {user?.tier === 'premium' && (
-                  <Sparkles className="w-3 h-3 text-white fill-white shrink-0" />
-                )}
-              </div>
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{user?.tier || 'free'}</p>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">{user?.name || 'MindFuel member'}</p>
+              <p className="text-xs capitalize text-[#6B7280]">{user?.tier || 'free'} plan</p>
             </div>
+          </div>
+          <div className="mb-3 flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-xs font-medium text-[#4B5563]">
+            <Shield className="h-3.5 w-3.5 text-[#4CAF50]" />
+            Private by default
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl text-xs font-black bg-zinc-800 text-zinc-400 hover:bg-white hover:text-black transition-all cursor-pointer border border-white/10"
+            className="flex h-10 w-full items-center justify-center gap-2 rounded-2xl border border-black/[0.08] bg-white text-sm font-semibold text-[#4B5563] transition-colors hover:bg-[#F5F7F6]"
           >
-            <LogOut className="w-3.5 h-3.5" /> Sign out
+            <LogOut className="h-4 w-4" /> Sign out
           </button>
         </div>
       </aside>
 
-      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setSidebarOpen(false)} />
-          <aside className="absolute left-0 top-0 bottom-0 w-[85vw] max-w-[320px] bg-zinc-950 border-r border-white/10 flex flex-col animate-fade-in-up">
-            <div className="flex items-center justify-between px-8 py-8 border-b border-white/10">
-              <div className="flex items-center gap-3">
-                <Network className="w-8 h-8 text-white" />
-                <span className="text-xl font-black text-white">MindFuel</span>
-              </div>
-              <button onClick={() => setSidebarOpen(false)} className="text-zinc-400 cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2">
-                <X className="w-6 h-6" />
+          <button className="absolute inset-0 bg-[#111827]/35" onClick={() => setSidebarOpen(false)} aria-label="Close menu" />
+          <aside className="absolute inset-y-0 left-0 flex w-[84vw] max-w-sm flex-col border-r border-black/[0.07] bg-[#FAF8F4] p-5 shadow-2xl">
+            <div className="mb-8 flex items-center justify-between">
+              <Link href="/dashboard" onClick={() => setSidebarOpen(false)} className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#111827] text-white">
+                  <SatyaMark size={20} />
+                </span>
+                <span className="text-lg font-bold">SatyaShift</span>
+              </Link>
+              <button onClick={() => setSidebarOpen(false)} className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white">
+                <X className="h-5 w-5" />
               </button>
             </div>
-            <nav className="flex-1 px-4 py-8 space-y-1 overflow-y-auto">
-              {[...NAV_ITEMS, { href: '/notifications', label: 'Notifications', icon: Bell }].map(item => {
-                const active = pathname === item.href
-                const isNotif = item.href === '/notifications'
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-bold transition-all ${
-                      active ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5'
-                    }`}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    {item.label}
-                    {isNotif && unreadCount > 0 && (
-                      <span className="ml-auto min-w-[20px] h-5 px-1 bg-white text-black text-[9px] font-black rounded-full flex items-center justify-center">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </Link>
-                )
-              })}
+            <nav className="space-y-1">
+              {[...PRIMARY_NAV, ...SECONDARY_NAV].map((item) => <NavLink key={item.href} item={item} />)}
             </nav>
           </aside>
         </div>
       )}
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen relative z-10 overflow-hidden">
-        {/* Mobile header */}
-        <header className="lg:hidden flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/80 backdrop-blur-xl sticky top-0 z-40">
-          <button onClick={() => setSidebarOpen(true)} className="text-white cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center -ml-2">
-            <Menu className="w-6 h-6" />
+      <div className="lg:pl-72">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-black/[0.06] bg-[#FAF8F4]/85 px-4 backdrop-blur-xl lg:hidden">
+          <button onClick={() => setSidebarOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm">
+            <Menu className="h-5 w-5" />
           </button>
-          <div className="flex items-center gap-2">
-            <Network className="w-6 h-6 text-white" />
-            <span className="font-black text-white">MindFuel</span>
-          </div>
-          <NotifBell />
+          <Link href="/dashboard" className="flex items-center gap-2 font-bold">
+            <SatyaMark size={20} /> SatyaShift
+          </Link>
+          <Link href="/notifications" className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm">
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#4CAF50]" />}
+          </Link>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-12 max-w-7xl w-full mx-auto overflow-y-auto custom-scrollbar scroll-smooth">
+        <main className="mx-auto min-h-screen w-full max-w-6xl px-4 py-6 pb-28 sm:px-6 lg:px-10 lg:py-10">
           {children}
         </main>
 
-        {/* Global Attention Rescue Overlay */}
         {rescueSignal && (
           <AttentionRescue
             appName={rescueSignal.app}
@@ -265,6 +244,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             onClose={() => setRescueSignal(null)}
           />
         )}
+
+        <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-black/[0.08] bg-white/90 px-3 pb-2 pt-2 backdrop-blur-xl lg:hidden">
+          <div className="mx-auto grid max-w-md grid-cols-5 items-center gap-1">
+            <NavLink item={PRIMARY_NAV[0]} compact />
+            <NavLink item={PRIMARY_NAV[2]} compact />
+            <Link href="/focus" aria-label="Start focus" className="mx-auto flex h-14 w-14 -translate-y-4 items-center justify-center rounded-full bg-[#2E7D32] text-white shadow-lg">
+              <Target className="h-6 w-6" />
+            </Link>
+            <NavLink item={SECONDARY_NAV[0]} compact />
+            <NavLink item={SECONDARY_NAV[1]} compact />
+          </div>
+        </nav>
       </div>
     </div>
   )

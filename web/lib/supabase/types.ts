@@ -36,6 +36,12 @@ export interface Database {
           content_regret: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          // SatyaShift columns (live DB) — optional during the MindFuel→SatyaShift transition.
+          coach_persona?: 'gentle' | 'direct' | 'brutal' | null
+          jitai_threshold_minutes?: number | null
+          timezone?: string | null
+          deleted_at?: string | null
+          onboarding_step?: number | null
         }
         Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'updated_at'> & {
           created_at?: string

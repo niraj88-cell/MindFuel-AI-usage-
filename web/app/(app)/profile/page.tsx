@@ -1,105 +1,118 @@
-// app/(app)/profile/page.tsx — Premium profile with data export, security info, achievement showcase
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import {
-  User, Mail, Shield, LogOut, Loader2, Award, Download, FileJson,
-  FileText, Flame, Brain, Lock, ChevronRight, Sparkles, BarChart3, Clock, Mic, Terminal, Key, Copy, Check
-} from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { PushNotificationManager } from '@/components/PushNotificationManager'
-import { Trash2 } from 'lucide-react'
+// SatyaShift — Settings.
+// The "I remain in control" surface. Two real preferences write to profiles
+// (coach_persona, jitai_threshold_minutes), plus the working data export/delete
+// flows and account actions. No vanity stats — this page is about control, not scores.
 
-interface ProfileData {
+import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
+import {
+  ArrowRight,
+  FileJson,
+  FileText,
+  Loader2,
+  Lock,
+  LogOut,
+  Mail,
+  Trash2,
+  Check,
+} from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { PushNotificationManager } from '@/components/PushNotificationManager'
+
+type Persona = 'gentle' | 'direct' | 'brutal'
+const THRESHOLDS = [3, 5, 8, 15, 30] as const
+
+const PERSONAS: { id: Persona; label: string; desc: string }[] = [
+  { id: 'gentle', label: 'Gentle', desc: 'Kind and encouraging. Never harsh.' },
+  { id: 'direct', label: 'Direct', desc: 'Clear and to the point.' },
+  { id: 'brutal', label: 'Blunt', desc: 'Unsparing tough love, if that helps you.' },
+]
+
+function SavedTick({ savedField, k }: { savedField: string | null; k: string }) {
+  return savedField === k ? (
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-[#2E7D32]"><Check className="h-3.5 w-3.5" /> Saved</span>
+  ) : null
+}
+
+interface Profile {
   email: string
   fullName: string
   joinedAt: string
-  totalLogs: number
-  highestStreak: number
-  avgScore: number
-  totalMoodEntries: number
   subscriptionTier: 'free' | 'premium'
+  coachPersona: Persona
+  jitaiThreshold: number
 }
 
-function StatCard({ icon: Icon, color, bg, value, label }: {
-  icon: any; color: string; bg: string; value: number | string; label: string
-}) {
-  return (
-    <div className={`flex flex-col items-center justify-center p-4 sm:p-6 rounded-2xl sm:rounded-3xl ${bg} border border-white/10 text-center`}>
-      <div className={`w-11 h-11 rounded-2xl ${bg} border border-white/10 flex items-center justify-center mb-3`}>
-        <Icon className={`w-5 h-5 ${color}`} />
-      </div>
-      <div className="text-2xl sm:text-3xl font-black text-white mb-1">{value}</div>
-      <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest">{label}</div>
-    </div>
-  )
-}
-
-export default function ProfilePage() {
-  const router = useRouter()
-  const [data, setData] = useState<ProfileData | null>(null)
+export default function SettingsPage() {
+  const [userId, setUserId] = useState<string | null>(null)
+  const [data, setData] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [savedField, setSavedField] = useState<string | null>(null)
   const [signingOut, setSigningOut] = useState(false)
   const [exporting, setExporting] = useState<'json' | 'csv' | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const [voiceMode, setVoiceMode] = useState<'browser' | 'elevenlabs'>('browser')
-  const [copiedKey, setCopiedKey] = useState(false)
 
-  useEffect(() => {
-    loadProfile()
-  }, [])
-
-  async function loadProfile() {
+  const load = useCallback(async () => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) { setLoading(false); return }
+    setUserId(user.id)
 
-    const [
-      { data: profile },
-      { data: summaries },
-      { data: moodCount },
-    ] = await Promise.all([
-      supabase.from('profiles').select('subscription_tier').eq('id', user.id).maybeSingle(),
-      supabase.from('daily_summaries').select('total_logs, streak_days, average_score').eq('user_id', user.id),
-      supabase.from('mood_logs').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-    ])
-
-    let totalLogs = 0, maxStreak = 0, totalScore = 0, scoreDays = 0
-    if (summaries) {
-      summaries.forEach(s => {
-        totalLogs += s.total_logs
-        if (s.streak_days > maxStreak) maxStreak = s.streak_days
-        if (s.average_score) { totalScore += s.average_score; scoreDays++ }
-      })
-    }
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('subscription_tier, coach_persona, jitai_threshold_minutes')
+      .eq('id', user.id)
+      .maybeSingle()
 
     setData({
       email: user.email || '',
-      fullName: user.user_metadata?.full_name || 'Explorer',
+      fullName: user.user_metadata?.full_name || 'Member',
       joinedAt: new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-      totalLogs,
-      highestStreak: maxStreak,
-      avgScore: scoreDays ? Math.round(totalScore / scoreDays) : 0,
-      totalMoodEntries: (moodCount as any)?.count || 0,
-      subscriptionTier: profile?.subscription_tier || 'free',
+      subscriptionTier: (profile?.subscription_tier as 'free' | 'premium') || 'free',
+      coachPersona: (profile?.coach_persona as Persona) || 'gentle',
+      jitaiThreshold: profile?.jitai_threshold_minutes ?? 8,
     })
     setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => { if (!cancelled) await load() })()
+    return () => { cancelled = true }
+  }, [load])
+
+  async function savePref(field: 'coach_persona' | 'jitai_threshold_minutes', value: string | number, key: string) {
+    if (!userId || !data) return
+    const prev = data
+    // optimistic
+    setData({
+      ...data,
+      coachPersona: field === 'coach_persona' ? (value as Persona) : data.coachPersona,
+      jitaiThreshold: field === 'jitai_threshold_minutes' ? (value as number) : data.jitaiThreshold,
+    })
+    const supabase = createClient()
+    const patch = field === 'coach_persona'
+      ? { coach_persona: value as Persona }
+      : { jitai_threshold_minutes: value as number }
+    const { error } = await supabase.from('profiles').update(patch).eq('id', userId)
+    if (error) {
+      setData(prev) // revert
+      return
+    }
+    setSavedField(key)
+    setTimeout(() => setSavedField((s) => (s === key ? null : s)), 1600)
   }
 
   async function handleExport(format: 'json' | 'csv') {
-    setExporting(format)
-    setExportError(null)
+    setExporting(format); setExportError(null)
     try {
       const res = await fetch(`/api/export?format=${format}&days=90`)
       if (res.status === 429) {
-        const data = await res.json()
-        setExportError(data.error || 'Export limit reached.')
-        setExporting(null)
+        const body = await res.json().catch(() => ({}))
+        setExportError(body.error || 'Export limit reached.')
         return
       }
       if (!res.ok) throw new Error('Export failed')
@@ -107,11 +120,11 @@ export default function ProfilePage() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `mindfuel-export.${format}`
+      a.download = `satyashift-export.${format}`
       a.click()
       URL.revokeObjectURL(url)
-    } catch (e: any) {
-      setExportError(e.message || 'Export failed. Please try again.')
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : 'Export failed. Please try again.')
     } finally {
       setExporting(null)
     }
@@ -124,266 +137,135 @@ export default function ProfilePage() {
     window.location.href = '/login'
   }
 
-  async function handleDeleteAccount() {
-    if (!window.confirm("WARNING: This will permanently delete your account and all associated data. This action cannot be undone.")) return
-    
+  async function handleDelete() {
+    if (!window.confirm('This permanently deletes your SatyaShift account and data. Continue?')) return
     setDeleting(true)
     try {
       const res = await fetch('/api/export/delete', { method: 'DELETE' })
-      if (!res.ok) throw new Error('Failed to delete account')
+      if (!res.ok) throw new Error('Could not delete account')
       window.location.href = '/login'
-    } catch (e: any) {
-      alert(e.message)
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Could not delete account')
       setDeleting(false)
     }
   }
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-7 w-7 animate-spin text-[#2E7D32]" />
       </div>
     )
   }
 
-  const initials = data?.fullName?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?'
-  const isPremium = data?.subscriptionTier === 'premium'
+  const initials = data?.fullName?.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2) || '?'
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8 pb-20 stagger-children">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-3">
-          <User className="w-7 h-7 text-white" />
-          Profile
-        </h1>
-        <p className="text-zinc-400 text-sm mt-1">Your account, stats, and data settings.</p>
-      </div>
-
-      {/* Identity Card */}
-      <div className="relative">
-        <div className="absolute -inset-px bg-gradient-to-r from-white/10 to-white/5 rounded-[28px] blur-sm" />
-        <div className="relative bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-[28px] p-6">
-          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5">
-            {/* Avatar */}
-            <div className="relative">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center text-3xl font-black text-zinc-300">
-                {initials}
-              </div>
-              {isPremium && (
-                <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/40">
-                  <Sparkles className="w-3.5 h-3.5 text-white" />
-                </div>
-              )}
-            </div>
-
-            {/* Info */}
-            <div className="flex-1 min-w-0 text-center sm:text-left">
-              <div className="flex items-center gap-3 mb-1">
-                <h2 className="text-xl font-black text-white truncate">{data?.fullName}</h2>
-                <span className={`shrink-0 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                  isPremium
-                    ? 'bg-white/5 text-white border-amber-500/30'
-                    : 'bg-zinc-700/50 text-zinc-400 border-white/10'
-                }`}>
-                  {data?.subscriptionTier}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 text-sm text-zinc-400 mb-1">
-                <Mail className="w-3.5 h-3.5" />
-                <span className="truncate">{data?.email}</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-                <Clock className="w-3 h-3" />
-                Member since {data?.joinedAt}
-              </div>
-            </div>
-          </div>
+    <div className="mx-auto max-w-2xl space-y-6 py-2">
+      {/* Identity */}
+      <div className="flex items-center gap-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#111827] text-lg font-semibold text-white">{initials}</div>
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-xl font-bold tracking-tight text-[#111827]">{data?.fullName}</h1>
+          <p className="flex items-center gap-1.5 text-sm text-[#6B7280]"><Mail className="h-3.5 w-3.5" /> {data?.email}</p>
         </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-3">
-        <StatCard icon={Brain} color="text-white" bg="bg-white/5" value={data?.totalLogs || 0} label="Logs" />
-        <StatCard icon={Flame} color="text-rose-400" bg="bg-rose-500/5" value={data?.highestStreak || 0} label="Best Streak" />
-        <StatCard icon={BarChart3} color="text-white" bg="bg-white/5" value={`${data?.avgScore || 0}/100`} label="Avg Score" />
-        <StatCard icon={Award} color="text-white" bg="bg-amber-500/5" value={data?.totalMoodEntries || 0} label="Mood Checks" />
-      </div>
-
-      {/* Premium Upgrade Teaser */}
-      {!isPremium && (
-        <Link href="/subscription" className="group block bg-gradient-to-r from-zinc-900 to-black border border-white/10 hover:border-white/20 rounded-3xl p-6 relative overflow-hidden transition-all shadow-[0_0_30px_rgba(255,255,255,0.03)] hover:shadow-[0_0_40px_rgba(255,255,255,0.06)]">
-          <div className="absolute inset-0 bg-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <div className="flex items-center justify-between gap-4 relative z-10">
-            <div>
-              <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-1">
-                Elevate your MindFuel <Sparkles className="w-4 h-4 text-white" />
-              </h3>
-              <p className="text-sm text-zinc-400">Get unlimited entries, bespoke habit challenges, and deep psychological insights.</p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-              <ChevronRight className="w-5 h-5" />
-            </div>
-          </div>
+        <Link href="/subscription" className="inline-flex items-center gap-1.5 rounded-2xl border border-black/[0.08] bg-white px-3.5 py-2 text-xs font-semibold text-[#111827] transition-colors hover:bg-black/[0.02]">
+          <span className="capitalize">{data?.subscriptionTier}</span> plan <ArrowRight className="h-3.5 w-3.5" />
         </Link>
-      )}
+      </div>
 
-      {/* Data Export */}
-      <div className="bg-zinc-900/50 border border-white/10 rounded-3xl p-6 space-y-4">
-        <div className="flex items-center gap-3 mb-2">
-          <Download className="w-5 h-5 text-white" />
-          <div>
-            <h3 className="text-sm font-black text-white">Export My Data</h3>
-            <p className="text-xs text-zinc-500">Download your last 90 days of data (5 exports/day)</p>
-          </div>
+      {/* Satya's voice */}
+      <section className="rounded-3xl border border-black/[0.07] bg-white p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-[#111827]">How should Satya talk to you?</h2>
+          <SavedTick savedField={savedField} k="persona" />
+        </div>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {PERSONAS.map((p) => {
+            const active = data?.coachPersona === p.id
+            return (
+              <button
+                key={p.id}
+                onClick={() => savePref('coach_persona', p.id, 'persona')}
+                className={`rounded-2xl border p-3 text-left transition-colors ${active ? 'border-[#2E7D32] bg-[#E8F5E9]' : 'border-black/[0.08] bg-[#FAF8F4] hover:bg-black/[0.02]'}`}
+              >
+                <div className={`text-sm font-semibold ${active ? 'text-[#1B5E20]' : 'text-[#111827]'}`}>{p.label}</div>
+                <div className={`mt-1 text-xs leading-snug ${active ? 'text-[#2E7D32]' : 'text-[#6B7280]'}`}>{p.desc}</div>
+              </button>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* Nudge timing */}
+      <section className="rounded-3xl border border-black/[0.07] bg-white p-5">
+        <div className="mb-1 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-[#111827]">Nudge me after I&rsquo;ve drifted for</h2>
+          <SavedTick savedField={savedField} k="threshold" />
+        </div>
+        <p className="mb-3 text-xs text-[#6B7280]">Lower is more watchful. Higher gives you more room before Satya checks in.</p>
+        <div className="flex flex-wrap gap-2">
+          {THRESHOLDS.map((t) => {
+            const active = data?.jitaiThreshold === t
+            return (
+              <button
+                key={t}
+                onClick={() => savePref('jitai_threshold_minutes', t, 'threshold')}
+                className={`rounded-full border px-4 py-2 font-mono text-sm transition-colors ${active ? 'border-[#2E7D32] bg-[#2E7D32] text-white' : 'border-black/[0.08] bg-[#FAF8F4] text-[#111827] hover:bg-black/[0.02]'}`}
+              >
+                {t} min
+              </button>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* Your data */}
+      <section className="rounded-3xl border border-black/[0.07] bg-white p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <Lock className="h-4 w-4 text-[#2E7D32]" />
+          <h2 className="text-sm font-semibold text-[#111827]">Your data</h2>
+        </div>
+        <div className="space-y-2 text-sm text-[#4B5563]">
+          {[
+            'We only ever see the domains you visit — never the page, your typing, or your history.',
+            'Your sites are never shown to your squad.',
+            'Stored only on your account. Yours to export or delete, anytime.',
+          ].map((t) => (
+            <div key={t} className="rounded-2xl bg-[#FAF8F4] p-3 leading-snug">{t}</div>
+          ))}
         </div>
 
-        {exportError && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-xs text-red-400">
-            {exportError}
-          </div>
-        )}
+        {exportError && <div className="mt-3 rounded-2xl bg-[#FEF3F2] p-3 text-sm font-medium text-[#B42318]">{exportError}</div>}
 
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => handleExport('json')}
-            disabled={exporting !== null}
-            className="flex items-center gap-2.5 p-4 rounded-2xl bg-zinc-800/50 border border-white/10 hover:border-white/10 hover:bg-indigo-500/5 transition-all cursor-pointer disabled:opacity-50 group"
-          >
-            {exporting === 'json'
-              ? <Loader2 className="w-5 h-5 text-white animate-spin" />
-              : <FileJson className="w-5 h-5 text-white" />}
-            <div className="text-left">
-              <div className="text-xs font-black text-white">JSON</div>
-              <div className="text-[10px] text-zinc-500">Full data</div>
-            </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <button onClick={() => handleExport('json')} disabled={exporting !== null} className="flex h-11 items-center justify-center gap-2 rounded-2xl border border-black/[0.08] bg-[#FAF8F4] text-sm font-semibold text-[#111827] transition-colors hover:bg-black/[0.02] disabled:opacity-60">
+            {exporting === 'json' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileJson className="h-4 w-4" />} Export JSON
           </button>
-
-          <button
-            onClick={() => handleExport('csv')}
-            disabled={exporting !== null}
-            className="flex items-center gap-2.5 p-4 rounded-2xl bg-zinc-800/50 border border-white/10 hover:border-emerald-500/30 hover:bg-white/5 transition-all cursor-pointer disabled:opacity-50 group"
-          >
-            {exporting === 'csv'
-              ? <Loader2 className="w-5 h-5 text-white animate-spin" />
-              : <FileText className="w-5 h-5 text-white" />}
-            <div className="text-left">
-              <div className="text-xs font-black text-white">CSV</div>
-              <div className="text-[10px] text-zinc-500">Spreadsheet</div>
-            </div>
+          <button onClick={() => handleExport('csv')} disabled={exporting !== null} className="flex h-11 items-center justify-center gap-2 rounded-2xl border border-black/[0.08] bg-[#FAF8F4] text-sm font-semibold text-[#111827] transition-colors hover:bg-black/[0.02] disabled:opacity-60">
+            {exporting === 'csv' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />} Export CSV
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* Developer API */}
-      <div className="bg-zinc-900/50 border border-white/10 rounded-3xl p-6 space-y-4">
-        <div className="flex items-center gap-3 mb-2">
-          <Terminal className="w-5 h-5 text-emerald-400" />
-          <div>
-            <h3 className="text-sm font-black text-white">Fuel API (V3 Beta)</h3>
-            <p className="text-xs text-zinc-500">Connect MindFuel to external apps and trackers</p>
-          </div>
-        </div>
-
-        <div className="bg-zinc-950 border border-white/10 rounded-2xl p-4 relative group overflow-hidden">
-          <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="flex items-center gap-3 mb-3 relative z-10">
-            <Key className="w-4 h-4 text-zinc-500" />
-            <div className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Your Private Key</div>
-          </div>
-          
-          <div className="flex items-center justify-between gap-4 bg-zinc-900/80 rounded-xl p-3 border border-white/5 relative z-10">
-            <code className="text-sm font-mono text-emerald-400/80 tracking-wider truncate">
-              mf_live_xxxxxxxxxxxxxxxxxxxxxxxx
-            </code>
-            <button 
-              onClick={() => {
-                navigator.clipboard.writeText('mf_live_demo_key_123')
-                setCopiedKey(true)
-                setTimeout(() => setCopiedKey(false), 2000)
-              }}
-              className="shrink-0 w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-colors"
-            >
-              {copiedKey ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-zinc-400 hover:text-white" />}
-            </button>
-          </div>
-          <p className="text-[10px] text-zinc-500 mt-3 relative z-10">Keep this key secret. You can use it to POST events to <code className="text-zinc-400 bg-zinc-800 px-1 py-0.5 rounded">/api/fuel/ingest</code>.</p>
-        </div>
-      </div>
-
-      {/* Security */}
-      <div className="bg-zinc-900/50 border border-white/10 rounded-3xl p-6 space-y-1">
-        <div className="flex items-center gap-3 mb-4">
-          <Shield className="w-5 h-5 text-white" />
-          <h3 className="text-sm font-black text-white">Security</h3>
-        </div>
-
-        <Link href="/forgot-password" className="flex items-center justify-between p-4 rounded-2xl bg-zinc-800/30 border border-white/10 hover:border-white/10 hover:bg-zinc-800/60 transition-all group">
-          <div className="flex items-center gap-3">
-            <Lock className="w-4 h-4 text-zinc-400" />
-            <div>
-              <div className="text-sm font-bold text-white">Change Password</div>
-              <div className="text-xs text-zinc-500">Send a secure reset link to your email</div>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
-        </Link>
-
-        <div className="flex items-center justify-between p-4 rounded-2xl bg-zinc-800/30 border border-white/10 mt-1">
-          <div className="flex items-center gap-3">
-            <Shield className="w-4 h-4 text-white" />
-            <div>
-              <div className="text-sm font-bold text-white">Data Encryption</div>
-              <div className="text-xs text-zinc-500">All data encrypted at rest via Supabase</div>
-            </div>
-          </div>
-          <span className="text-[10px] font-black text-white bg-white/5 border border-white/10 px-2 py-1 rounded-full">ACTIVE</span>
-        </div>
-
-        <div className="mt-1">
+      {/* Account */}
+      <section className="rounded-3xl border border-black/[0.07] bg-white p-5">
+        <h2 className="mb-3 text-sm font-semibold text-[#111827]">Account</h2>
+        <div className="mb-3 rounded-2xl bg-[#FAF8F4] p-3">
           <PushNotificationManager />
         </div>
-      </div>
-
-      {/* Upgrade CTA for free users */}
-      {!isPremium && (
-        <div className="relative overflow-hidden rounded-3xl">
-          <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/[0.03]" />
-          <div className="relative p-6 flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-black text-white uppercase tracking-widest mb-1">Unlock Premium</p>
-              <p className="text-sm font-bold text-white">Unlimited logs, 500 coach messages/hr, priority AI</p>
-            </div>
-            <Link href="/subscription">
-              <Button size="sm" className="shrink-0 bg-white hover:bg-zinc-200 text-black shadow-lg shadow-white/10">
-                Upgrade
-              </Button>
-            </Link>
-          </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Link href="/forgot-password" className="flex h-11 items-center justify-center gap-2 rounded-2xl border border-black/[0.08] bg-[#FAF8F4] text-sm font-semibold text-[#111827] transition-colors hover:bg-black/[0.02]">
+            <Lock className="h-4 w-4" /> Change password
+          </Link>
+          <button onClick={handleSignOut} disabled={signingOut} className="flex h-11 items-center justify-center gap-2 rounded-2xl border border-black/[0.08] bg-[#FAF8F4] text-sm font-semibold text-[#111827] transition-colors hover:bg-black/[0.02] disabled:opacity-60">
+            {signingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />} Sign out
+          </button>
         </div>
-      )}
-
-      {/* Sign Out & Danger Zone */}
-      <div className="space-y-3 pt-6 border-t border-white/5">
-        <button
-          onClick={handleSignOut}
-          disabled={signingOut}
-          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10 transition-all font-black text-sm cursor-pointer disabled:opacity-50"
-        >
-          {signingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
-          {signingOut ? 'Signing out...' : 'Sign Out'}
+        <button onClick={handleDelete} disabled={deleting} className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#FEF3F2] text-sm font-semibold text-[#B42318] transition-colors hover:bg-[#FDE8E6] disabled:opacity-60">
+          {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Delete account
         </button>
-
-        <button
-          onClick={handleDeleteAccount}
-          disabled={deleting}
-          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-rose-500/5 border border-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all font-black text-sm cursor-pointer disabled:opacity-50"
-        >
-          {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-          {deleting ? 'Deleting account...' : 'Permanently Delete Account'}
-        </button>
-      </div>
-
+      </section>
     </div>
   )
 }

@@ -5,7 +5,6 @@
 // "proof layer" the squad feed depends on.
 
 import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
 import { getUserContext } from '@/lib/supabase/route-auth'
 import { z } from 'zod'
 
@@ -60,7 +59,7 @@ export async function POST(req: Request) {
     for (const l of logs ?? []) {
       const d = l.duration_s ?? 0
       totalS += d
-      if (l.category === 'doomscroll') distractingS += d
+      if (l.category === 'distraction') distractingS += d
     }
     const distractionPct = totalS > 0 ? Math.round((distractingS / totalS) * 100) : 0
 
@@ -100,8 +99,8 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ success: true, session: updated })
-  } catch (e: any) {
-    console.error('[focus/stop] error:', e?.message)
+  } catch (e) {
+    console.error('[focus/stop] error:', e instanceof Error ? e.message : e)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
