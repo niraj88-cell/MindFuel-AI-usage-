@@ -1,0 +1,10 @@
+{
+  "name": "satyashift-extension",
+  "version": "2.1.0",
+  "private": true,
+  "type": "module",
+  "description": "SatyaShift ambient focus tracker (MV3). No build step; package.json exists only so tooling treats the .js files as ES modules for `node --test`.",
+  "scripts": {
+    "test": "node --test"
+  }
+}
