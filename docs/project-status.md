@@ -5,6 +5,43 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-01 — Live debug + JITAI reconnect (auth, tracking seed, domain-only nudge)
+
+Debugged the extension against the user's live browser (Chrome MCP + Supabase MCP). Findings and
+fixes, in order:
+
+1. **Auth "Not signed in" was NOT the code-verifier** (that cookie wasn't even present). Proved via
+   the page that the `sb-<ref>-auth-token.0/.1` cookies were present, valid, ~55 min to expiry, and
+   parsed fine — yet the SW's `chrome.cookies.getAll` returned nothing. `chrome.cookies` from an MV3
+   worker is unreliable across Chrome permission/cookie-store states.
+   **Fix:** hardened `fetchCookieSession` to query by url AND domain (union), and added a **content
+   script `bridge.js`** (matches our own domains only) that reads the session from `document.cookie`
+   in-page and forwards it to the SW via `SESSION_FROM_PAGE` → `setStoredSession`. This is now the
+   reliable auth path; chrome.cookies is a fallback. Popup confirmed **"Connected"** live.
+
+2. **Tracking never started on the already-open tab.** onActivated/onUpdated only fire on switch/
+   navigation, so after a worker restart it sat at "Waiting for a focused tab" forever.
+   **Fix:** `seedActiveTab()` queries the active tab and starts timing on install/startup/worker-wake
+   and on popup GET_STATUS. Guarded so it never double-banks.
+
+3. **JITAI was built but orphaned** (the real answer to "why track if nothing intervenes"). The
+   `/intercept` friction UX, `/api/intercept/predict`, `agents/interceptor`, and push plumbing all
+   exist, but: the extension was rebuilt passive + "never block navigation" (cut the trigger);
+   `/api/intercept/predict` reads `mental_logs` not `domain_logs`; `/api/cron/predictive-push` sends a
+   hardcoded simulated alert (real AI commented out). Two products coexist (interventionist JITAI vs
+   passive accountability); the extension only served the latter.
+   **Decision (user):** revive JITAI the domain-only way. New **nudge engine**: pure `nextNudge()` in
+   core.js (5 sustained min on a distraction domain → nudge, 10-min cooldown), 1-min `NUDGE_ALARM`
+   ticks it, fires a `chrome.notifications` nudge that deep-links to `/intercept?target=<domain>`
+   ("Refocus"/"Keep scrolling"). Added `notifications` permission. Still domain-only, never blocks,
+   never reads page content. manifest v2.3.0.
+
+Tests: `node --test` 17/17 (added selectAuthCookie + nextNudge cases). Pending: user Load-unpacked
+verify of tracking-lands-in-DB and the live nudge; wiring predict/predictive-push to real
+`domain_logs`/AI is still open (not done this pass).
+
+---
+
 ## 2026-07-01 — Extension bugfix: false "Not signed in" after OAuth login
 
 Symptom: user was fully signed in on satyashift.vercel.app (Google/OAuth) but the popup showed

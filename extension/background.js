@@ -19,6 +19,7 @@ import {
   MIN_DWELL_S, MAX_QUEUE, MAX_BATCH,
   hostnameOf, isSensitive, isOwnApp, categoryFor,
   capDuration, parseSupabaseSession, selectAuthCookie, tokenExpiresSoon,
+  nextNudge,
 } from './core.js';
 
 const PRODUCTION_URL = 'https://satyashift.vercel.app';
@@ -26,6 +27,7 @@ const DEV_URL = 'http://localhost:3000';
 
 const FLUSH_MINUTES = 5;
 const FLUSH_ALARM = 'satyashift_flush';
+const NUDGE_ALARM = 'satyashift_nudge'; // 1-min tick that drives the distraction nudge policy
 const IDLE_SECONDS = 300; // 5 min — do not penalize reading without keyboard input (BALANCED)
 
 // chrome.storage.local — survives browser restarts.
@@ -41,6 +43,8 @@ const FORCE_REFRESH_KEY = 'force_refresh'; // set after a 401 so the next cycle 
 // chrome.storage.session — cleared when the browser closes.
 const ACTIVE_KEY = 'active';               // { domain, segmentStart, accumulatedMs }
 const GATE_KEY = 'gate';                   // { blurred, idle }
+const NUDGE_STATE_KEY = 'nudge_state';     // { domain, minutes, lastNudgeAt } — distraction streak
+const NUDGE_TARGET_PREFIX = 'nudge_tgt_';  // per-notification: the domain to deep-link into /intercept
 
 // Web Locks (available in service workers) serialize concurrent handlers.
 const LOCK_STATE = 'satyashift_state';     // guards active-tab state + queue writes
@@ -182,10 +186,21 @@ chrome.idle.onStateChanged.addListener((state) => {
 // ---------------------------------------------------------------------------
 // Auth: a valid Supabase access token, refreshed even when the web app is closed (H3).
 // ---------------------------------------------------------------------------
+// Read the app's Supabase session cookie. We query BOTH by url and by domain and union the
+// results: depending on Chrome build and how host access was granted, a host-only cookie can be
+// returned by one query but not the other, and relying on `{ domain }` alone was the failure mode
+// that showed a signed-in user as "Not signed in". De-dupe by name; selectAuthCookie ignores any
+// sibling cookies.
 async function fetchCookieSession() {
-  const domain = new URL(await getBaseUrl()).hostname;
-  const cookies = await chrome.cookies.getAll({ domain });
-  const raw = selectAuthCookie(cookies, PROJECT_REF);
+  const baseUrl = await getBaseUrl();
+  const domain = new URL(baseUrl).hostname;
+  const lists = await Promise.all([
+    chrome.cookies.getAll({ url: baseUrl }).catch(() => []),
+    chrome.cookies.getAll({ domain }).catch(() => []),
+  ]);
+  const byName = new Map();
+  for (const list of lists) for (const c of list) byName.set(c.name, c);
+  const raw = selectAuthCookie([...byName.values()], PROJECT_REF);
   return raw ? parseSupabaseSession(raw) : null;
 }
 
@@ -285,6 +300,64 @@ async function recordError(kind, status, message) {
 async function clearError() { await chrome.storage.local.remove(LAST_ERROR_KEY); }
 
 // ---------------------------------------------------------------------------
+// Nudge (domain-only JITAI). A 1-minute alarm ticks the pure nextNudge() policy against the tab
+// you're actively attending. When you've stayed on a distraction domain long enough, we fire one
+// gentle local notification that deep-links into the app's /intercept flow. We never block, never
+// read page content, and pass only the bare domain. Paused/blurred/idle => not counting => no nudge.
+// ---------------------------------------------------------------------------
+async function getNudgeState() {
+  const { [NUDGE_STATE_KEY]: s } = await chrome.storage.session.get(NUDGE_STATE_KEY);
+  return s || { domain: null, minutes: 0, lastNudgeAt: 0 };
+}
+
+async function checkNudge() {
+  const a = await getActive();
+  const counting = a.domain != null && a.segmentStart != null;
+  const ctx = {
+    domain: a.domain,
+    counting,
+    category: a.domain ? categoryFor(a.domain) : 'neutral',
+    now: Date.now(),
+  };
+  const { state, fire, domain, minutes } = nextNudge(await getNudgeState(), ctx);
+  await chrome.storage.session.set({ [NUDGE_STATE_KEY]: state });
+  if (fire) await fireNudge(domain, minutes);
+}
+
+async function fireNudge(domain, minutes) {
+  if (!chrome.notifications) return; // permission missing (shouldn't happen — declared in manifest)
+  const id = `${NUDGE_TARGET_PREFIX}${Date.now()}`;
+  await chrome.storage.session.set({ [id]: domain }); // remember where to send them on click
+  try {
+    await chrome.notifications.create(id, {
+      type: 'basic',
+      iconUrl: 'icon128.png',
+      title: `Still on ${domain}?`,
+      message: `You've been on ${domain} for about ${minutes} min. Take a breath and choose on purpose.`,
+      buttons: [{ title: 'Refocus' }, { title: 'Keep scrolling' }],
+      priority: 2,
+    });
+  } catch { /* notifications unavailable — skip silently */ }
+}
+
+// Open the existing /intercept friction flow for the nudged domain (domain-only in the query).
+async function openIntercept(notificationId) {
+  const { [notificationId]: domain } = await chrome.storage.session.get(notificationId);
+  await chrome.storage.session.remove(notificationId);
+  const base = await getBaseUrl();
+  const url = domain ? `${base}/intercept?target=${encodeURIComponent(domain)}` : base;
+  try { await chrome.tabs.create({ url }); } catch { /* ignore */ }
+  try { await chrome.notifications.clear(notificationId); } catch { /* ignore */ }
+}
+if (chrome.notifications) {
+  chrome.notifications.onClicked.addListener(openIntercept);
+  chrome.notifications.onButtonClicked.addListener((id, idx) => {
+    if (idx === 0) openIntercept(id); // "Refocus"
+    else { chrome.storage.session.remove(id); chrome.notifications.clear(id); } // "Keep scrolling"
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Flush: one idempotent batch, single-flight, with a real retry/quarantine policy.
 // ---------------------------------------------------------------------------
 async function trimQueue(count) {
@@ -367,15 +440,35 @@ async function ensureAlarm() {
   if (!(await chrome.alarms.get(FLUSH_ALARM))) {
     await chrome.alarms.create(FLUSH_ALARM, { periodInMinutes: FLUSH_MINUTES });
   }
+  if (!(await chrome.alarms.get(NUDGE_ALARM))) {
+    await chrome.alarms.create(NUDGE_ALARM, { periodInMinutes: 1 });
+  }
 }
+
+// Grab the tab you're already looking at. onActivated/onUpdated only fire on a switch or a
+// navigation, so after an install, browser start, or MV3 worker restart we'd never begin timing
+// the current tab until you touched another one ("Waiting for a focused tab" forever). Seed it
+// here. Guarded to only start when we're not already timing something, so it never double-banks.
+async function seedActiveTab() {
+  try {
+    if ((await getActive()).domain) return;
+    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    if (tab?.id != null) await handleTab(tab.id);
+  } catch { /* no focused window / tab closed — ignore */ }
+}
+
 chrome.runtime.onInstalled.addListener((details) => {
   ensureAlarm();
+  seedActiveTab();
   if (details.reason === 'install') {
     chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html') }); // U2: explain the permissions once
   }
 });
-chrome.runtime.onStartup.addListener(ensureAlarm);
-chrome.alarms.onAlarm.addListener((a) => { if (a.name === FLUSH_ALARM) flush(); });
+chrome.runtime.onStartup.addListener(() => { ensureAlarm(); seedActiveTab(); });
+chrome.alarms.onAlarm.addListener((a) => {
+  if (a.name === FLUSH_ALARM) flush();
+  else if (a.name === NUDGE_ALARM) checkNudge();
+});
 
 // ---------------------------------------------------------------------------
 // Popup <-> worker messaging (status, manual sync, pause toggle)
@@ -409,8 +502,24 @@ async function buildStatus() {
 }
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  // The page bridge (content script on our own domain) forwards the app's Supabase session.
+  // This is the reliable auth path: document.cookie in the page is the source of truth, whereas
+  // chrome.cookies from the SW proved flaky. We store it so getAccessToken can use it even when
+  // the app tab is closed, and refresh it from the held refresh_token as needed.
+  if (msg?.type === 'SESSION_FROM_PAGE') {
+    (async () => {
+      const raw = selectAuthCookie(msg.cookies || [], PROJECT_REF);
+      const session = raw ? parseSupabaseSession(raw) : null;
+      if (session?.access_token) {
+        await setStoredSession(session);
+        if (!tokenExpiresSoon(session)) await clearError(); // healthy session — drop stale errors
+      }
+      sendResponse({ ok: !!session?.access_token });
+    })();
+    return true;
+  }
   if (msg?.type === 'GET_STATUS') {
-    buildStatus().then(sendResponse);
+    seedActiveTab().then(buildStatus).then(sendResponse); // start timing the current tab if idle
     return true;
   }
   if (msg?.type === 'FLUSH_NOW') {
@@ -432,5 +541,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
 });
 
-// Reflect the paused state on the toolbar badge whenever the worker (re)starts.
+// On every worker (re)start: reflect the paused badge and begin timing the tab you're already on.
 isPaused().then(setBadge);
+seedActiveTab();

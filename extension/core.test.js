@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {
   hostnameOf, matchesDomain, isSensitive, isOwnApp, categoryFor,
   capDuration, parseSupabaseSession, selectAuthCookie, tokenExpiresSoon,
+  nextNudge, NUDGE_AFTER_MIN,
   MAX_DWELL_S,
 } from './core.js';
 
@@ -129,6 +130,46 @@ test('selectAuthCookie: ignores the PKCE code-verifier sibling (the login bug)',
 test('selectAuthCookie: null when no auth cookie present', () => {
   assert.equal(selectAuthCookie([{ name: `${KEY}-code-verifier`, value: 'v' }], REF), null);
   assert.equal(selectAuthCookie([], REF), null);
+});
+
+test('nextNudge: fires only after sustained minutes on one distraction domain', () => {
+  const cfg = { afterMin: 5, cooldownMin: 10 };
+  const dist = (now) => ({ domain: 'facebook.com', counting: true, category: 'distraction', now });
+  let s = { domain: null, minutes: 0, lastNudgeAt: 0 };
+  let fired = false;
+  for (let m = 1; m <= 5; m++) {
+    const r = nextNudge(s, dist(m * 60000), cfg);
+    s = r.state;
+    if (r.fire) { fired = fired || (m === 5); assert.equal(r.minutes, 5); assert.equal(r.domain, 'facebook.com'); }
+    else assert.ok(m < 5, `should not fire before minute 5 (fired at ${m})`);
+  }
+  assert.ok(fired, 'should fire exactly at the 5th sustained minute');
+  assert.equal(s.minutes, 0); // streak reset after firing
+});
+
+test('nextNudge: respects cooldown (no second nudge inside the quiet window)', () => {
+  const cfg = { afterMin: 5, cooldownMin: 10 };
+  const dist = (now) => ({ domain: 'facebook.com', counting: true, category: 'distraction', now });
+  // Already nudged 3 minutes ago, streak has climbed back to threshold.
+  const s = { domain: 'facebook.com', minutes: 4, lastNudgeAt: 3 * 60000 };
+  const r = nextNudge(s, dist(4 * 60000), cfg); // now minute reaches 5 again but only 1 min since last
+  assert.equal(r.fire, false);
+});
+
+test('nextNudge: resets streak off distraction, on idle, and on domain change', () => {
+  const base = { domain: 'facebook.com', minutes: 4, lastNudgeAt: 0 };
+  // Productive domain -> reset, no fire.
+  assert.deepEqual(
+    nextNudge(base, { domain: 'github.com', counting: true, category: 'productive', now: 5 * 60000 }),
+    { state: { domain: null, minutes: 0, lastNudgeAt: 0 }, fire: false });
+  // Not counting (idle/blur/pause) -> reset, no fire.
+  assert.equal(nextNudge(base, { domain: 'facebook.com', counting: false, category: 'distraction', now: 5 * 60000 }).fire, false);
+  // Switch to a different distraction domain -> streak restarts at 1.
+  assert.equal(nextNudge(base, { domain: 'reddit.com', counting: true, category: 'distraction', now: 5 * 60000 }).state.minutes, 1);
+});
+
+test('nextNudge: default threshold is exported and sane', () => {
+  assert.ok(NUDGE_AFTER_MIN >= 3 && NUDGE_AFTER_MIN <= 15);
 });
 
 test('tokenExpiresSoon: honors the skew window', () => {

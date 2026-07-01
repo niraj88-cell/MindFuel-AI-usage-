@@ -123,6 +123,43 @@ export function parseSupabaseSession(rawJoined) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Nudge policy (domain-only JITAI). When attention stays on a single distraction domain for
+// NUDGE_AFTER_MIN sustained minutes, fire one gentle local nudge, then stay quiet for
+// NUDGE_COOLDOWN_MIN so we never spam. This is the ONLY intervention the extension makes: it
+// reads nothing but the bare domain it already tracks, never blocks navigation, and only ever
+// deep-links into the app's existing /intercept flow.
+// ---------------------------------------------------------------------------
+export const NUDGE_AFTER_MIN = 5;      // sustained minutes on a distraction domain before nudging
+export const NUDGE_COOLDOWN_MIN = 10;  // quiet window after a nudge
+
+// Pure state machine, ticked once per minute by the service worker. Given the previous nudge
+// state and the current attention context, return the next state and whether to nudge now.
+//   prev: { domain, minutes, lastNudgeAt }
+//   ctx:  { domain, counting, category, now }   (now = Date.now())
+// Returns { state, fire, domain?, minutes? }. Kept pure (no chrome.*, no timers) so it's testable.
+export function nextNudge(prev, ctx, cfg = {}) {
+  const afterMin = cfg.afterMin ?? NUDGE_AFTER_MIN;
+  const cooldownMs = (cfg.cooldownMin ?? NUDGE_COOLDOWN_MIN) * 60_000;
+  const lastNudgeAt = (prev && prev.lastNudgeAt) || 0;
+
+  // Not actively attending a distraction domain -> reset the streak, keep the cooldown clock.
+  if (!ctx.counting || ctx.category !== 'distraction' || !ctx.domain) {
+    return { state: { domain: null, minutes: 0, lastNudgeAt }, fire: false };
+  }
+
+  // Same domain extends the streak; a different distraction domain starts a fresh one.
+  const minutes = prev && prev.domain === ctx.domain ? (prev.minutes || 0) + 1 : 1;
+
+  // Never-nudged (lastNudgeAt === 0) is always past cooldown, regardless of clock scale.
+  const cooledDown = !lastNudgeAt || ctx.now - lastNudgeAt >= cooldownMs;
+  if (minutes >= afterMin && cooledDown) {
+    // Fire, then zero the streak so the next nudge is a full interval away (cooldown also applies).
+    return { state: { domain: ctx.domain, minutes: 0, lastNudgeAt: ctx.now }, fire: true, domain: ctx.domain, minutes };
+  }
+  return { state: { domain: ctx.domain, minutes, lastNudgeAt }, fire: false };
+}
+
 // expires_at is unix SECONDS. True if the token is missing or within `skewS` of expiry,
 // so we refresh proactively instead of waiting for a 401 (H3).
 export function tokenExpiresSoon(session, skewS = 60, now = Date.now()) {

@@ -1,14 +1,15 @@
 {
   "manifest_version": 3,
   "name": "SatyaShift — Ambient Focus",
-  "version": "2.1.0",
+  "version": "2.3.0",
   "description": "Passive, domain-only attention tracking. Zero manual logging, ever.",
   "permissions": [
     "storage",
     "tabs",
     "alarms",
     "cookies",
-    "idle"
+    "idle",
+    "notifications"
   ],
   "host_permissions": [
     "http://localhost:3000/*",
@@ -18,6 +19,16 @@
     "service_worker": "background.js",
     "type": "module"
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://satyashift.vercel.app/*",
+        "http://localhost:3000/*"
+      ],
+      "js": ["bridge.js"],
+      "run_at": "document_idle"
+    }
+  ],
   "action": {
     "default_title": "SatyaShift",
     "default_popup": "popup.html",
