@@ -11,6 +11,15 @@ function getOpenAI() {
   return _openai
 }
 
+// Embeddings are the only paid (OpenAI) dependency left. Groq has no embeddings API, and there's
+// no AI budget — so when no real OPENAI_API_KEY is configured we skip the API entirely: storeMemory
+// becomes a no-op and searchMemory returns []. Semantic memory is a nice-to-have layered on top of
+// the coach, so degrading it to off costs nothing and never breaks a caller (all are try/wrapped).
+function embeddingsEnabled(): boolean {
+  const k = process.env.OPENAI_API_KEY || ''
+  return !!k && k !== 'dummy_key_for_build' && k !== 'your_openai_api_key_here'
+}
+
 export interface MemoryMetadata {
   type: 'log' | 'mood' | 'insight' | 'intercept'
   source_id?: string
@@ -35,6 +44,7 @@ async function generateEmbedding(text: string): Promise<number[]> {
  * Stores a new memory in the semantic_memories table.
  */
 export async function storeMemory(userId: string, content: string, metadata: MemoryMetadata) {
+  if (!embeddingsEnabled()) return false // no OpenAI key -> skip (no cost, no crash)
   try {
     const supabase = await createClient()
     const embedding = await generateEmbedding(content)
@@ -61,6 +71,7 @@ export async function storeMemory(userId: string, content: string, metadata: Mem
  * Searches the semantic_memories table for memories related to a query.
  */
 export async function searchMemory(userId: string, query: string, matchCount: number = 3) {
+  if (!embeddingsEnabled()) return [] // no OpenAI key -> no semantic recall (no cost, no crash)
   try {
     const supabase = await createClient()
     const embedding = await generateEmbedding(query)

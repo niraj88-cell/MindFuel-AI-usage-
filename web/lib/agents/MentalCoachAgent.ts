@@ -2,7 +2,7 @@
 // LangGraph StateGraph — orchestrates the full AI coaching pipeline
 
 import { StateGraph, END, START, Annotation } from '@langchain/langgraph'
-import { ChatGoogleGenerativeAI } from '@langchain/google-genai'
+import Groq from 'groq-sdk'
 import { HumanMessage, SystemMessage, AIMessage, type BaseMessage } from '@langchain/core/messages'
 
 // ── State Definition ──
@@ -32,17 +32,48 @@ const AgentState = Annotation.Root({
 
 type AgentStateType = typeof AgentState.State
 
-// ── Gemini Model (lazy init to avoid build-time crash) ──
-let _model: ChatGoogleGenerativeAI | null = null
-function getModel() {
-  if (!_model) {
-    _model = new ChatGoogleGenerativeAI({
-      model: 'gemini-2.0-flash',
+// ── Model: Groq (free tier). A tiny adapter keeps the LangGraph nodes unchanged — they still call
+// invokeModel([...messages]) and read response.content, but the request now goes to Groq's free
+// llama-3.3-70b instead of paid Gemini. If no GROQ_API_KEY is set, each node degrades to a calm,
+// deterministic fallback so the pipeline never crashes and never costs anything. ──
+const GROQ_MODEL = 'llama-3.3-70b-versatile'
+
+function groqReady(): boolean {
+  const k = process.env.GROQ_API_KEY || ''
+  return !!k && k !== 'your_free_groq_key_here'
+}
+
+let _groq: Groq | null = null
+function getGroq() {
+  if (!_groq) _groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' })
+  return _groq
+}
+
+// Map LangChain messages to Groq's chat format via each message's type tag.
+function toGroqMessages(messages: BaseMessage[]) {
+  return messages.map((m) => {
+    const t = m._getType()
+    const role: 'system' | 'user' | 'assistant' = t === 'system' ? 'system' : t === 'ai' ? 'assistant' : 'user'
+    const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content)
+    return { role, content }
+  })
+}
+
+// Returns an AIMessage so the graph's message reducer and every `response.content` read still work.
+async function invokeModel(messages: BaseMessage[], fallback: string): Promise<AIMessage> {
+  if (!groqReady()) return new AIMessage(fallback)
+  try {
+    const completion = await getGroq().chat.completions.create({
+      messages: toGroqMessages(messages),
+      model: GROQ_MODEL,
       temperature: 0.7,
-      maxOutputTokens: 2048,
+      max_tokens: 2048,
     })
+    return new AIMessage(completion.choices[0]?.message?.content || fallback)
+  } catch (err) {
+    console.error('[MentalCoachAgent] Groq error:', err)
+    return new AIMessage(fallback)
   }
-  return _model
 }
 
 // ── Node: Analyze User Data ──
@@ -69,7 +100,10 @@ Rules:
     `Analyze this user's mental wellness data and identify 3-5 key insights:\n\n${userDataStr}`
   )
 
-  const response = await getModel().invoke([systemMsg, humanMsg])
+  const response = await invokeModel(
+    [systemMsg, humanMsg],
+    'AI analysis is temporarily unavailable. Focus on one small, intentional action today.',
+  )
 
   return {
     messages: [response],
@@ -98,7 +132,10 @@ Rules:
     `Based on these insights:\n${insightsSummary}\n\nGenerate specific, actionable recommendations for today.`
   )
 
-  const response = await getModel().invoke([systemMsg, humanMsg])
+  const response = await invokeModel(
+    [systemMsg, humanMsg],
+    '1. Take one 25-minute focused block on your most important task.\n2. Put your phone in another room during it.\n3. Note how you feel afterward.',
+  )
   const content = typeof response.content === 'string' ? response.content : JSON.stringify(response.content)
 
   return {
@@ -140,7 +177,10 @@ Persona rules:
     `Insights:\n${state.insights.join('\n')}\n\nRecommendations:\n${state.recommendations.join('\n')}\n\nCreate a friendly coach message for the user.`
   )
 
-  const response = await getModel().invoke([systemMsg, humanMsg])
+  const response = await invokeModel(
+    [systemMsg, humanMsg],
+    "Here's your check-in: even small intentional choices add up. Pick one thing that matters and give it 25 focused minutes today, then notice how it feels.",
+  )
 
   return {
     messages: [response],
