@@ -5,6 +5,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getUserContext } from '@/lib/supabase/route-auth'
+import { notifySquadOnSessionStart } from '@/lib/squad/notifySessionStart'
 import { z } from 'zod'
 
 export const runtime = 'nodejs'
@@ -70,6 +71,16 @@ export async function POST(req: Request) {
       console.error('[focus/start] insert error:', error)
       return NextResponse.json({ error: 'Failed to start session' }, { status: 500 })
     }
+
+    // Gently let the squad know a real session just began (only on a fresh start, never on the
+    // resumed branch above). The helper is fully guarded and de-duped to 1/hour, so it can never
+    // throw or delay the response in a way that breaks starting a session.
+    await notifySquadOnSessionStart({
+      admin,
+      actorId: userId,
+      squadId: parsed.data.squad_id ?? null,
+      sessionId: created.id,
+    })
 
     return NextResponse.json({ session_id: created.id, started_at: created.created_at })
   } catch (e: any) {
