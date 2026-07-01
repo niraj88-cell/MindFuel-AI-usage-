@@ -8,10 +8,10 @@ import { WaitlistForm } from '@/components/landing/WaitlistForm'
 export const metadata: Metadata = {
   title: 'SatyaShift — Focus you can prove',
   description:
-    'Verified focus, not self-reported. A browser extension quietly confirms your focus — and only ever sees the domains you visit, never the page or what you type. Private by default.',
+    'Deep work is easier when you are not doing it alone. SatyaShift keeps an honest, verified record of your focus, solo or with friends, and only ever sees the domains you visit, never your screen. Private by default.',
   openGraph: {
     title: 'SatyaShift — Focus you can prove',
-    description: 'Verified focus, not self-reported. Private by default.',
+    description: 'Deep work is easier when you are not doing it alone. Verified focus, solo or with friends. Private by default.',
     type: 'website',
   },
 }
@@ -24,14 +24,21 @@ export default function LandingPage() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#111827] text-white">
             <SatyaMark size={18} />
           </span>
-          <span className="font-semibold">SatyaShift</span>
+          <span className="flex flex-col leading-none">
+            <span className="font-semibold">SatyaShift</span>
+            <span className="mt-1 text-[11px] font-medium tracking-wide text-[#9CA3AF]">&#2360;&#2340;&#2381;&#2351; &middot; truth</span>
+          </span>
         </div>
 
-        <h1 className="text-[2rem] font-bold leading-tight tracking-tight">Focus you can prove.</h1>
+        <h1 className="text-[2rem] font-bold leading-tight tracking-tight">
+          Deep work is easier when you&rsquo;re not doing it alone.
+        </h1>
         <p className="mt-4 text-[15px] leading-relaxed text-[#4B5563]">
-          Most focus tools run on what you tell them. SatyaShift runs on what actually happened &mdash; a
-          browser extension quietly verifies your focus, so the time is real, not self-reported. It only ever
-          sees the domains you visit, never the page or what you type. Private by default.
+          SatyaShift keeps an honest record of your focus, verified quietly in your browser so it can&rsquo;t be faked.
+          On your own, it&rsquo;s a witness you can&rsquo;t fool. With friends, you keep each other going.
+        </p>
+        <p className="mt-3 text-[13px] leading-relaxed text-[#6B7280]">
+          It only ever sees the domains you visit. Never your screen, never what you type.
         </p>
 
         <WaitlistForm />
