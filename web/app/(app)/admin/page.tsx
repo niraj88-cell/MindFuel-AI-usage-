@@ -2,26 +2,18 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Activity, Users, Clock, Brain, Lock, ArrowUp, Zap, ShieldAlert, CheckCircle2 } from 'lucide-react'
+import { Activity, Users, Clock, Lock, ArrowUp, ShieldAlert } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface AdminStats {
   totalUsers: number
-  totalLogs: number
+  totalSessions: number
   totalFocusHours: number
-}
-
-interface RecentLog {
-  content: string
-  mental_score: number
-  category: string
-  created_at: string
 }
 
 export default function AdminDashboard() {
   const router = useRouter()
   const [stats, setStats] = useState<AdminStats | null>(null)
-  const [logs, setLogs] = useState<RecentLog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -45,7 +37,6 @@ export default function AdminDashboard() {
         }
         const data = await res.json()
         setStats(data.stats)
-        setLogs(data.recentLogs)
       } catch (err: any) {
         setError(err.message || 'Failed to load CEO stats')
       } finally {
@@ -110,10 +101,10 @@ export default function AdminDashboard() {
           <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
             <Activity className="w-24 h-24 text-emerald-500" />
           </div>
-          <p className="text-sm font-bold text-zinc-400 mb-2">Mental Intercepts Logged</p>
-          <div className="text-5xl font-black text-white mb-2">{stats?.totalLogs || 0}</div>
+          <p className="text-sm font-bold text-zinc-400 mb-2">Focus Sessions</p>
+          <div className="text-5xl font-black text-white mb-2">{stats?.totalSessions || 0}</div>
           <div className="flex items-center gap-1 text-xs font-bold text-zinc-500">
-            <span>Aggregated across all squads</span>
+            <span>Verified across all circles</span>
           </div>
         </div>
 
@@ -129,42 +120,15 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Global Activity Feed */}
+      {/* Privacy stance — the owner panel deliberately shows no user content. */}
       <div>
         <h2 className="text-lg font-black text-white mb-6 flex items-center gap-2">
-          <Zap className="w-5 h-5 text-amber-500" /> Live Global Activity (Anonymized)
+          <ShieldAlert className="w-5 h-5 text-emerald-500" /> Privacy by design
         </h2>
-        
-        <div className="bg-zinc-900/30 border border-white/5 rounded-3xl overflow-hidden">
-          {logs.map((log, i) => (
-            <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
-              <div className="flex items-center gap-4 mb-4 sm:mb-0">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                  log.mental_score >= 70 ? 'bg-emerald-500/10 text-emerald-400' :
-                  log.mental_score >= 40 ? 'bg-amber-500/10 text-amber-400' :
-                  'bg-rose-500/10 text-rose-400'
-                }`}>
-                  <Brain className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-white mb-1 line-clamp-1">"{log.content}"</div>
-                  <div className="text-xs text-zinc-500 font-bold uppercase tracking-wider">{log.category}</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-6 sm:pl-6 border-t sm:border-t-0 sm:border-l border-white/5 pt-4 sm:pt-0">
-                <div className="text-center">
-                  <div className="text-xl font-black text-white">{log.mental_score}</div>
-                  <div className="text-[9px] font-bold uppercase tracking-widest text-zinc-600">Score</div>
-                </div>
-                <div className="text-xs text-zinc-500 font-medium">
-                  {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
-              </div>
-            </div>
-          ))}
-          {logs.length === 0 && (
-            <div className="p-8 text-center text-zinc-500 text-sm font-medium">No recent logs found.</div>
-          )}
+        <div className="bg-zinc-900/30 border border-white/5 rounded-3xl p-8 text-sm leading-relaxed text-zinc-400">
+          This panel shows aggregate counts only. It does not read domains, session
+          content, or any per-user activity — the same domain-only boundary the product
+          promises everyone applies to the owner too.
         </div>
       </div>
     </div>

@@ -32,8 +32,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true })
-  } catch (err: any) {
-    console.error('Subscription error:', err)
-    return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 })
+  } catch (err) {
+    console.error('Subscription error:', err instanceof Error ? err.message : err)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }

@@ -155,10 +155,7 @@ export function validateEmail(email: unknown): ValidationResult {
  * This runs in Edge runtime, so we must use Web Crypto API, not Node 'crypto'.
  */
 export async function getRequestFingerprint(req: NextRequest): Promise<string> {
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    req.headers.get('x-real-ip') ||
-    'unknown'
+  const ip = getClientIP(req)
 
   const ua = req.headers.get('user-agent') || 'unknown'
   const data = new TextEncoder().encode(`${ip}:${ua}`)
@@ -173,13 +170,23 @@ export async function getRequestFingerprint(req: NextRequest): Promise<string> {
 
 /**
  * Extract the real client IP from request headers.
+ *
+ * SECURITY: `x-forwarded-for` is client-controllable — the leftmost entry can be forged
+ * to evade or poison per-IP rate limiting. On Vercel, `x-real-ip` is set by the platform
+ * to the true connecting IP and cannot be spoofed by the client, so we trust it first and
+ * only fall back to XFF for local/non-Vercel runtimes.
  */
 export function getClientIP(req: NextRequest): string {
-  return (
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    req.headers.get('x-real-ip') ||
-    'unknown'
-  )
+  const realIp = req.headers.get('x-real-ip')?.trim()
+  if (realIp) return realIp
+  // Fallback (local dev / other hosts): take the LAST hop, which the nearest trusted
+  // proxy appends, rather than the client-controlled first hop.
+  const xff = req.headers.get('x-forwarded-for')
+  if (xff) {
+    const parts = xff.split(',').map((s) => s.trim()).filter(Boolean)
+    if (parts.length) return parts[parts.length - 1]
+  }
+  return 'unknown'
 }
 
 // ── Security Headers ───────────────────────────────────────────────────────

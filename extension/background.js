@@ -626,12 +626,29 @@ async function buildStatus() {
   };
 }
 
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+// Origins allowed to hand us a session via SESSION_FROM_PAGE. Only our own app.
+const TRUSTED_MESSAGE_ORIGINS = new Set([PRODUCTION_URL, DEV_URL]);
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  // Defense in depth: onMessage (unlike onMessageExternal) is only reachable by this
+  // extension's own content scripts and pages, and there is no externally_connectable
+  // entry — so web pages cannot reach here. We still hard-verify that the token-bearing
+  // SESSION_FROM_PAGE came from our OWN extension AND from a content script running on our
+  // own app origin, so a compromised/injected script on any other site can never seed a
+  // forged session. Messages from the popup (sender.url is an extension:// URL) skip the
+  // origin check but must still originate from this extension.
+  if (sender.id !== chrome.runtime.id) return; // not from us — ignore entirely
+
   // The page bridge (content script on our own domain) forwards the app's Supabase session.
   // This is the reliable auth path: document.cookie in the page is the source of truth, whereas
   // chrome.cookies from the SW proved flaky. We store it so getAccessToken can use it even when
   // the app tab is closed, and refresh it from the held refresh_token as needed.
   if (msg?.type === 'SESSION_FROM_PAGE') {
+    const origin = sender.origin || (sender.url ? new URL(sender.url).origin : '');
+    if (!TRUSTED_MESSAGE_ORIGINS.has(origin)) {
+      sendResponse({ ok: false });
+      return true;
+    }
     (async () => {
       const raw = selectAuthCookie(msg.cookies || [], PROJECT_REF);
       const session = raw ? parseSupabaseSession(raw) : null;
