@@ -11,8 +11,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
-import { Play, Square, ShieldCheck, ShieldAlert, ChevronRight, Loader2 } from 'lucide-react'
+import { Play, Square, ShieldCheck, Shield, ChevronRight, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { FocusAudio } from '@/components/focus/FocusAudio'
 
 interface SessionRow {
   id: string
@@ -23,21 +24,21 @@ interface SessionRow {
   intention: string | null
 }
 
-// count-up clock: 754s -> "12:34", 3754s -> "1:02:34"
-function elapsedClock(totalSeconds: number) {
-  const s = Math.max(0, totalSeconds)
-  const h = Math.floor(s / 3600)
-  const m = Math.floor((s % 3600) / 60)
-  const sec = s % 60
-  const mm = String(m).padStart(2, '0')
-  const ss = String(sec).padStart(2, '0')
-  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`
+// Quiet, minute-level elapsed for the running screen. Deliberately NOT a ticking
+// seconds stopwatch — the product's promise is "just work", not "watch the clock".
+function humanElapsed(totalSeconds: number) {
+  const m = Math.floor(Math.max(0, totalSeconds) / 60)
+  if (m < 1) return 'just started'
+  const h = Math.floor(m / 60)
+  return h === 0 ? `${m} min` : `${h}h ${String(m % 60).padStart(2, '0')}m`
 }
 
-// completed-duration clock: 8040s -> "2:14"
-function durationClock(totalSeconds: number) {
+// Humanized duration for the recent list, matching the dashboard/session format
+// (8040s -> "2h 14m") so one session reads the same on every screen.
+function humanDuration(totalSeconds: number) {
   const m = Math.round(totalSeconds / 60)
-  return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`
+  const h = Math.floor(m / 60)
+  return h === 0 ? `${m % 60}m` : `${h}h ${m % 60}m`
 }
 
 export default function FocusPage() {
@@ -145,30 +146,37 @@ export default function FocusPage() {
   }
 
   // ── Running ───────────────────────────────────────────────
+  // A calm presence, not a stopwatch. Elapsed time is quiet and secondary so the screen
+  // invites work instead of clock-watching (the whole point of "just work in the background").
   if (activeId && startedAt != null) {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center py-8 text-center">
-        <span className="inline-flex items-center gap-2 rounded-full bg-[#E8F5E9] px-3 py-1 text-xs font-semibold text-[#2E7D32]">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-[#4CAF50]" /> Focusing
+        <span className="relative flex h-16 w-16 items-center justify-center">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#4CAF50] opacity-20" />
+          <span className="relative inline-flex h-4 w-4 rounded-full bg-[#4CAF50]" />
         </span>
 
-        <div className="mt-8 font-mono text-6xl font-bold tracking-tight text-[#111827] tabular-nums">
-          {elapsedClock(elapsed)}
-        </div>
+        <p className="mt-8 text-xl font-bold tracking-tight text-[#111827]">You&rsquo;re focusing.</p>
         {intention.trim() && (
-          <p className="mt-3 text-sm italic text-[#6B7280]">&ldquo;{intention.trim()}&rdquo;</p>
+          <p className="mt-2 text-sm italic text-[#6B7280]">&ldquo;{intention.trim()}&rdquo;</p>
         )}
 
-        <p className="mt-8 max-w-xs text-sm leading-relaxed text-[#9CA3AF]">
-          Just work like you normally would. SatyaShift is verifying this in the background — nothing to manage.
+        <p className="mt-6 max-w-xs text-sm leading-relaxed text-[#9CA3AF]">
+          Just work like you normally would. SatyaShift is verifying this in the background. There&rsquo;s nothing to watch here.
         </p>
+
+        <p className="mt-6 font-mono text-xs text-[#9CA3AF]">
+          Started {format(new Date(startedAt), 'h:mm a')} &middot; {humanElapsed(elapsed)} so far
+        </p>
+
+        <FocusAudio />
 
         {error && <p className="mt-4 text-sm text-[#B45309]">{error}</p>}
 
         <button
           onClick={stopSession}
           disabled={busy}
-          className="mt-10 inline-flex items-center gap-2 rounded-2xl bg-[#111827] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#1f2937] disabled:opacity-60"
+          className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-[#111827] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#1f2937] disabled:opacity-60"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
           End session
@@ -238,11 +246,11 @@ export default function FocusPage() {
                       <ShieldCheck className="h-3 w-3" /> verified
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#FEF3C7] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#B45309]">
-                      <ShieldAlert className="h-3 w-3" /> unverified
+                    <span className="inline-flex items-center gap-1 rounded-full bg-black/[0.05] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#6B7280]">
+                      <Shield className="h-3 w-3" /> unverified
                     </span>
                   )}
-                  <span className="font-mono text-sm font-semibold text-[#2E7D32]">{durationClock(s.duration_s ?? 0)}</span>
+                  <span className="font-mono text-sm font-semibold text-[#2E7D32]">{humanDuration(s.duration_s ?? 0)}</span>
                   <ChevronRight className="h-4 w-4 text-[#9CA3AF]" />
                 </Link>
               )

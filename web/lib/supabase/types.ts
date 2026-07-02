@@ -15,7 +15,9 @@ export type SubscriptionTier = 'free' | 'premium'
 export type LogSource = 'manual' | 'auto_tracking' | 'url_submission'
 export type InsightType = 'daily_coach' | 'content_swap' | 'mood_correlation' | 'recipe' | 'challenge' | 'behavioral_insight'
 export type ChallengeDifficulty = 'easy' | 'medium' | 'hard'
-export type NotificationType = 'daily_coach' | 'swap_suggestion' | 'challenge' | 'streak'
+export type NotificationType =
+  | 'daily_coach' | 'swap_suggestion' | 'challenge' | 'streak'
+  | 'squad_focus_start' | 'squad_ping'
 
 export interface Database {
   public: {

@@ -15,6 +15,9 @@ const StartSchema = z.object({
   squad_id: z.string().uuid().optional(),
 })
 
+// Same cap as /api/focus/stop: past this a session was forgotten, not focused.
+const MAX_SESSION_S = 4 * 60 * 60
+
 export async function POST(req: Request) {
   try {
     const ctx = await getUserContext(req)
@@ -48,7 +51,25 @@ export async function POST(req: Request) {
       .maybeSingle()
 
     if (existing) {
-      return NextResponse.json({ session_id: existing.id, started_at: existing.created_at, resumed: true })
+      const ageS = (Date.now() - new Date(existing.created_at ?? Date.now()).getTime()) / 1000
+      if (ageS <= MAX_SESSION_S) {
+        return NextResponse.json({ session_id: existing.id, started_at: existing.created_at, resumed: true })
+      }
+      // The session was forgotten (browser closed, never stopped). Without this, one forgotten
+      // session is "resumed" forever: the user can never start a real one and the squad radar
+      // shows phantom deep work. Close it honestly as abandoned, then start fresh below.
+      await supabase
+        .from('focus_sessions')
+        .update({
+          status: 'abandoned',
+          duration_s: MAX_SESSION_S,
+          session_quality: 'unverified',
+          mf_duration_minutes: Math.round(MAX_SESSION_S / 60),
+          mf_completed: false,
+        })
+        .eq('id', existing.id)
+        .eq('user_id', userId)
+        .eq('status', 'active')
     }
 
     const { data: created, error } = await supabase
