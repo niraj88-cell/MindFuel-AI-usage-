@@ -26,7 +26,7 @@ export default function LandingPage() {
           </span>
           <span className="flex flex-col leading-none">
             <span className="font-semibold">SatyaShift</span>
-            <span className="mt-1 text-[11px] font-medium tracking-wide text-[#9CA3AF]">&#2360;&#2340;&#2381;&#2351; &middot; truth</span>
+            <span className="mt-1 text-[11px] font-medium tracking-wide text-[#6B7280]">&#2360;&#2340;&#2381;&#2351; &middot; truth</span>
           </span>
         </div>
 

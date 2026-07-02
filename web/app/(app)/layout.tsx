@@ -15,17 +15,16 @@ import {
   X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { AttentionRescue } from '@/components/fuel/AttentionRescue'
 import { SatyaMark } from '@/components/brand/SatyaMark'
 
 const PRIMARY_NAV = [
   { href: '/dashboard', label: 'Today', icon: CalendarDays },
   { href: '/focus', label: 'Focus', icon: Target },
-  { href: '/squads', label: 'Squad', icon: Users },
+  { href: '/squads', label: 'Circle', icon: Users },
 ]
 
 const SECONDARY_NAV = [
-  { href: '/notifications', label: 'Reminders', icon: Bell },
+  { href: '/notifications', label: 'Activity', icon: Bell },
   { href: '/profile', label: 'Settings', icon: User },
 ]
 
@@ -36,18 +35,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [authChecked, setAuthChecked] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const [user, setUser] = useState<{ email?: string; name?: string; tier?: string } | null>(null)
-  const [rescueSignal, setRescueSignal] = useState<{ app: string; minutes: number } | null>(null)
-
-  useEffect(() => {
-    function handleMessage(event: MessageEvent) {
-      if (event.data?.type === 'MINDFUEL_DOOMSCROLL_ALERT') {
-        setRescueSignal({ app: event.data.appName, minutes: event.data.minutesSpent })
-      }
-    }
-
-    window.addEventListener('message', handleMessage)
-    return () => window.removeEventListener('message', handleMessage)
-  }, [])
 
   const loadUser = useCallback(async () => {
     const supabase = createClient()
@@ -162,14 +149,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </Link>
 
         <nav className="space-y-1">
-          <p className="mb-2 px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9CA3AF]">Core loop</p>
           {PRIMARY_NAV.map((item) => <NavLink key={item.href} item={item} />)}
         </nav>
 
-        <div className="my-6 h-px bg-black/[0.06]" />
+        <div className="my-4 h-px bg-black/[0.06]" />
 
         <nav className="space-y-1">
-          <p className="mb-2 px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9CA3AF]">Support</p>
           {SECONDARY_NAV.map((item) => <NavLink key={item.href} item={item} />)}
         </nav>
 
@@ -179,8 +164,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               {user?.name?.[0] || user?.email?.[0]?.toUpperCase() || '?'}
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">{user?.name || 'MindFuel member'}</p>
-              <p className="text-xs capitalize text-[#6B7280]">{user?.tier || 'free'} plan</p>
+              <p className="truncate text-sm font-semibold">{user?.name || 'Member'}</p>
+              <p className="truncate text-xs text-[#6B7280]">{user?.email || ''}</p>
             </div>
           </div>
           <div className="mb-3 flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-xs font-medium text-[#4B5563]">
@@ -235,15 +220,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <main className="mx-auto min-h-screen w-full max-w-6xl px-4 py-6 pb-28 sm:px-6 lg:px-10 lg:py-10">
           {children}
         </main>
-
-        {rescueSignal && (
-          <AttentionRescue
-            appName={rescueSignal.app}
-            minutesSpent={rescueSignal.minutes}
-            trigger="doomscroll"
-            onClose={() => setRescueSignal(null)}
-          />
-        )}
 
         <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-black/[0.08] bg-white/90 px-3 pb-2 pt-2 backdrop-blur-xl lg:hidden">
           <div className="mx-auto grid max-w-md grid-cols-5 items-center gap-1">

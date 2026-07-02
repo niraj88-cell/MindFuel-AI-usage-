@@ -1,20 +1,22 @@
-// app/(auth)/login/page.tsx
 'use client'
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Brain, Loader2, Eye, EyeOff, ArrowRight, Sparkles, Shield, Zap } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, Loader2, Shield, ShieldCheck, Activity } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { SatyaMark } from '@/components/brand/SatyaMark'
 import { createClient } from '@/lib/supabase/client'
 import { identifyUser, trackEvent } from '@/lib/mixpanel'
-import { AnimatedBackground } from '@/components/landing/AnimatedBackground'
-import { AnimatedBrain } from '@/components/landing/AnimatedBrain'
+
+const TRUST_ITEMS = [
+  { icon: Shield, title: 'Private by default', desc: 'Your domains stay on your account — never shown to your circle.' },
+  { icon: ShieldCheck, title: 'Verified, not self-reported', desc: 'Focus sessions are confirmed in the background, so they can’t be faked.' },
+  { icon: Activity, title: 'Ambient by design', desc: 'Nothing to start or log — your sessions appear on their own.' },
+]
 
 export default function LoginPage() {
-  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -37,8 +39,8 @@ export default function LoginPage() {
     }
 
     if (data.user) {
-      identifyUser(data.user.id, { $email: data.user.email });
-      trackEvent('User Logged In');
+      identifyUser(data.user.id, { $email: data.user.email })
+      trackEvent('User Logged In')
     }
 
     window.location.href = '/dashboard'
@@ -61,200 +63,160 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex relative overflow-hidden">
-      {/* Left Panel - Value Proposition */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        {/* Animated Background */}
-        <AnimatedBackground variant="auth" />
-        
-        <div className="relative z-10 flex flex-col justify-center px-16 py-20 w-full h-full">
-          <div className="mb-12 animate-fade-in-up">
-            <div className="flex items-center gap-4 mb-8">
-              <AnimatedBrain size={60} />
-              <span className="text-3xl font-black tracking-tight text-white">MindFuel</span>
-            </div>
-            
-            <h2 className="text-5xl font-black text-white leading-tight mb-4">
-              Your digital diet<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-500">shapes your mind.</span>
-            </h2>
-            <p className="text-zinc-400 text-lg max-w-md leading-relaxed font-medium">
-              Join thousands who are already optimizing their screen time for better focus, mood, and mental performance.
+    <main className="min-h-screen bg-[#FAF8F4] text-[#111827]">
+      <div className="grid min-h-screen lg:grid-cols-2">
+        <section className="hidden lg:flex flex-col justify-between border-r border-black/[0.06] px-16 py-12">
+          <Link href="/" className="flex items-center gap-3 w-fit">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#111827] text-white">
+              <SatyaMark size={20} />
+            </span>
+            <span className="text-2xl font-bold tracking-tight">SatyaShift</span>
+          </Link>
+
+          <div className="max-w-xl">
+            <p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-[#4CAF50]">Welcome back</p>
+            <h1 className="mb-6 text-5xl font-semibold leading-[1.05] tracking-tight">
+              Welcome back to your focus.
+            </h1>
+            <p className="max-w-md text-lg leading-relaxed text-[#4B5563]">
+              Sign in to see your verified focus sessions and check in with your circle.
             </p>
           </div>
 
-          {/* Features */}
-          <div className="space-y-6 stagger-children">
-            <FeatureRow icon={<Zap className="w-4 h-4 text-white" />} title="Pattern Discovery" desc="Gently uncover hidden patterns in your daily thoughts" />
-            <FeatureRow icon={<Sparkles className="w-4 h-4 text-white" />} title="Mood Intelligence" desc="Understand how your screen time affects your emotional state" />
-            <FeatureRow icon={<Shield className="w-4 h-4 text-white" />} title="Personal AI Coach" desc="Get guidance to build healthier digital habits" />
-          </div>
-
-          {/* Social proof */}
-          <div className="mt-12 pt-8 border-t border-white/5 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-            <div className="flex items-center gap-4">
-              <div className="flex -space-x-3">
-                {['A', 'B', 'C', 'D'].map((letter, i) => (
-                  <div key={letter} className="w-10 h-10 rounded-full bg-zinc-900 border-2 border-black flex items-center justify-center text-xs font-black text-zinc-300 shadow-lg" style={{ zIndex: 10 - i }}>
-                    {letter}
-                  </div>
-                ))}
+          <div className="grid gap-4">
+            {TRUST_ITEMS.map((item) => (
+              <div key={item.title} className="flex gap-4 rounded-2xl border border-black/[0.06] bg-white/70 p-5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#ECFDF5] text-[#4CAF50]">
+                  <item.icon className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="font-semibold">{item.title}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-[#6B7280]">{item.desc}</p>
+                </div>
               </div>
-              <p className="text-sm text-zinc-500 font-medium">
-                <span className="text-white font-bold">500+</span> users tracking their digital wellness
-              </p>
+            ))}
+          </div>
+        </section>
+
+        <section className="flex items-center justify-center px-5 py-10 sm:px-8">
+          <div className="w-full max-w-[430px]">
+            <div className="mb-10 lg:hidden">
+              <Link href="/" className="flex items-center gap-3 w-fit">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#111827] text-white">
+                  <SatyaMark size={20} />
+                </span>
+                <span className="text-2xl font-bold tracking-tight">SatyaShift</span>
+              </Link>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Right Panel - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative z-10 bg-black">
-        <div className="w-full max-w-[420px] animate-fade-in-up">
-          {/* Mobile logo */}
-          <div className="lg:hidden text-center mb-10 flex flex-col items-center gap-4">
-            <AnimatedBrain size={50} />
-            <span className="text-2xl font-black text-white">MindFuel</span>
-          </div>
+            <div className="mb-8">
+              <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Sign in</h2>
+              <p className="mt-3 text-base text-[#6B7280]">Continue to your verified focus sessions and your circle.</p>
+            </div>
 
-          <div className="mb-8">
-            <h1 className="text-3xl sm:text-4xl font-black text-white mb-2">Welcome back</h1>
-            <p className="text-zinc-400 font-medium">
-              Sign in to continue your wellness journey
-            </p>
-          </div>
-
-          {/* Google OAuth */}
-          <button
-            id="google-login-button"
-            type="button"
-            onClick={handleGoogleLogin}
-            disabled={googleLoading}
-            className="w-full h-12 flex items-center justify-center gap-3 bg-zinc-900/40 border border-white/10 rounded-xl text-white font-bold text-sm hover:bg-zinc-800 hover:border-white/20 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-lg"
-          >
-            {googleLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                </svg>
-                Continue with Google
-              </>
-            )}
-          </button>
-
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-8">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-[10px] text-zinc-500 font-black tracking-widest uppercase">Or</span>
-            <div className="flex-1 h-px bg-white/10" />
-          </div>
-
-          {/* Form */}
-          <div className="p-6 sm:p-8 bg-zinc-900/30 border border-white/5 rounded-3xl group focus-within:border-white/10 focus-within:bg-zinc-900/50 transition-all shadow-2xl">
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-black uppercase tracking-wider text-zinc-500">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  className="h-12 bg-black/50 border-white/5 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-xs font-black uppercase tracking-wider text-zinc-500">Password</Label>
-                  <Link href="/forgot-password" className="text-xs text-zinc-500 hover:text-white transition-colors font-medium">
-                    Forgot?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoComplete="current-password"
-                    className="h-12 bg-black/50 border-white/5 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all pr-12"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors cursor-pointer w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {error && (
-                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400 font-medium">
-                  {error}
-                </div>
+            <button
+              id="google-login-button"
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={googleLoading}
+              className="flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-black/[0.08] bg-white text-sm font-semibold text-[#111827] shadow-sm transition-colors hover:bg-[#F5F7F6] disabled:opacity-60"
+            >
+              {googleLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                  </svg>
+                  Continue with Google
+                </>
               )}
+            </button>
 
-              <Button
-                id="login-button"
-                type="submit"
-                className="w-full h-12 bg-white text-black hover:bg-zinc-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] rounded-xl font-black text-sm transition-all active:scale-[0.98] mt-2"
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <span className="flex items-center gap-2">
-                    Sign In <ArrowRight className="w-4 h-4" />
-                  </span>
+            <div className="my-8 flex items-center gap-4">
+              <div className="h-px flex-1 bg-black/[0.08]" />
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#6B7280]">or</span>
+              <div className="h-px flex-1 bg-black/[0.08]" />
+            </div>
+
+            <form onSubmit={handleLogin} className="rounded-3xl border border-black/[0.07] bg-white p-6 shadow-sm sm:p-8">
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6B7280]">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                    className="h-12 rounded-2xl border-black/[0.08] bg-[#F9FAF8] text-[#111827] placeholder:text-[#9CA3AF]"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6B7280]">Password</Label>
+                    <Link href="/forgot-password" className="text-xs font-semibold text-[#4B5563] hover:text-[#111827]">Forgot?</Link>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      autoComplete="current-password"
+                      className="h-12 rounded-2xl border-black/[0.08] bg-[#F9FAF8] pr-12 text-[#111827] placeholder:text-[#9CA3AF]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-[#6B7280] transition-colors hover:bg-black/[0.04] hover:text-[#111827]"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+                    {error}
+                  </div>
                 )}
-              </Button>
-            </form>
-          </div>
 
-          <div className="mt-8 text-center">
-            <p className="text-sm text-zinc-500 font-medium">
-              Don&apos;t have an account?{' '}
-              <Link href="/signup" className="text-white hover:text-zinc-300 transition-colors font-bold">
-                Create one free →
+                <Button
+                  id="login-button"
+                  type="submit"
+                  className="h-12 w-full rounded-2xl bg-[#111827] text-sm font-semibold text-white hover:bg-[#1F2937]"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      Sign in <ArrowRight className="h-4 w-4" />
+                    </span>
+                  )}
+                </Button>
+              </div>
+            </form>
+
+            <p className="mt-8 text-center text-sm text-[#6B7280]">
+              New to SatyaShift?{' '}
+              <Link href="/signup" className="font-semibold text-[#111827] hover:underline">
+                Create an account
               </Link>
             </p>
           </div>
-
-          {/* Trust badges */}
-          <div className="mt-12 flex justify-center">
-            <div className="inline-flex items-center gap-6 px-4 py-2 rounded-full bg-white/[0.02] border border-white/5 text-[10px] font-black text-zinc-500 uppercase tracking-widest">
-              <span>🔒 Private</span>
-              <span className="w-1 h-1 rounded-full bg-zinc-700" />
-              <span>🛡️ Encrypted</span>
-            </div>
-          </div>
-        </div>
+        </section>
       </div>
-    </div>
-  )
-}
-
-function FeatureRow({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
-  return (
-    <div className="flex items-start gap-5 group">
-      <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center text-white shrink-0 group-hover:bg-white/[0.08] group-hover:scale-110 transition-all">
-        {icon}
-      </div>
-      <div>
-        <p className="text-base font-bold text-white mb-1">{title}</p>
-        <p className="text-sm text-zinc-400 leading-relaxed">{desc}</p>
-      </div>
-    </div>
+    </main>
   )
 }

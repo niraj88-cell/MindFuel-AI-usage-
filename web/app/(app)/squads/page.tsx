@@ -1,6 +1,6 @@
 'use client'
 
-// SatyaShift — Squad.
+// SatyaShift — Circle (route stays /squads; "circle" is the product word).
 // A supportive circle, not a scoreboard. Presence first (who's focusing now), then a
 // chronological feed of extension-verified sessions. No streaks, no rankings, no totals,
 // and never a domain — the feed shows verified TIME plus each person's own words (intention).
@@ -14,7 +14,7 @@ import {
   KeyRound,
   ArrowRight,
   ShieldCheck,
-  ShieldAlert,
+  Shield,
   UserPlus,
   Check,
 } from 'lucide-react'
@@ -41,9 +41,10 @@ interface FeedItem {
   member: { id: string; name: string; avatar: string | null }
 }
 
-function clock(totalSeconds: number) {
+function humanDuration(totalSeconds: number) {
   const m = Math.round(totalSeconds / 60)
-  return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`
+  const h = Math.floor(m / 60)
+  return h === 0 ? `${m % 60}m` : `${h}h ${m % 60}m`
 }
 function minutesSince(iso: string) {
   return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000))
@@ -80,7 +81,7 @@ export default function SquadsPage() {
         setFeed(fdata.feed || [])
       }
     } catch {
-      setMessage({ type: 'error', text: 'Could not load your squad.' })
+      setMessage({ type: 'error', text: 'Could not load your circle.' })
     } finally {
       setLoading(false)
     }
@@ -107,11 +108,11 @@ export default function SquadsPage() {
         body: JSON.stringify({ name: newName.trim() }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Could not create squad')
+      if (!res.ok) throw new Error(data.error || 'Could not create your circle')
       setNewName('')
       await loadSquads()
     } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Could not create squad' })
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Could not create your circle' })
     } finally { setBusy(null) }
   }
 
@@ -125,11 +126,11 @@ export default function SquadsPage() {
         body: JSON.stringify({ invite_code: code.trim().toUpperCase() }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Could not join squad')
+      if (!res.ok) throw new Error(data.error || 'Could not join that circle')
       setCode('')
       await loadSquads()
     } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Could not join squad' })
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Could not join that circle' })
     } finally { setBusy(null) }
   }
 
@@ -158,8 +159,8 @@ export default function SquadsPage() {
         <ShieldCheck className="h-3 w-3" /> verified
       </span>
     ) : (
-      <span className="inline-flex items-center gap-1 rounded-full bg-[#FEF3C7] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#B45309]">
-        <ShieldAlert className="h-3 w-3" /> unverified
+      <span className="inline-flex items-center gap-1 rounded-full bg-black/[0.05] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#6B7280]">
+        <Shield className="h-3 w-3" /> unverified
       </span>
     )
   }
@@ -179,7 +180,7 @@ export default function SquadsPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold tracking-tight text-[#111827]">Focus is easier with someone in it.</h1>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[#6B7280]">
-            A squad is a small circle that sees when you&rsquo;re focusing and quietly shows up too. No feed to scroll, no rankings.
+            A circle is a few people who see when you&rsquo;re focusing and quietly show up too. No feed to scroll, no rankings.
           </p>
         </div>
 
@@ -190,7 +191,7 @@ export default function SquadsPage() {
         <form onSubmit={createSquad} className="mt-7 rounded-3xl border border-black/[0.07] bg-white p-5">
           <div className="mb-2 flex items-center gap-2 text-[#2E7D32]">
             <Plus className="h-4 w-4" />
-            <span className="text-sm font-semibold text-[#111827]">Create a squad</span>
+            <span className="text-sm font-semibold text-[#111827]">Create a circle</span>
           </div>
           <input
             value={newName}
@@ -204,7 +205,7 @@ export default function SquadsPage() {
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#2E7D32] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#256628] disabled:opacity-50"
           >
             {busy === 'create' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-            Create squad
+            Create circle
           </button>
         </form>
 
@@ -226,7 +227,7 @@ export default function SquadsPage() {
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-black/[0.08] bg-white py-3 text-sm font-semibold text-[#111827] transition-colors hover:bg-black/[0.02] disabled:opacity-50"
           >
             {busy === 'join' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-            Join squad
+            Join circle
           </button>
         </form>
       </div>
@@ -276,7 +277,7 @@ export default function SquadsPage() {
       {focusingNow.length > 0 && (
         <div className="mt-7">
           <div className="mb-2 flex items-center gap-2">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[#4CAF50]" />
+            <span className="h-2 w-2 animate-pulse rounded-full bg-[#4CAF50] motion-reduce:animate-none" />
             <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#2E7D32]">In it right now</span>
           </div>
           <div className="space-y-2">
@@ -295,7 +296,7 @@ export default function SquadsPage() {
 
       {/* Recent verified sessions */}
       <div className="mt-7">
-        <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-[#9CA3AF]">Recent</div>
+        <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-[#6B7280]">Recent</div>
         {recent.length > 0 ? (
           <div className="rounded-2xl border border-black/[0.07] bg-white">
             {recent.map((f) => (
@@ -303,26 +304,26 @@ export default function SquadsPage() {
                 <Avatar id={f.member.id} name={f.member.name} />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-[#111827]">{f.member.name}</p>
-                  <p className="truncate text-xs text-[#9CA3AF]">
+                  <p className="truncate text-xs text-[#6B7280]">
                     {f.intention ? <span className="italic">&ldquo;{f.intention}&rdquo;</span> : 'Focused'}
                   </p>
                 </div>
                 <VerifiedBadge quality={f.session_quality} />
-                <span className="font-mono text-sm font-semibold text-[#2E7D32]">{clock(f.duration_s ?? 0)}</span>
+                <span className="font-mono text-sm font-semibold text-[#2E7D32]">{humanDuration(f.duration_s ?? 0)}</span>
               </div>
             ))}
           </div>
         ) : (
           <div className="rounded-2xl border border-black/[0.07] bg-white p-8 text-center">
             <p className="text-sm font-medium text-[#111827]">No sessions yet.</p>
-            <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-[#9CA3AF]">
+            <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-[#6B7280]">
               When anyone in your circle focuses, their verified time shows up here.
             </p>
           </div>
         )}
       </div>
 
-      <p className="mt-8 text-center text-xs text-[#9CA3AF]">
+      <p className="mt-8 text-center text-xs text-[#6B7280]">
         No streaks, no rankings, no totals — just your people, showing up.
       </p>
     </div>

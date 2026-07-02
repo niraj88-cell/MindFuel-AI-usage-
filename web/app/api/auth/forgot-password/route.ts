@@ -44,11 +44,13 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createClient()
 
-    const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://mindfuel.app'
+    const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://satyashift.vercel.app'
 
-    // Supabase sends the password reset email
+    // Supabase sends the password reset email. The link lands on our callback,
+    // which exchanges the code for a session server-side, then forwards to the
+    // reset form (the page itself requires that session to render the form).
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/reset-password`,
+      redirectTo: `${origin}/api/auth/callback?next=/reset-password`,
     })
 
     // Log the attempt (not the result — we don't want to reveal if email exists)

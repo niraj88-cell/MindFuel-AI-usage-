@@ -1,17 +1,15 @@
-// app/(auth)/signup/page.tsx
 'use client'
 
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Brain, Loader2, Eye, EyeOff, Check, X, ArrowRight, Shield } from 'lucide-react'
+import { ArrowRight, Check, Eye, EyeOff, Loader2, Lock, Shield, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { SatyaMark } from '@/components/brand/SatyaMark'
 import { createClient } from '@/lib/supabase/client'
 import { identifyUser, trackEvent } from '@/lib/mixpanel'
-import { AnimatedBackground } from '@/components/landing/AnimatedBackground'
-import { AnimatedBrain } from '@/components/landing/AnimatedBrain'
 
 function getPasswordStrength(pw: string) {
   let s = 0
@@ -23,21 +21,14 @@ function getPasswordStrength(pw: string) {
   return s
 }
 
-const STR_LABELS = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Excellent']
-const STR_COLORS = ['', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-emerald-500', 'bg-emerald-400']
-
-function Rule({ met, label }: { met: boolean; label: string }) {
-  return (
-    <li className={`flex items-center gap-2 text-xs ${met ? 'text-emerald-400' : 'text-zinc-600'}`}>
-      {met ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-      {label}
-    </li>
-  )
-}
+const STEPS = [
+  { label: 'Create your account', detail: 'Private from the very first second.' },
+  { label: 'Add the focus extension', detail: 'It runs ambiently in your browser — nothing to start.' },
+  { label: 'See your first verified session', detail: 'Confirmed in the background, not self-reported.' },
+]
 
 export default function SignupPage() {
   const router = useRouter()
-  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -47,15 +38,16 @@ export default function SignupPage() {
   const [success, setSuccess] = useState(false)
 
   const strength = getPasswordStrength(password)
+  const strengthLabel = password.length === 0 ? '' : strength >= 4 ? 'Strong' : strength >= 3 ? 'Good' : strength >= 2 ? 'Fair' : 'Weak'
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
     if (password.length < 8) {
-      setError('Password must be at least 8 characters')
+      setError('Password must be at least 8 characters.')
       return
     }
-    if (strength < 3) {
-      setError('Password is too weak. Include uppercase, lowercase, and a number.')
+    if (strength < 2) {
+      setError('Password needs at least 8 characters with a mix of letters and numbers.')
       return
     }
 
@@ -67,7 +59,6 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        data: { full_name: name },
         emailRedirectTo: `${window.location.origin}/onboarding`,
       },
     })
@@ -82,11 +73,10 @@ export default function SignupPage() {
     setLoading(false)
 
     if (data.user) {
-      identifyUser(data.user.id, { $name: name, $email: email });
-      trackEvent('User Signed Up');
+      identifyUser(data.user.id, { $email: email })
+      trackEvent('User Signed Up')
     }
 
-    // Only redirect if session was created automatically
     if (data.session) {
       setTimeout(() => {
         window.location.href = '/onboarding'
@@ -96,263 +86,226 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center px-4">
-        <div className="text-center p-10 max-w-md rounded-3xl bg-zinc-900/50 border border-white/10 animate-fade-in-up">
-          <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-6">
-            <Check className="w-8 h-8 text-emerald-400" />
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF8F4] px-5 text-[#111827]">
+        <div className="w-full max-w-md rounded-3xl border border-black/[0.07] bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ECFDF5] text-[#4CAF50]">
+            <Check className="h-7 w-7" />
           </div>
-          <h2 className="text-2xl font-black text-white mb-3">Check your email! 📧</h2>
-          <p className="text-sm text-zinc-400 leading-relaxed">
-            We sent a confirmation link to <span className="text-white font-bold">{email}</span>. Click the link to activate your account and start your journey.
+          <h1 className="mb-3 text-2xl font-semibold tracking-tight">Check your email</h1>
+          <p className="text-sm leading-relaxed text-[#6B7280]">
+            We sent a confirmation link to <span className="font-semibold text-[#111827]">{email}</span>. Open it to activate your account.
           </p>
           <div className="mt-8 space-y-3">
-            <Button onClick={() => router.push('/login')} className="w-full h-11 bg-white text-black hover:bg-zinc-200 rounded-xl font-bold">
-              Back to Login
+            <Button onClick={() => router.push('/login')} className="h-11 w-full rounded-2xl bg-[#111827] text-white hover:bg-[#1F2937]">
+              Back to login
             </Button>
-            <p className="text-xs text-zinc-600">Didn&apos;t receive it? Check your spam folder.</p>
+            <p className="text-xs text-[#6B7280]">If it is not in your inbox, check spam or promotions.</p>
           </div>
         </div>
-      </div>
+      </main>
     )
   }
 
   return (
-    <div className="min-h-screen bg-black flex relative overflow-hidden">
-      {/* Left Panel - Value Proposition */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        {/* Animated Background */}
-        <AnimatedBackground variant="auth" />
-        
-        <div className="relative z-10 flex flex-col justify-center px-16 py-20 w-full h-full">
-          <div className="mb-12 animate-fade-in-up">
-            <div className="flex items-center gap-4 mb-8">
-              <AnimatedBrain size={60} />
-              <span className="text-3xl font-black tracking-tight text-white">MindFuel</span>
-            </div>
-            
-            <h2 className="text-5xl font-black text-white leading-tight mb-4">
-              Start optimizing your<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-500">digital nutrition today.</span>
-            </h2>
-            <p className="text-zinc-400 text-lg max-w-md leading-relaxed font-medium">
-              It takes 30 seconds to create an account. No credit card required.
+    <main className="min-h-screen bg-[#FAF8F4] text-[#111827]">
+      <div className="grid min-h-screen lg:grid-cols-2">
+        <section className="hidden lg:flex flex-col justify-between border-r border-black/[0.06] px-16 py-12">
+          <Link href="/" className="flex items-center gap-3 w-fit">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#111827] text-white">
+              <SatyaMark size={20} />
+            </span>
+            <span className="text-2xl font-bold tracking-tight">SatyaShift</span>
+          </Link>
+
+          <div className="max-w-xl">
+            <p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-[#4CAF50]">Start in seconds</p>
+            <h1 className="mb-6 text-5xl font-semibold leading-[1.05] tracking-tight">
+              Focus you can actually prove.
+            </h1>
+            <p className="max-w-md text-lg leading-relaxed text-[#4B5563]">
+              Create your account, add the extension, and your first verified focus session appears on its own.
             </p>
           </div>
 
-          {/* Privacy Promise */}
-          <div className="mb-12 stagger-children">
-            <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 relative overflow-hidden group hover:border-white/10 transition-colors">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                  <Shield className="w-4 h-4 text-emerald-400" />
-                </div>
-                <h3 className="text-white font-bold">Your Privacy Matters</h3>
-              </div>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                Our thoughtful AI runs quietly in the background strictly to help you uncover your own patterns. Your thoughts are encrypted, private, and always yours.
-              </p>
-            </div>
-          </div>
-
-          {/* Testimonial */}
-          <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-            <p className="text-sm text-zinc-400 italic leading-relaxed mb-4">
-              &ldquo;MindFuel helped me realize I was spending 4 hours daily on content that drained my energy. Now I&apos;m more intentional about what I consume.&rdquo;
-            </p>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-400">S</div>
+          <div className="rounded-3xl border border-black/[0.06] bg-white/75 p-6">
+            <div className="mb-5 flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ECFDF5] text-[#4CAF50]">
+                <Shield className="h-5 w-5" />
+              </span>
               <div>
-                <p className="text-xs font-bold text-white">Sarah K.</p>
-                <p className="text-[10px] text-zinc-600">Product Designer</p>
+                <p className="font-semibold">Private by default</p>
+                <p className="text-sm text-[#6B7280]">No ads. Export anytime. Delete your data anytime.</p>
               </div>
             </div>
+            <div className="space-y-4">
+              {STEPS.map((step, index) => (
+                <div key={step.label} className="flex gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#F5F7F6] text-xs font-semibold text-[#4CAF50]">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold">{step.label}</p>
+                    <p className="text-sm text-[#6B7280]">{step.detail}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* Right Panel - Signup Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 relative z-10 bg-black">
-        <div className="w-full max-w-[420px] animate-fade-in-up">
-          {/* Mobile logo */}
-          <div className="lg:hidden text-center mb-10 flex flex-col items-center gap-4">
-            <AnimatedBrain size={50} />
-            <span className="text-2xl font-black text-white">MindFuel</span>
-          </div>
+        <section className="flex items-center justify-center px-5 py-10 sm:px-8">
+          <div className="w-full max-w-[430px]">
+            <div className="mb-10 lg:hidden">
+              <Link href="/" className="flex items-center gap-3 w-fit">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#111827] text-white">
+                  <SatyaMark size={20} />
+                </span>
+                <span className="text-2xl font-bold tracking-tight">SatyaShift</span>
+              </Link>
+            </div>
 
-          <div className="mb-8">
-            <h1 className="text-3xl sm:text-4xl font-black text-white mb-2">Create your account</h1>
-            <p className="text-zinc-400 font-medium">
-              Free forever. No credit card needed.
-            </p>
-          </div>
+            <div className="mb-8">
+              <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Create your account</h2>
+              <p className="mt-3 text-base text-[#6B7280]">Start free. No credit card required.</p>
+            </div>
 
-          {/* Google OAuth */}
-          <button
-            id="google-signup-button"
-            type="button"
-            onClick={async () => {
-              setGoogleLoading(true)
-              setError(null)
-              const supabase = createClient()
-              const { error: oauthError } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                  redirectTo: `${window.location.origin}/api/auth/callback`,
-                },
-              })
-              if (oauthError) {
-                setError(oauthError.message)
-                setGoogleLoading(false)
-              }
-            }}
-            disabled={googleLoading}
-            className="w-full h-12 flex items-center justify-center gap-3 bg-zinc-900/40 border border-white/10 rounded-xl text-white font-bold text-sm hover:bg-zinc-800 hover:border-white/20 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-lg"
-          >
-            {googleLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                </svg>
-                Continue with Google
-              </>
-            )}
-          </button>
+            <button
+              id="google-signup-button"
+              type="button"
+              onClick={async () => {
+                setGoogleLoading(true)
+                setError(null)
+                const supabase = createClient()
+                const { error: oauthError } = await supabase.auth.signInWithOAuth({
+                  provider: 'google',
+                  options: {
+                    redirectTo: `${window.location.origin}/api/auth/callback`,
+                  },
+                })
+                if (oauthError) {
+                  setError(oauthError.message)
+                  setGoogleLoading(false)
+                }
+              }}
+              disabled={googleLoading}
+              className="flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-black/[0.08] bg-white text-sm font-semibold text-[#111827] shadow-sm transition-colors hover:bg-[#F5F7F6] disabled:opacity-60"
+            >
+              {googleLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                  </svg>
+                  Continue with Google
+                </>
+              )}
+            </button>
 
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-8">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-[10px] text-zinc-500 font-black tracking-widest uppercase">Or</span>
-            <div className="flex-1 h-px bg-white/10" />
-          </div>
+            <div className="my-8 flex items-center gap-4">
+              <div className="h-px flex-1 bg-black/[0.08]" />
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#6B7280]">or</span>
+              <div className="h-px flex-1 bg-black/[0.08]" />
+            </div>
 
-          {/* Form */}
-          <div className="p-6 sm:p-8 bg-zinc-900/30 border border-white/5 rounded-3xl group focus-within:border-white/10 focus-within:bg-zinc-900/50 transition-all shadow-2xl">
-            <form onSubmit={handleSignup} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-xs font-black uppercase tracking-wider text-zinc-500">Full Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  autoComplete="name"
-                  className="h-12 bg-black/50 border-white/5 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signup-email" className="text-xs font-black uppercase tracking-wider text-zinc-500">Email</Label>
-                <Input
-                  id="signup-email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  className="h-12 bg-black/50 border-white/5 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signup-password" className="text-xs font-black uppercase tracking-wider text-zinc-500">Password</Label>
-                <div className="relative">
+            <form onSubmit={handleSignup} className="rounded-3xl border border-black/[0.07] bg-white p-6 shadow-sm sm:p-8">
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email" className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6B7280]">Email</Label>
                   <Input
-                    id="signup-password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Min 8 characters"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    id="signup-email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
-                    autoComplete="new-password"
-                    minLength={8}
-                    className="h-12 bg-black/50 border-white/5 rounded-xl text-white placeholder:text-zinc-600 focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all pr-12"
+                    autoComplete="email"
+                    className="h-12 rounded-2xl border-black/[0.08] bg-[#F9FAF8] text-[#111827] placeholder:text-[#9CA3AF]"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors cursor-pointer w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
                 </div>
 
-                {/* Password Strength Indicator */}
-                {password.length > 0 && (
-                  <div className="space-y-3 pt-2">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden flex gap-0.5">
-                        {[1, 2, 3, 4, 5].map((i) => (
-                          <div
-                            key={i}
-                            className={`flex-1 rounded-full transition-all duration-300 ${
-                              i <= strength ? STR_COLORS[strength] : 'bg-transparent'
-                            }`}
-                          />
-                        ))}
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password" className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6B7280]">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="signup-password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="At least 8 characters"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      autoComplete="new-password"
+                      minLength={8}
+                      className="h-12 rounded-2xl border-black/[0.08] bg-[#F9FAF8] pr-12 text-[#111827] placeholder:text-[#9CA3AF]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-[#6B7280] transition-colors hover:bg-black/[0.04] hover:text-[#111827]"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+
+                  {password.length > 0 && (
+                    <div className="flex items-center gap-3 pt-2">
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#EEF0EC]">
+                        <div
+                          className="h-full rounded-full bg-[#4CAF50] transition-all"
+                          style={{ width: `${Math.min(100, Math.max(20, strength * 20))}%` }}
+                        />
                       </div>
-                      <span className={`text-[10px] font-black uppercase tracking-widest ${
-                        strength >= 4 ? 'text-emerald-400' : strength >= 3 ? 'text-yellow-400' : 'text-zinc-600'
-                      }`}>
-                        {STR_LABELS[strength]}
-                      </span>
+                      <span className="text-xs font-semibold text-[#6B7280]">{strengthLabel}</span>
                     </div>
-                    <ul className="space-y-1">
-                      <Rule met={password.length >= 8} label="At least 8 characters" />
-                      <Rule met={/[A-Z]/.test(password)} label="One uppercase letter" />
-                      <Rule met={/[a-z]/.test(password)} label="One lowercase letter" />
-                      <Rule met={/[0-9]/.test(password)} label="One number" />
-                      <Rule met={/[^A-Za-z0-9]/.test(password)} label="One special character (optional)" />
-                    </ul>
+                  )}
+                </div>
+
+                {error && (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+                    {error}
                   </div>
                 )}
+
+                <Button
+                  id="signup-button"
+                  type="submit"
+                  className="h-12 w-full rounded-2xl bg-[#111827] text-sm font-semibold text-white hover:bg-[#1F2937]"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      Create account <ArrowRight className="h-4 w-4" />
+                    </span>
+                  )}
+                </Button>
+
+                <p className="text-center text-xs leading-relaxed text-[#6B7280]">
+                  By signing up, you agree to the Terms of Service and Privacy Policy.
+                </p>
               </div>
-
-              {error && (
-                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400 font-medium">
-                  {error}
-                </div>
-              )}
-
-              <Button
-                id="signup-button"
-                type="submit"
-                className="w-full h-12 bg-white text-black hover:bg-zinc-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] rounded-xl font-black text-sm transition-all active:scale-[0.98] mt-2"
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <span className="flex items-center gap-2">
-                    Create Free Account <ArrowRight className="w-4 h-4" />
-                  </span>
-                )}
-              </Button>
-
-              <p className="text-[10px] text-zinc-600 text-center leading-relaxed mt-4">
-                By signing up, you agree to our Terms of Service and Privacy Policy.
-              </p>
             </form>
-          </div>
 
-          <div className="mt-8 text-center">
-            <p className="text-sm text-zinc-500 font-medium">
+            <p className="mt-8 text-center text-sm text-[#6B7280]">
               Already have an account?{' '}
-              <Link href="/login" className="text-white hover:text-zinc-300 transition-colors font-bold">
-                Sign in →
+              <Link href="/login" className="font-semibold text-[#111827] hover:underline">
+                Sign in
               </Link>
             </p>
+
+            <div className="mt-8 flex items-center justify-center gap-4 text-xs font-medium text-[#6B7280]">
+              <span className="inline-flex items-center gap-1.5"><Lock className="h-3.5 w-3.5" /> No ads</span>
+              <span className="h-1 w-1 rounded-full bg-[#D1D5DB]" />
+              <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> Export anytime</span>
+            </div>
           </div>
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   )
 }

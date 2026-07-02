@@ -18,7 +18,7 @@ import { format } from 'date-fns'
 import {
   Check,
   ShieldCheck,
-  ShieldAlert,
+  Shield,
   Lock,
   EyeOff,
   Users,
@@ -52,6 +52,15 @@ function clock(totalSeconds: number) {
   const h = Math.floor(m / 60)
   const mm = String(m % 60).padStart(2, '0')
   return `${h}:${mm}`
+}
+
+// Humanized duration for headline numbers, e.g. 8040s -> "2h 14m", 2700s -> "45m".
+// Matches the dashboard's format so one concept reads one way across the app.
+function humanDuration(totalSeconds: number) {
+  const m = Math.round(totalSeconds / 60)
+  const h = Math.floor(m / 60)
+  const mm = m % 60
+  return h === 0 ? `${mm}m` : `${h}h ${mm}m`
 }
 
 // The DB constraint allows category IN ('distraction','productive','neutral').
@@ -149,14 +158,16 @@ export default function SessionDetailPage() {
   const end = new Date(start.getTime() + durationS * 1000)
   const quality = session.session_quality ?? 'unverified'
   const distraction = session.distraction_pct ?? 0
+  // Human, non-punitive status. Never surface the raw "abandoned" system word to a person.
+  const statusLabel = session.status === 'abandoned' ? 'Short session' : 'Session complete'
 
   // Honest, non-punitive reflection derived from the real result.
   const satyaLine = !verified
-    ? `We couldn't verify this one — the extension wasn't watching. It still counts as time you set aside.`
+    ? `The extension wasn't connected, so this one is yours on trust. It still counts as time you set aside.`
     : distraction < 15
-      ? `${clock(durationS)} of focus, barely a detour. A clean session.`
+      ? `${humanDuration(durationS)} of focus, barely a detour. A clean session.`
       : distraction < 50
-        ? `${clock(durationS)} in, a couple of detours you caught. Steady work.`
+        ? `${humanDuration(durationS)} in, a couple of detours you caught. Steady work.`
         : `Some drift in there — but you showed up and put in the time. That counts.`
 
   return (
@@ -169,15 +180,15 @@ export default function SessionDetailPage() {
       <div className="rounded-3xl bg-[#E8F5E9] p-6 sm:p-7">
         <div className="mb-5 flex flex-wrap gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#2E7D32]">
-            <Check className="h-3.5 w-3.5" /> Session {session.status || 'complete'}
+            <Check className="h-3.5 w-3.5" /> {statusLabel}
           </span>
           {verified ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[#2E7D32] px-3 py-1 text-xs font-semibold text-white">
               <ShieldCheck className="h-3.5 w-3.5" /> Extension verified
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FEF3C7] px-3 py-1 text-xs font-semibold text-[#B45309]">
-              <ShieldAlert className="h-3.5 w-3.5" /> Unverified
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-black/[0.05] px-3 py-1 text-xs font-semibold text-[#6B7280]">
+              <Shield className="h-3.5 w-3.5" /> Not verified
             </span>
           )}
         </div>
@@ -185,15 +196,15 @@ export default function SessionDetailPage() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-[#111827]">
-              {topDomain || session.intention || 'Focus session'}
+              {session.intention || 'Focus session'}
             </h1>
             <p className="mt-1.5 font-mono text-xs text-[#2E7D32]">
               {format(start, 'h:mmaaa')} &ndash; {format(end, 'h:mmaaa')} &middot; {format(start, 'd MMM')}
             </p>
           </div>
           <div className="text-right leading-none">
-            <div className="font-mono text-[2.75rem] font-bold text-[#1B5E20]">{clock(durationS)}</div>
-            <div className="mt-1 text-xs text-[#2E7D32]">hours of verified focus</div>
+            <div className="font-mono text-[2.75rem] font-bold text-[#1B5E20]">{humanDuration(durationS)}</div>
+            <div className="mt-1 text-xs text-[#2E7D32]">{verified ? 'of verified focus' : 'of focus time'}</div>
           </div>
         </div>
 
@@ -214,12 +225,12 @@ export default function SessionDetailPage() {
 
           <div className="rounded-2xl border border-black/[0.07] bg-white p-4">
             <div className="mb-1 flex items-center justify-between">
-              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#9CA3AF]">Where the time went</span>
-              {nudges > 0 && <span className="text-[11px] text-[#9CA3AF]">{nudges} gentle nudge{nudges > 1 ? 's' : ''}</span>}
+              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#6B7280]">Where the time went</span>
+              {nudges > 0 && <span className="text-[11px] text-[#6B7280]">{nudges} gentle nudge{nudges > 1 ? 's' : ''}</span>}
             </div>
 
             {perDomain.length === 0 ? (
-              <p className="py-2 text-xs text-[#9CA3AF]">No ambient activity was recorded for this session.</p>
+              <p className="py-2 text-xs text-[#6B7280]">No ambient activity was recorded for this session.</p>
             ) : (
               perDomain.map((row) => (
                 <div key={row.domain} className="flex items-center justify-between border-b border-black/[0.05] py-2 last:border-0">
@@ -237,24 +248,24 @@ export default function SessionDetailPage() {
             )}
 
             <div className="mt-3 flex items-center justify-between border-t border-black/[0.06] pt-3">
-              <span className="text-xs text-[#9CA3AF]">Quality &middot; your eyes only</span>
-              <span className="font-mono text-[13px] capitalize text-[#6B7280]">{quality}{verified ? ` · ${distraction}% drift` : ''}</span>
+              <span className="text-xs text-[#6B7280]">Quality &middot; your eyes only</span>
+              <span className="font-mono text-[13px] capitalize text-[#6B7280]">{quality}</span>
             </div>
           </div>
 
           <div className="mt-4 border-l-2 border-[#4CAF50] pl-4">
-            <div className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-[#9CA3AF]">Satya</div>
+            <div className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-[#6B7280]">Satya</div>
             <p className="text-[15px] italic leading-relaxed text-[#111827]" style={{ fontFamily: 'var(--font-serif)' }}>
               {satyaLine}
             </p>
           </div>
         </div>
 
-        {/* Shared with squad */}
+        {/* Shared with your circle */}
         <div className="mt-6 border-l-2 border-[#A5D6A7] pl-7 sm:mt-0">
           <div className="mb-3 flex items-center gap-1.5">
             <Users className="h-3.5 w-3.5 text-[#2E7D32]" />
-            <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#2E7D32]">Shared with your squad</span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#2E7D32]">Shared with your circle</span>
           </div>
 
           <div className="rounded-2xl border border-[#A5D6A7] bg-white p-4">
@@ -269,7 +280,7 @@ export default function SessionDetailPage() {
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-mono text-[15px] font-semibold text-[#2E7D32]">{clock(durationS)}</div>
+                <div className="font-mono text-[15px] font-semibold text-[#2E7D32]">{humanDuration(durationS)}</div>
                 {verified && (
                   <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-[#E8F5E9] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#2E7D32]">
                     <ShieldCheck className="h-3 w-3" /> verified
@@ -277,13 +288,13 @@ export default function SessionDetailPage() {
                 )}
               </div>
             </div>
-            <p className="mt-3 text-xs leading-relaxed text-[#9CA3AF]">
+            <p className="mt-3 text-xs leading-relaxed text-[#6B7280]">
               That&apos;s all they get — verified time, no site, no score.
             </p>
           </div>
 
           <div className="mt-4">
-            <div className="mb-2 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-[#9CA3AF]">
+            <div className="mb-2 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-[#6B7280]">
               <EyeOff className="h-3 w-3" /> Stays private
             </div>
             {[

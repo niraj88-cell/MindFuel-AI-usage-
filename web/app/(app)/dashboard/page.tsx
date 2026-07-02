@@ -195,13 +195,13 @@ export default function DashboardPage() {
                     <li><span className="font-semibold text-[#111827]">1.</span> Open <span className="font-mono text-[12px]">chrome://extensions</span> and turn on <span className="font-semibold">Developer mode</span> (top-right).</li>
                     <li><span className="font-semibold text-[#111827]">2.</span> Click <span className="font-semibold">Load unpacked</span> and choose the SatyaShift <span className="font-mono text-[12px]">extension</span> folder.</li>
                     <li><span className="font-semibold text-[#111827]">3.</span> Make sure you&rsquo;re signed in here, then reload this page.</li>
-                    <li className="text-[#9CA3AF]">It connects on its own — this card disappears once it sends its first activity.</li>
+                    <li className="text-[#6B7280]">It connects on its own — this card disappears once it sends its first activity.</li>
                   </ol>
                 )}
               </>
             )}
 
-            <div className="mt-3 flex items-center gap-1.5 text-[11px] text-[#9CA3AF]">
+            <div className="mt-3 flex items-center gap-1.5 text-[11px] text-[#6B7280]">
               <Lock className="h-3 w-3" /> Domain only. Never the page, content, or keystrokes.
             </div>
           </div>
@@ -225,7 +225,7 @@ export default function DashboardPage() {
       {/* Today's sessions */}
       {today.length > 0 && (
         <div className="mt-8">
-          <p className="mb-2 px-1 font-mono text-[11px] uppercase tracking-[0.12em] text-[#9CA3AF]">Today&rsquo;s sessions</p>
+          <p className="mb-2 px-1 font-mono text-[11px] uppercase tracking-[0.12em] text-[#6B7280]">Today&rsquo;s sessions</p>
           <div className="rounded-2xl border border-black/[0.07] bg-white">
             {today.map((s) => {
               const verified = !!s.session_quality && s.session_quality !== 'unverified'
@@ -239,7 +239,7 @@ export default function DashboardPage() {
                     <p className="truncate text-sm font-medium text-[#111827]">
                       {s.intention || (s.status === 'abandoned' ? 'Short session' : 'Focus session')}
                     </p>
-                    <p className="text-xs text-[#9CA3AF]">{format(new Date(s.created_at), 'h:mm a')}</p>
+                    <p className="text-xs text-[#6B7280]">{format(new Date(s.created_at), 'h:mm a')}</p>
                   </div>
                   {verified ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-[#E8F5E9] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#2E7D32]">
@@ -293,7 +293,7 @@ export default function DashboardPage() {
         </Link>
       )}
 
-      <p className="mt-8 text-center text-xs text-[#9CA3AF]">
+      <p className="mt-8 text-center text-xs text-[#6B7280]">
         Just keep working — everything here updates on its own.
       </p>
     </div>

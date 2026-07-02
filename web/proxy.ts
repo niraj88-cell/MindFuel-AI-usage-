@@ -31,14 +31,13 @@ export async function proxy(request: NextRequest) {
   // CSRF only threatens COOKIE-authenticated requests, because the browser attaches
   // cookies automatically on cross-site requests. Requests authenticated with a Bearer
   // token (Chrome extension, mobile app, server-to-server) cannot be forged cross-site —
-  // an attacker page can neither read the token nor set the Authorization header. The
-  // Stripe webhook is verified by signature. Both are exempt; everything else (the
-  // cookie-based web app) must present a same-origin Origin header.
+  // an attacker page can neither read the token nor set the Authorization header. It is
+  // exempt; everything else (the cookie-based web app) must present a same-origin
+  // Origin header.
   if (isApiRoute && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
     const hasBearer = request.headers.get('authorization')?.startsWith('Bearer ')
-    const isStripeWebhook = request.nextUrl.pathname.startsWith('/api/stripe/webhook')
 
-    if (!hasBearer && !isStripeWebhook) {
+    if (!hasBearer) {
       const origin = request.headers.get('origin')
       const host = request.headers.get('host')
 

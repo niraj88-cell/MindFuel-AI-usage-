@@ -1,56 +1,28 @@
-// app/(app)/notifications/page.tsx — Full notifications center
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { Bell, BrainCircuit, Trophy, Sparkles, TrendingUp, CheckCheck, X, RefreshCw } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { formatDistanceToNow } from 'date-fns'
+// SatyaShift — Activity.
+// SatyaShift is ambient: there is nothing to log and nothing to manage. This page is the
+// single quiet inbox — pings from your circle and anything the app has sent you — plus one
+// optional, off-by-default nudge to show up. No fake schedules, no "log now", no shame.
 
-interface Notification {
+import { useEffect, useState } from 'react'
+import { Bell, Shield, Trash2 } from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
+import { createClient } from '@/lib/supabase/client'
+import { PushNotificationManager } from '@/components/PushNotificationManager'
+
+type NotificationItem = {
   id: string
   title: string
   body: string
-  type: 'daily_coach' | 'swap_suggestion' | 'challenge' | 'streak'
+  type: string
   is_read: boolean
   created_at: string
-  metadata: any
-}
-
-const TYPE_CONFIG = {
-  daily_coach: {
-    icon: BrainCircuit,
-    color: 'text-white',
-    bg: 'bg-white/5',
-    border: 'border-white/10',
-    label: 'Daily Coach',
-  },
-  swap_suggestion: {
-    icon: RefreshCw,
-    color: 'text-white',
-    bg: 'bg-white/5',
-    border: 'border-white/10',
-    label: 'Content Swap',
-  },
-  challenge: {
-    icon: Trophy,
-    color: 'text-white',
-    bg: 'bg-white/5',
-    border: 'border-white/10',
-    label: 'Challenge',
-  },
-  streak: {
-    icon: TrendingUp,
-    color: 'text-rose-400',
-    bg: 'bg-rose-500/10',
-    border: 'border-rose-500/20',
-    label: 'Streak',
-  },
 }
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'unread'>('all')
 
   useEffect(() => {
     loadNotifications()
@@ -60,20 +32,22 @@ export default function NotificationsPage() {
     setLoading(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
 
     const { data } = await supabase
       .from('notifications')
-      .select('*')
+      .select('id, title, body, type, is_read, created_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(50)
+      .limit(30)
 
-    setNotifications(data || [])
+    setNotifications((data || []) as NotificationItem[])
     setLoading(false)
 
-    // Mark all as read after loading
-    if (data && data.some(n => !n.is_read)) {
+    if (data?.some((item) => !item.is_read)) {
       await supabase
         .from('notifications')
         .update({ is_read: true })
@@ -88,154 +62,70 @@ export default function NotificationsPage() {
     if (!user) return
 
     await supabase.from('notifications').delete().eq('id', id).eq('user_id', user.id)
-    setNotifications(prev => prev.filter(n => n.id !== id))
+    setNotifications((items) => items.filter((item) => item.id !== id))
   }
-
-  async function clearAll() {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    await supabase.from('notifications').delete().eq('user_id', user.id)
-    setNotifications([])
-  }
-
-  const filtered = filter === 'unread'
-    ? notifications.filter(n => !n.is_read)
-    : notifications
-
-  const unreadCount = notifications.filter(n => !n.is_read).length
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 pb-20 stagger-children">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-3">
-            <Bell className="w-7 h-7 text-white" />
-            Notifications
-          </h1>
-          <p className="text-zinc-400 text-sm mt-1">
-            {notifications.length === 0
-              ? 'All caught up!'
-              : `${notifications.length} notification${notifications.length !== 1 ? 's' : ''}`}
-          </p>
-        </div>
-
-        {notifications.length > 0 && (
-          <button
-            onClick={clearAll}
-            className="text-xs text-zinc-500 hover:text-rose-400 transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-800/50 border border-white/10 hover:border-rose-500/20 cursor-pointer"
-          >
-            <X className="w-3 h-3" />
-            Clear All
-          </button>
-        )}
+    <div className="mx-auto max-w-2xl space-y-6 py-2">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-[#111827]">Activity</h1>
+        <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-[#6B7280]">
+          What happened while you were away — pings from your circle, and anything SatyaShift
+          sent you. If a single gentle nudge helps you show up, turn one on. It&rsquo;s off by default.
+        </p>
       </div>
 
-      {/* Filter tabs */}
-      {notifications.length > 0 && (
-        <div className="flex gap-2">
-          {(['all', 'unread'] as const).map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all cursor-pointer ${
-                filter === f
-                  ? 'bg-white text-black text-white shadow-lg shadow-none'
-                  : 'bg-zinc-800/50 text-zinc-400 border border-white/10 hover:text-white'
-              }`}
-            >
-              {f}
-              {f === 'unread' && unreadCount > 0 && (
-                <span className="ml-1.5 bg-white/20 rounded-full px-1.5">{unreadCount}</span>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Loading */}
-      {loading && (
-        <div className="space-y-3">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-24 rounded-3xl bg-zinc-800/30 animate-shimmer" />
-          ))}
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!loading && filtered.length === 0 && (
-        <div className="text-center py-20">
-          <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6">
-            <Bell className="w-10 h-10 text-white opacity-50" />
-          </div>
-          <h3 className="text-xl font-black text-zinc-300 mb-2">
-            {filter === 'unread' ? 'All caught up!' : 'No notifications yet'}
-          </h3>
-          <p className="text-zinc-500 text-sm">
-            {filter === 'unread'
-              ? 'You have no unread notifications.'
-              : 'Your daily coach updates and insights will appear here.'}
+      {/* The one real control */}
+      <section className="rounded-3xl border border-black/[0.07] bg-white p-5">
+        <PushNotificationManager />
+        <div className="mt-4 flex items-start gap-2.5 rounded-2xl bg-[#FAF8F4] p-3">
+          <Shield className="mt-0.5 h-4 w-4 shrink-0 text-[#2E7D32]" />
+          <p className="text-[13px] leading-relaxed text-[#4B5563]">
+            A reminder should help you show up. It should never shame you or become another feed to check.
           </p>
         </div>
-      )}
+      </section>
 
-      {/* Notifications list */}
-      {!loading && filtered.length > 0 && (
-        <div className="space-y-3">
-          {filtered.map((notif, index) => {
-            const config = TYPE_CONFIG[notif.type] || TYPE_CONFIG.daily_coach
-            const Icon = config.icon
-            const timeAgo = (() => {
-              try { return formatDistanceToNow(new Date(notif.created_at), { addSuffix: true }) }
-              catch { return 'recently' }
-            })()
-
-            return (
-              <div
-                key={notif.id}
-                className={`relative group flex gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all duration-300 animate-fade-in-up ${
-                  !notif.is_read
-                    ? `${config.bg} ${config.border}`
-                    : 'bg-zinc-900/40 border-white/10'
-                }`}
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                {/* Icon */}
-                <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl ${config.bg} border ${config.border} flex items-center justify-center shrink-0`}>
-                  <Icon className={`w-5 h-5 ${config.color}`} />
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <div>
-                      <span className={`text-[9px] font-black uppercase tracking-widest ${config.color} mr-2`}>
-                        {config.label}
-                      </span>
-                      {!notif.is_read && (
-                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle" />
-                      )}
-                    </div>
-                    <span className="text-[10px] text-zinc-600 shrink-0">{timeAgo}</span>
+      {/* Quiet history of anything the app has sent */}
+      <section>
+        <p className="mb-2 px-1 font-mono text-[11px] uppercase tracking-[0.12em] text-[#6B7280]">History</p>
+        {loading ? (
+          <div className="space-y-2">
+            {[1, 2].map((item) => <div key={item} className="h-16 animate-pulse rounded-2xl bg-black/[0.04]" />)}
+          </div>
+        ) : notifications.length > 0 ? (
+          <div className="rounded-2xl border border-black/[0.07] bg-white">
+            {notifications.map((item) => (
+              <div key={item.id} className="flex gap-3 border-b border-black/[0.05] p-4 last:border-0">
+                <div className="min-w-0 flex-1">
+                  <div className="mb-0.5 flex items-start justify-between gap-3">
+                    <p className="text-sm font-semibold text-[#111827]">{item.title}</p>
+                    <p className="shrink-0 text-xs text-[#6B7280]">
+                      {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                    </p>
                   </div>
-                  <p className="text-sm font-bold text-white mb-1">{notif.title}</p>
-                  <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3">{notif.body}</p>
+                  <p className="text-[13px] leading-relaxed text-[#6B7280]">{item.body}</p>
                 </div>
-
-                {/* Delete button */}
                 <button
-                  onClick={() => deleteNotification(notif.id)}
-                  className="absolute top-3 right-3 sm:top-4 sm:right-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity w-7 h-7 sm:w-6 sm:h-6 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 rounded-lg bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-rose-500/50 cursor-pointer"
+                  onClick={() => deleteNotification(item.id)}
+                  aria-label="Delete"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[#6B7280] transition-colors hover:bg-black/[0.03] hover:text-[#B42318]"
                 >
-                  <X className="w-3 h-3" />
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
-            )
-          })}
-        </div>
-      )}
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-black/[0.07] bg-white p-8 text-center">
+            <Bell className="mx-auto mb-3 h-7 w-7 text-[#A5D6A7]" />
+            <p className="text-sm font-medium text-[#111827]">Nothing here yet.</p>
+            <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-[#6B7280]">
+              Anything SatyaShift sends you will rest here quietly. That&rsquo;s all this page is for.
+            </p>
+          </div>
+        )}
+      </section>
     </div>
   )
 }

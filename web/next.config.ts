@@ -35,6 +35,15 @@ const CSP = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
+  // Legacy MindFuel routes (deleted 2026-07-02). Old links and browser history land
+  // on Today instead of a 404. Temporary (307) so a path can be reused later.
+  async redirects() {
+    return [
+      '/log', '/coach', '/insights', '/pulse', '/challenges', '/weekly-report',
+      '/mood-scan', '/intercept', '/subscription', '/promo-simulate',
+    ].map((source) => ({ source, destination: '/dashboard', permanent: false }))
+  },
+
   async headers() {
     return [
       {

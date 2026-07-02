@@ -152,7 +152,7 @@ export default function FocusPage() {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center py-8 text-center">
         <span className="relative flex h-16 w-16 items-center justify-center">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#4CAF50] opacity-20" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#4CAF50] opacity-20 motion-reduce:animate-none" />
           <span className="relative inline-flex h-4 w-4 rounded-full bg-[#4CAF50]" />
         </span>
 
@@ -161,11 +161,11 @@ export default function FocusPage() {
           <p className="mt-2 text-sm italic text-[#6B7280]">&ldquo;{intention.trim()}&rdquo;</p>
         )}
 
-        <p className="mt-6 max-w-xs text-sm leading-relaxed text-[#9CA3AF]">
+        <p className="mt-6 max-w-xs text-sm leading-relaxed text-[#6B7280]">
           Just work like you normally would. SatyaShift is verifying this in the background. There&rsquo;s nothing to watch here.
         </p>
 
-        <p className="mt-6 font-mono text-xs text-[#9CA3AF]">
+        <p className="mt-6 font-mono text-xs text-[#6B7280]">
           Started {format(new Date(startedAt), 'h:mm a')} &middot; {humanElapsed(elapsed)} so far
         </p>
 
@@ -196,8 +196,8 @@ export default function FocusPage() {
       </div>
 
       <div className="mt-8 rounded-3xl border border-black/[0.07] bg-white p-5">
-        <label htmlFor="intention" className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-[#9CA3AF]">
-          What are you working on? <span className="font-normal normal-case tracking-normal text-[#9CA3AF]">(optional)</span>
+        <label htmlFor="intention" className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-[#6B7280]">
+          What are you working on? <span className="font-normal normal-case tracking-normal text-[#6B7280]">(optional)</span>
         </label>
         <input
           id="intention"
@@ -207,8 +207,8 @@ export default function FocusPage() {
           placeholder="Deep work on the redesign"
           className="w-full rounded-2xl border border-black/[0.08] bg-[#FAF8F4] px-4 py-3 text-sm text-[#111827] outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#4CAF50]"
         />
-        <p className="mt-2 text-xs text-[#9CA3AF]">
-          Only your squad sees this — in your words. Your sites stay private either way.
+        <p className="mt-2 text-xs text-[#6B7280]">
+          Only your circle sees this — in your words. Your sites stay private either way.
         </p>
 
         {error && <p className="mt-3 text-sm text-[#B45309]">{error}</p>}
@@ -225,7 +225,7 @@ export default function FocusPage() {
 
       {history.length > 0 && (
         <div className="mt-8">
-          <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Recent sessions</p>
+          <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280]">Recent sessions</p>
           <div className="rounded-2xl border border-black/[0.07] bg-white">
             {history.map((s) => {
               const verified = !!s.session_quality && s.session_quality !== 'unverified'
@@ -239,7 +239,7 @@ export default function FocusPage() {
                     <p className="truncate text-sm font-medium text-[#111827]">
                       {s.intention || (s.status === 'abandoned' ? 'Short session' : 'Focus session')}
                     </p>
-                    <p className="text-xs text-[#9CA3AF]">{format(new Date(s.created_at), 'd MMM · h:mm a')}</p>
+                    <p className="text-xs text-[#6B7280]">{format(new Date(s.created_at), 'd MMM · h:mm a')}</p>
                   </div>
                   {verified ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-[#E8F5E9] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#2E7D32]">
