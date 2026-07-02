@@ -44,6 +44,10 @@ export interface Database {
           timezone?: string | null
           deleted_at?: string | null
           onboarding_step?: number | null
+          // Subscription foundation (migration 016) — status derived in lib/subscription.ts.
+          trial_ends_at?: string | null
+          subscription_plan?: 'monthly' | 'annual' | null
+          subscribed_at?: string | null
         }
         Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'updated_at'> & {
           created_at?: string

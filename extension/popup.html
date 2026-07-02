@@ -11,7 +11,7 @@
     .tile { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px;
       border-radius: 10px; background: #111827; color: #fff; flex: 0 0 auto; }
     .name { font-weight: 600; font-size: 15px; line-height: 1.1; }
-    .sub { font-size: 10px; color: #9CA3AF; margin-top: 2px; letter-spacing: 0.03em; }
+    .sub { font-size: 10px; color: #6B7280; margin-top: 2px; letter-spacing: 0.03em; }
     .status { display: flex; align-items: flex-start; gap: 10px; padding: 12px;
       border: 1px solid rgba(0,0,0,0.07); border-radius: 12px; background: #fff; }
     .dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 4px; flex: 0 0 auto; background: #9CA3AF; }
@@ -20,7 +20,7 @@
     .dot.off { background: #9CA3AF; }
     .state { font-size: 13px; font-weight: 600; }
     .detail { font-size: 12px; color: #6B7280; margin-top: 2px; line-height: 1.45; }
-    .synced { margin-top: 10px; min-height: 14px; font-size: 11px; color: #9CA3AF; text-align: center; }
+    .synced { margin-top: 10px; min-height: 14px; font-size: 11px; color: #6B7280; text-align: center; }
     .note { margin-top: 10px; font-size: 11.5px; line-height: 1.45; padding: 9px 11px; border-radius: 10px;
       background: #FEF3C7; color: #92400E; display: none; }
     .btn { display: block; box-sizing: border-box; width: 100%; text-align: center; text-decoration: none;
@@ -31,7 +31,7 @@
     .btn:disabled { opacity: 0.55; cursor: default; }
     .toggle { width: 100%; margin-top: 8px; background: #fff; color: #6B7280; border: 1px solid rgba(0,0,0,0.1);
       font: inherit; font-size: 12.5px; font-weight: 600; padding: 9px 10px; border-radius: 10px; cursor: pointer; }
-    .priv { margin-top: 12px; font-size: 11px; color: #9CA3AF; display: flex; align-items: center; gap: 5px; }
+    .priv { margin-top: 12px; font-size: 11px; color: #6B7280; display: flex; align-items: center; gap: 5px; }
   </style>
 </head>
 <body>
@@ -51,8 +51,8 @@
     </div>
 
     <div class="status">
-      <span id="dot" class="dot off"></span>
-      <span>
+      <span id="dot" class="dot off" aria-hidden="true"></span>
+      <span aria-live="polite">
         <div id="state" class="state">Checking&hellip;</div>
         <div id="detail" class="detail">Reading your session.</div>
       </span>
