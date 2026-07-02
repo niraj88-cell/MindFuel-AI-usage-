@@ -1,10 +1,10 @@
-# Chrome Web Store submission kit — SatyaShift v2.6.1
+# Chrome Web Store submission kit — SatyaShift v2.6.2
 
 Everything is prepared; only the Web Store dashboard steps need a human (Google sign-in +
 a one-time $5 fee). Follow top to bottom. Total time: ~20 minutes, then Google review
 (usually 1–3 days).
 
-The upload file is **`dist/satyashift-extension-2.6.1.zip`** (already built; its manifest
+The upload file is **`dist/satyashift-extension-2.6.2.zip`** (already built; its manifest
 has the localhost dev entries stripped — the repo `extension/` folder keeps them for
 local development).
 
@@ -25,7 +25,7 @@ powershell -Command "Compress-Archive -Path C:\MindFuel\dist\webstore-staging\* 
 
 ## Step 2 — upload
 
-1. Click **New item** → upload `dist/satyashift-extension-2.6.1.zip`.
+1. Click **New item** → upload `dist/satyashift-extension-2.6.2.zip`.
 2. The dashboard opens the draft listing. Fill the tabs below.
 
 ## Step 3 — Store listing tab (copy-paste)
