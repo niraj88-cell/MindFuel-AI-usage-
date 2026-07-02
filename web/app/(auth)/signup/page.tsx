@@ -286,7 +286,8 @@ export default function SignupPage() {
                 </Button>
 
                 <p className="text-center text-xs leading-relaxed text-[#6B7280]">
-                  By signing up, you agree to the Terms of Service and Privacy Policy.
+                  By signing up, you agree to our{' '}
+                  <Link href="/privacy" className="font-semibold text-[#111827] hover:underline">Privacy Policy</Link>.
                 </p>
               </div>
             </form>

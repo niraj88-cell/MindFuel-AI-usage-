@@ -11,12 +11,7 @@ import Link from 'next/link'
 import { format, startOfDay } from 'date-fns'
 import { Play, ShieldCheck, Shield, ChevronRight, Users, Puzzle, Lock, UserPlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-
-// The extension isn't on the Chrome Web Store yet. For now the connect card shows
-// dev-mode "Load unpacked" steps; when published, set EXTENSION_STORE_URL and flip
-// PUBLISHED to render a one-click "Add to Chrome" button instead. One line changes.
-const PUBLISHED = false
-const EXTENSION_STORE_URL = '' // e.g. https://chrome.google.com/webstore/detail/<id>
+import { EXTENSION_PUBLISHED, EXTENSION_STORE_URL } from '@/lib/extension'
 
 interface SessionRow {
   id: string
@@ -173,7 +168,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {PUBLISHED && EXTENSION_STORE_URL ? (
+            {EXTENSION_PUBLISHED ? (
               <a
                 href={EXTENSION_STORE_URL}
                 target="_blank"

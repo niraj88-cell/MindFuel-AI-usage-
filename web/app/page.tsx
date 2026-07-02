@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { SatyaMark } from '@/components/brand/SatyaMark'
 import { WaitlistForm } from '@/components/landing/WaitlistForm'
 
@@ -38,7 +39,10 @@ export default function LandingPage() {
           On your own, it&rsquo;s a witness you can&rsquo;t fool. With friends, you keep each other going.
         </p>
         <p className="mt-3 text-[13px] leading-relaxed text-[#6B7280]">
-          It only ever sees the domains you visit. Never your screen, never what you type.
+          It only ever sees the domains you visit. Never your screen, never what you type.{' '}
+          <Link href="/privacy" className="font-medium text-[#111827] underline-offset-2 hover:underline">
+            Read the full promise
+          </Link>.
         </p>
 
         <WaitlistForm />
