@@ -5,6 +5,38 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-02 — Phase 1 SHIPPED (agent side): onboarding install step, /privacy, Web Store kit (web DEPLOYED; store upload = user)
+
+Same session as Phase 0 below. Commit `abff2c8`, deployed + verified live
+(/privacy 200 public, landing links it, sitemap updated).
+
+- **`web/lib/extension.ts` is THE flip switch:** paste the Chrome Web Store listing URL
+  into `EXTENSION_STORE_URL` and redeploy — onboarding step 2 AND the Today connect card
+  both turn into one-click "Add to Chrome". Until then both show the honest
+  founding-preview manual install.
+- **Onboarding is now: privacy boundary → install extension → Today.** The install step
+  (the product's most important action) was previously absent from first-run entirely.
+  Skippable ("Take me to Today"); Today's connect card remains the fallback.
+- **/privacy** (public in proxy `isPublicRoute` — remember the middleware is
+  default-deny): plain-words policy; discloses Supabase/Vercel and that Mixpanel runs in
+  the WEB APP only (`NEXT_PUBLIC_MIXPANEL_TOKEN` is set in prod), extension has no
+  analytics. Linked from signup consent line + landing. NOTE: a privacy-first product
+  running Mixpanel is worth revisiting — flagged to user as an optional removal.
+- **Web Store package + kit:** `dist/satyashift-extension-2.6.1.zip` (localhost host
+  permissions/matches stripped from the STORE manifest only; repo manifest keeps them
+  for dev). `docs/webstore-submission.md` = full kit: listing copy, permission
+  justifications (incl. the honest web-history disclosure), data-usage checkboxes,
+  recommended UNLISTED visibility for preview, repackaging one-liner, and what to do
+  after approval.
+- **Needs the user (harness cannot):** Web Store dev account ($5) + upload the zip +
+  paste listing copy + 1–3 screenshots (1280×800) + submit. Then paste the approved URL
+  into `web/lib/extension.ts` and redeploy.
+- **Next after store approval:** Phase 2 — popup presence line, post-nudge "Welcome
+  back", verification seal on end, squad-UI decision (delete or rebuild the orphaned
+  dark cluster), Focus-idle merge into Today.
+
+---
+
 ## 2026-07-02 — Phase 0 SHIPPED: ghost product deleted, subscription foundation, password-reset fixed (web DEPLOYED, ext v2.6.1)
 
 Implemented Phase 0 of `docs/experience-audit-2026-07-02.md` plus the subscription
