@@ -5,6 +5,30 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-02 — Product experience audit (analysis only, NOTHING implemented)
+
+Full experience audit written to `docs/experience-audit-2026-07-02.md` (all 13 deliverables:
+IA, nav, popup UX, dashboard UX, cut/merge/keep lists, micro-interactions, a11y, trust,
+phased roadmap, challenge log). Grounded in the real code (popup, app shell, Today, Focus,
+Squad, onboarding, session detail). Key findings, ranked:
+1. **Install cliff** — load-unpacked is the #1 blocker; Chrome Web Store publication gates
+   everything else (Phase 1).
+2. **Ghost product** — ~10 orphaned legacy MindFuel routes still ship (`/log /coach /insights
+   /pulse /challenges /weekly-report /mood-scan /intercept /subscription /promo-simulate`),
+   contradict zero-manual-input + privacy promises. Delete/redirect (Phase 0).
+3. **Popup has no squad presence** (planned Phase 2 never started) — one presence line is the
+   highest-leverage addition.
+4. **verified/unverified vocabulary never taught**; onboarding step 2 (persona incl. "Blunt")
+   should move to Settings, install step should replace it; "Reminders"→"Activity",
+   "Squad"→"Circle"; mobile bottom bar duplicates /focus; `#9CA3AF` on cream fails WCAG AA;
+   reduced-motion missing on infinite pulses.
+Roadmap: Phase 0 trust-bleed fixes → Phase 1 Web Store + onboarding rework → Phase 2 popup
+presence + nudge "Welcome back" + Focus-idle merge into Today → Phase 3 warmth (Monday line,
+overlap noticing, data ledger). Next session: start Phase 0 (delete legacy routes, renames,
+contrast pass). No code changed this session.
+
+---
+
 ## 2026-07-02 — Behavior redesign pass: media-aware tracking, nudge grace, session lifecycle, ping delivery, focus audio (ext v2.6.0 + web DEPLOYED)
 
 Full product-behavior audit against the pipeline (session → tracking → detection → nudge →
