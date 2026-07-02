@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {
   hostnameOf, matchesDomain, isSensitive, isOwnApp, categoryFor,
   capDuration, parseSupabaseSession, selectAuthCookie, tokenExpiresSoon,
-  nextNudge, NUDGE_AFTER_MIN,
+  nextNudge, NUDGE_AFTER_MIN, NUDGE_GRACE_TICKS, nudgeCopy, gateAllowsCounting,
   MAX_DWELL_S,
 } from './core.js';
 
@@ -22,6 +22,21 @@ test('hostnameOf: strips www, lowercases, rejects non-web schemes', () => {
   assert.equal(hostnameOf('view-source:https://x.com'), null);
   assert.equal(hostnameOf(''), null);
   assert.equal(hostnameOf('not a url'), null);
+});
+
+test('nudgeCopy: gentle, non-judgmental, includes domain + minutes, rotates, no shame words', () => {
+  const a = nudgeCopy('youtube.com', 7, 7);
+  assert.equal(a.title, 'A quiet check-in');
+  assert.match(a.message, /youtube\.com/);
+  assert.match(a.message, /7/);
+  // Tone guard: never the old callout/shaming language.
+  for (const seed of [0, 1, 2, 7, 42]) {
+    const { message } = nudgeCopy('reddit.com', 5, seed);
+    assert.doesNotMatch(message, /still on|keep scrolling|stop|wasting|should/i);
+  }
+  // Rotation: different seeds can produce different phrasings.
+  const set = new Set([0, 1, 2].map((s) => nudgeCopy('x.com', 5, s).message));
+  assert.equal(set.size, 3);
 });
 
 test('matchesDomain: exact + subdomain only, never substring', () => {
@@ -156,16 +171,61 @@ test('nextNudge: respects cooldown (no second nudge inside the quiet window)', (
   assert.equal(r.fire, false);
 });
 
-test('nextNudge: resets streak off distraction, on idle, and on domain change', () => {
-  const base = { domain: 'facebook.com', minutes: 4, lastNudgeAt: 0 };
-  // Productive domain -> reset, no fire.
+test('nextNudge: resets streak off distraction and on domain change', () => {
+  const base = { domain: 'facebook.com', minutes: 4, gap: 0, lastNudgeAt: 0 };
+  // Attention landed somewhere else (counting on a productive domain) -> reset, no fire.
   assert.deepEqual(
     nextNudge(base, { domain: 'github.com', counting: true, category: 'productive', now: 5 * 60000 }),
-    { state: { domain: null, minutes: 0, lastNudgeAt: 0 }, fire: false });
-  // Not counting (idle/blur/pause) -> reset, no fire.
-  assert.equal(nextNudge(base, { domain: 'facebook.com', counting: false, category: 'distraction', now: 5 * 60000 }).fire, false);
+    { state: { domain: null, minutes: 0, gap: 0, lastNudgeAt: 0 }, fire: false });
   // Switch to a different distraction domain -> streak restarts at 1.
   assert.equal(nextNudge(base, { domain: 'reddit.com', counting: true, category: 'distraction', now: 5 * 60000 }).state.minutes, 1);
+});
+
+test('nextNudge: a short non-counting gap pauses the streak instead of erasing it', () => {
+  const cfg = { afterMin: 5, cooldownMin: 10, graceTicks: 2 };
+  const dist = (now) => ({ domain: 'reddit.com', counting: true, category: 'distraction', now });
+  const gap = (now) => ({ domain: 'reddit.com', counting: false, category: 'distraction', now });
+
+  // 4 attended minutes, then a 2-tick gap (alt-tab), then back: fires on the 5th attended minute.
+  let s = { domain: null, minutes: 0, gap: 0, lastNudgeAt: 0 };
+  for (let m = 1; m <= 4; m++) s = nextNudge(s, dist(m * 60000), cfg).state;
+  assert.equal(s.minutes, 4);
+  s = nextNudge(s, gap(5 * 60000), cfg).state;   // gap tick 1
+  s = nextNudge(s, gap(6 * 60000), cfg).state;   // gap tick 2 (still within grace)
+  assert.equal(s.minutes, 4, 'streak held through the grace window');
+  const r = nextNudge(s, dist(7 * 60000), cfg);
+  assert.equal(r.fire, true, 'fires on the 5th attended minute after the gap');
+
+  // A gap LONGER than the grace resets the streak.
+  let s2 = { domain: 'reddit.com', minutes: 4, gap: 0, lastNudgeAt: 0 };
+  for (let t = 1; t <= 3; t++) s2 = nextNudge(s2, gap(t * 60000), cfg).state; // 3 > graceTicks
+  assert.equal(s2.domain, null);
+  assert.equal(s2.minutes, 0);
+});
+
+test('nextNudge: grace default is short and sane', () => {
+  assert.ok(NUDGE_GRACE_TICKS >= 1 && NUDGE_GRACE_TICKS <= 3);
+});
+
+test('gateAllowsCounting: BALANCED policy with the media exemption', () => {
+  const active = { blurred: false, idleState: 'active' };
+  const idle = { blurred: false, idleState: 'idle' };
+  const locked = { blurred: false, idleState: 'locked' };
+  const blurred = { blurred: true, idleState: 'active' };
+
+  assert.equal(gateAllowsCounting(active, {}), true);
+  // The core fix: watching a video (no input, tab audible) still counts as attention...
+  assert.equal(gateAllowsCounting(idle, { audible: true }), true);
+  // ...but silent idle, a locked machine, and a blurred window never do.
+  assert.equal(gateAllowsCounting(idle, { audible: false }), false);
+  assert.equal(gateAllowsCounting(locked, { audible: true }), false);
+  assert.equal(gateAllowsCounting(blurred, { audible: true }), false);
+  // Paused wins over everything.
+  assert.equal(gateAllowsCounting(active, { audible: true, paused: true }), false);
+  // Tolerates the pre-2.6 gate shape ({ idle: bool }).
+  assert.equal(gateAllowsCounting({ blurred: false, idle: true }, { audible: false }), false);
+  assert.equal(gateAllowsCounting({ blurred: false, idle: false }, {}), true);
+  assert.equal(gateAllowsCounting(undefined, {}), true);
 });
 
 test('nextNudge: default threshold is exported and sane', () => {

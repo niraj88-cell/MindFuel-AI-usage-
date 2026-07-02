@@ -19,7 +19,7 @@ import {
   MIN_DWELL_S, MAX_QUEUE, MAX_BATCH,
   hostnameOf, isSensitive, isOwnApp, categoryFor,
   capDuration, parseSupabaseSession, selectAuthCookie, tokenExpiresSoon,
-  nextNudge,
+  nextNudge, nudgeCopy, gateAllowsCounting,
 } from './core.js';
 
 const PRODUCTION_URL = 'https://satyashift.vercel.app';
@@ -39,12 +39,14 @@ const LAST_SYNC_KEY = 'last_sync';
 const LAST_ERROR_KEY = 'last_error';
 const TOKEN_KEY = 'satyashift_token';      // extension-refreshed session (H3)
 const FORCE_REFRESH_KEY = 'force_refresh'; // set after a 401 so the next cycle refreshes
+const SESSION_KEY = 'focus_session';       // { id, startedAt } — active deep session started here
 
 // chrome.storage.session — cleared when the browser closes.
 const ACTIVE_KEY = 'active';               // { domain, segmentStart, accumulatedMs }
 const GATE_KEY = 'gate';                   // { blurred, idle }
 const NUDGE_STATE_KEY = 'nudge_state';     // { domain, minutes, lastNudgeAt } — distraction streak
 const NUDGE_TARGET_PREFIX = 'nudge_tgt_';  // per-notification: the domain to deep-link into /intercept
+const POPUP_OPEN_KEY = 'popup_open';       // true while the action popup is on-screen (Windows blur guard)
 
 // Web Locks (available in service workers) serialize concurrent handlers.
 const LOCK_STATE = 'satyashift_state';     // guards active-tab state + queue writes
@@ -62,17 +64,18 @@ async function getBaseUrl() {
 // Active-tab timing state (segment model)
 //   segmentStart === null  -> paused (its time already banked into accumulatedMs)
 //   segmentStart === <ts>  -> counting since that timestamp
-// Transitions (tab switch, blur, idle, pause) all wake the worker and are applied here.
+//   audible                -> the tab is playing sound (drives the media exemption to idle)
+// Transitions (tab switch, blur, idle, audio start/stop, pause) all wake the worker here.
 // ---------------------------------------------------------------------------
 async function getActive() {
   const { [ACTIVE_KEY]: a } = await chrome.storage.session.get(ACTIVE_KEY);
-  return a || { domain: null, segmentStart: null, accumulatedMs: 0 };
+  return a || { domain: null, segmentStart: null, accumulatedMs: 0, audible: false };
 }
 async function setActive(a) { await chrome.storage.session.set({ [ACTIVE_KEY]: a }); }
 
 async function getGate() {
   const { [GATE_KEY]: g } = await chrome.storage.session.get(GATE_KEY);
-  return g || { blurred: false, idle: false };
+  return g || { blurred: false, idleState: 'active' };
 }
 async function setGate(g) { await chrome.storage.session.set({ [GATE_KEY]: g }); }
 
@@ -80,11 +83,11 @@ async function isPaused() {
   const { [PAUSED_KEY]: p } = await chrome.storage.local.get(PAUSED_KEY);
   return !!p;
 }
-// We only accrue focus time when the window is focused, the machine is active, and the
-// user hasn't paused tracking.
-async function shouldCount() {
-  const g = await getGate();
-  return !g.blurred && !g.idle && !(await isPaused());
+// We only accrue focus time when the window is focused, the machine is active (or the active
+// tab is audibly playing — watching a video is attention without input), and the user hasn't
+// paused tracking. The exact policy is the pure, tested gateAllowsCounting in core.js.
+async function shouldCount(a) {
+  return gateAllowsCounting(await getGate(), { audible: !!(a && a.audible), paused: await isPaused() });
 }
 
 function elapsedMs(a, now) {
@@ -111,18 +114,21 @@ async function finalizeActive() {
     domain: a.domain,
     accumulatedMs: 0,
     segmentStart: a.segmentStart != null ? now : null, // preserve running/paused state
+    audible: !!a.audible,
   });
 }
 
-async function startTiming(domain) {
-  await setActive({ domain, accumulatedMs: 0, segmentStart: (await shouldCount()) ? Date.now() : null });
+async function startTiming(domain, audible = false) {
+  const a = { domain, accumulatedMs: 0, segmentStart: null, audible: !!audible };
+  a.segmentStart = (await shouldCount(a)) ? Date.now() : null;
+  await setActive(a);
 }
 
 // Pause or resume the running segment to match the current gate.
 async function applyGate() {
   const a = await getActive();
   if (!a.domain) return;
-  const counting = await shouldCount();
+  const counting = await shouldCount(a);
   const now = Date.now();
   if (counting && a.segmentStart == null) {
     await setActive({ ...a, segmentStart: now });
@@ -131,6 +137,7 @@ async function applyGate() {
       domain: a.domain,
       accumulatedMs: (a.accumulatedMs || 0) + (now - a.segmentStart),
       segmentStart: null,
+      audible: !!a.audible,
     });
   }
 }
@@ -146,20 +153,42 @@ async function handleTab(tabId) {
   await withStateLock(async () => {
     await finalizeActive(); // bank whatever we were timing before the context switch
     if (!h || tab.incognito || isSensitive(h) || isOwnApp(h)) {
-      await setActive({ domain: null, segmentStart: null, accumulatedMs: 0 });
+      await setActive({ domain: null, segmentStart: null, accumulatedMs: 0, audible: false });
       return;
     }
-    await startTiming(h);
+    await startTiming(h, tab.audible);
+  });
+}
+
+// The active tab started or stopped playing sound. This drives the media exemption: an
+// audible tab keeps counting through chrome.idle's 'idle' (watching a video is attention
+// without input), and when the sound stops the normal idle gate takes over again.
+async function handleAudible(tab) {
+  const h = hostnameOf(tab.url || '');
+  await withStateLock(async () => {
+    const a = await getActive();
+    if (!a.domain || a.domain !== h) return; // not the tab we're timing
+    await setActive({ ...a, audible: !!tab.audible });
+    await applyGate();
   });
 }
 
 chrome.tabs.onActivated.addListener(({ tabId }) => handleTab(tabId));
 chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
   if (info.status === 'complete' && tab.active) handleTab(tabId);
+  else if (info.audible !== undefined && tab.active) handleAudible(tab);
 });
 
 async function handleFocusChange(windowId) {
   const blurred = windowId === chrome.windows.WINDOW_ID_NONE;
+  // Opening our own action popup makes Chrome report WINDOW_ID_NONE on some platforms (notably
+  // Windows). That is the user glancing at our popup, NOT leaving the browser — so while the popup
+  // is open we ignore a blur. Otherwise merely checking the popup would pause timing and show
+  // "Waiting for a focused tab" (the exact symptom users reported). The popup port sets this flag.
+  if (blurred) {
+    const { [POPUP_OPEN_KEY]: popupOpen } = await chrome.storage.session.get(POPUP_OPEN_KEY);
+    if (popupOpen) return;
+  }
   await withStateLock(async () => {
     await setGate({ ...(await getGate()), blurred });
     await applyGate();
@@ -176,9 +205,10 @@ chrome.windows.onFocusChanged.addListener(handleFocusChange);
 
 chrome.idle.setDetectionInterval(IDLE_SECONDS);
 chrome.idle.onStateChanged.addListener((state) => {
-  const idle = state !== 'active'; // 'idle' (no input for 5 min) or 'locked'
+  // 'active' | 'idle' (no input for 5 min) | 'locked'. We keep the distinction: 'idle' is
+  // exempted for an audibly-playing tab (media), 'locked' always pauses (gateAllowsCounting).
   withStateLock(async () => {
-    await setGate({ ...(await getGate()), idle });
+    await setGate({ ...(await getGate()), idleState: state });
     await applyGate();
   });
 });
@@ -328,13 +358,15 @@ async function fireNudge(domain, minutes) {
   if (!chrome.notifications) return; // permission missing (shouldn't happen — declared in manifest)
   const id = `${NUDGE_TARGET_PREFIX}${Date.now()}`;
   await chrome.storage.session.set({ [id]: domain }); // remember where to send them on click
+  const { title, message } = nudgeCopy(domain, minutes, minutes);
   try {
     await chrome.notifications.create(id, {
       type: 'basic',
       iconUrl: 'icon128.png',
-      title: `Still on ${domain}?`,
-      message: `You've been on ${domain} for about ${minutes} min. Take a breath and choose on purpose.`,
-      buttons: [{ title: 'Refocus' }, { title: 'Keep scrolling' }],
+      title,
+      message,
+      // "Return to focus" opens the intercept flow; "Stay, on purpose" honors their choice and closes.
+      buttons: [{ title: 'Return to focus' }, { title: 'Stay, on purpose' }],
       priority: 2,
     });
   } catch { /* notifications unavailable — skip silently */ }
@@ -452,10 +484,42 @@ async function ensureAlarm() {
 async function seedActiveTab() {
   try {
     if ((await getActive()).domain) return;
-    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    // Prefer the last-focused normal window's active tab. When the popup holds focus this query can
+    // come back empty, so fall back to any active tab in a normal window.
+    let [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    if (!tab) [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab) {
+      const tabs = await chrome.tabs.query({ active: true });
+      tab = tabs.find((t) => t.url && /^https?:/.test(t.url)) || tabs[0];
+    }
     if (tab?.id != null) await handleTab(tab.id);
   } catch { /* no focused window / tab closed — ignore */ }
 }
+
+// Re-derive the blur gate from the real window state. Used after the popup closes, since a
+// popup-induced blur was ignored while it was open — now we need the true focus state back.
+async function reconcileFocus() {
+  let focused = false;
+  try {
+    const win = await chrome.windows.getLastFocused({ windowTypes: ['normal'] });
+    focused = !!(win && win.focused);
+  } catch { focused = false; }
+  await withStateLock(async () => {
+    await setGate({ ...(await getGate()), blurred: !focused });
+    await applyGate();
+  });
+}
+
+// The popup opens a long-lived port so the worker knows it is on-screen. While it is, a
+// WINDOW_ID_NONE focus change is treated as popup-induced rather than "left the browser"
+// (see handleFocusChange). On disconnect (popup closed) we re-derive the real focus state.
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name !== 'popup') return;
+  chrome.storage.session.set({ [POPUP_OPEN_KEY]: true });
+  port.onDisconnect.addListener(() => {
+    chrome.storage.session.remove(POPUP_OPEN_KEY).then(reconcileFocus);
+  });
+});
 
 chrome.runtime.onInstalled.addListener((details) => {
   ensureAlarm();
@@ -466,7 +530,7 @@ chrome.runtime.onInstalled.addListener((details) => {
 });
 chrome.runtime.onStartup.addListener(() => { ensureAlarm(); seedActiveTab(); });
 chrome.alarms.onAlarm.addListener((a) => {
-  if (a.name === FLUSH_ALARM) flush();
+  if (a.name === FLUSH_ALARM) { reconcileSession(); flush(); }
   else if (a.name === NUDGE_ALARM) checkNudge();
 });
 
@@ -480,14 +544,75 @@ async function setBadge(paused) {
   } catch { /* action may be unavailable during teardown */ }
 }
 
+// ---------------------------------------------------------------------------
+// Deep session (started/ended from the popup). The session lives server-side in focus_sessions;
+// we only keep { id, startedAt } locally so the popup can show it and survive a worker restart.
+// Verification is free: the same passive domain_logs we already flush are what /api/focus/stop
+// reads to compute the session's quality. Bearer-authed, so it's exempt from the CSRF origin gate.
+// ---------------------------------------------------------------------------
+const SESSION_MAX_MS = 4 * 60 * 60 * 1000; // matches the server's forgotten-session cap
+
+async function getSession() {
+  const { [SESSION_KEY]: s } = await chrome.storage.local.get(SESSION_KEY);
+  return s || null;
+}
+
+// A session the user forgot to end (closed the laptop, walked away) must not show
+// "In deep work" forever. Past the same 4h cap the server uses, end it — the server
+// marks it abandoned/capped, and the popup returns to idle honestly.
+async function reconcileSession() {
+  const s = await getSession();
+  if (s && s.startedAt && Date.now() - s.startedAt > SESSION_MAX_MS) await stopSession();
+}
+
+async function startSession() {
+  const token = await getAccessToken();
+  if (!token) return { error: 'not_signed_in' };
+  let res;
+  try {
+    res = await fetch(`${await getBaseUrl()}/api/focus/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({}), // no intention, no squad_id => the helper notifies ALL of your squads
+    });
+  } catch { return { error: 'offline' }; }
+  if (!res.ok) return { error: `http_${res.status}` };
+  const data = await res.json().catch(() => null);
+  if (!data?.session_id) return { error: 'bad_response' };
+  const session = {
+    id: data.session_id,
+    startedAt: data.started_at ? new Date(data.started_at).getTime() : Date.now(),
+  };
+  await chrome.storage.local.set({ [SESSION_KEY]: session });
+  return { session };
+}
+
+async function stopSession() {
+  const current = await getSession();
+  const token = await getAccessToken();
+  if (token) {
+    try {
+      await fetch(`${await getBaseUrl()}/api/focus/stop`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(current?.id ? { session_id: current.id } : {}),
+      });
+    } catch { /* clear locally regardless so the UI is never stuck in a session */ }
+  }
+  await chrome.storage.local.remove(SESSION_KEY);
+  return { session: null };
+}
+
 async function buildStatus() {
   const store = await chrome.storage.local.get(
     [QUEUE_KEY, ENV_KEY, LAST_SYNC_KEY, LAST_ERROR_KEY, PAUSED_KEY],
   );
   const active = await getActive();
+  const session = await getSession();
   const token = await getAccessToken().catch(() => null);
   const err = store[LAST_ERROR_KEY] || null;
   return {
+    session,
     env: store[ENV_KEY] === 'dev' ? 'dev' : 'prod',
     baseUrl: await getBaseUrl(),
     signedIn: !!token,
@@ -519,11 +644,29 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
   if (msg?.type === 'GET_STATUS') {
-    seedActiveTab().then(buildStatus).then(sendResponse); // start timing the current tab if idle
+    (async () => {
+      // The popup is now on-screen. Undo any popup-induced blur so a glance never reads as paused,
+      // then start timing the current tab if we weren't already.
+      await withStateLock(async () => { await setGate({ ...(await getGate()), blurred: false }); await applyGate(); });
+      await seedActiveTab();
+      await reconcileSession(); // never show a forgotten session as "In deep work"
+      sendResponse(await buildStatus());
+    })();
     return true;
   }
   if (msg?.type === 'FLUSH_NOW') {
     flush().then(buildStatus).then(sendResponse);
+    return true;
+  }
+  if (msg?.type === 'START_SESSION') {
+    (async () => {
+      const r = await startSession();
+      sendResponse({ ...(await buildStatus()), actionError: r.error || null });
+    })();
+    return true;
+  }
+  if (msg?.type === 'STOP_SESSION') {
+    stopSession().then(buildStatus).then(sendResponse);
     return true;
   }
   if (msg?.type === 'SET_PAUSED') {

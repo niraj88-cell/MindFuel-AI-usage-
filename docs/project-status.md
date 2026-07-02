@@ -5,6 +5,199 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-02 — Behavior redesign pass: media-aware tracking, nudge grace, session lifecycle, ping delivery, focus audio (ext v2.6.0 + web DEPLOYED)
+
+Full product-behavior audit against the pipeline (session → tracking → detection → nudge →
+squad → history). Verified live first: ingest healthy (40 domain_logs/48h, 14 batches), squad
+start-notifications real (5 rows), focus/stop verdicts correct. Root-caused the "nudge never
+fires" complaint to two architecture bugs, plus found a session-lifecycle hole in prod.
+
+**Extension v2.6.0** (background.js, core.js, tests 21/21):
+- **Media exemption (root cause 1 of the dead nudge + silent data loss).** `chrome.idle`
+  fires 'idle' after 5 input-less minutes — exactly what watching a video is. Tracking paused
+  and the nudge streak reset at the 5-minute mark, so passive YouTube was undercounted and
+  could never nudge. Now the gate distinguishes 'idle' vs 'locked' and an ACTIVE + `audible`
+  tab keeps counting through 'idle' (never through lock/blur). Active state tracks `audible`
+  via `tabs.onUpdated`; policy is pure `gateAllowsCounting()` in core.js, tested.
+- **Nudge streak grace (root cause 2).** One non-counting tick (alt-tab, idle blip) erased a
+  4-minute streak; in real browsing the threshold was near-unreachable. `nextNudge` now holds
+  the streak through ≤ `NUDGE_GRACE_TICKS` (2) non-counting ticks; resets only when the gap
+  outlasts grace or attention lands elsewhere.
+- **Session auto-expiry.** A forgotten "Start deep session" no longer shows "In deep work"
+  forever: past the server's 4h cap the worker auto-calls stop (reconcileSession on
+  GET_STATUS + the 5-min alarm).
+
+**Web (deployed `web-fdkuycayi`, alias verified 200):**
+- `/api/focus/start`: an active session older than 4h is closed as abandoned (was: "resumed"
+  forever — found a real squadmate session stuck active for 34.8h; also fixed that row in
+  prod by the same rule).
+- `/api/squads/[id]/radar`: "approximate" location jitter was `Math.random()` per request —
+  refetch-and-average recovers the true location. Now seeded deterministically by checkin id.
+- `/api/squads/[id]/pings`: zod validation (uuid + curated ping_type enum), rate limit
+  (`check_rate_limit`, 30/h), and the ping now lands as a `notifications` row for the
+  recipient (bell) — encouragement that only lived in an unopened feed wasn't support.
+- **Focus audio (new, `components/focus/FocusAudio.tsx` on the running screen):** WebAudio-
+  GENERATED brown/pink noise. No files, no streaming, no third-party requests, preference in
+  localStorage only. Two options + off (deliberately no fake rain/café: honesty > imitation).
+  Off by default; starts only from a click (autoplay-safe); fades in/out.
+- `NotificationType` union widened to `squad_focus_start` | `squad_ping` (was stale).
+
+**DB (Supabase, live):** migration `revoke_anon_membership_fns` — revoked `anon` EXECUTE on
+`is_squad_member`/`is_squad_admin` (advisor WARN; anon has no RLS path to squads, so the RPCs
+were pure probe surface). Security advisors now: remaining WARNs are known/accepted (vector
+ext in public, public waitlist INSERT, `get_squad_by_invite` for authenticated = intended,
+leaked-password protection needs a dashboard toggle — user action).
+
+**Still needs the user (harness cannot do it):** (1) load-unpacked reload to v2.6.0;
+(2) if nudges still silent, the SW-console `chrome.notifications.create` test isolates
+OS-notification blocking (Windows Focus Assist) from policy; (3) optionally enable leaked-
+password protection in Supabase Auth settings; (4) optionally rotate the service-role key.
+
+**Known deliberate limits:** muted passive video still pauses on idle (indistinguishable from
+absence); squad UI (SquadDashboard/CuratedInteractionMenu) is dark-themed while the app is
+cream — visual-consistency pass deferred, behavior was the priority.
+
+---
+
+## 2026-07-01 — Free-AI pass + squad-notify COMMITTED + DEPLOYED
+
+Converted the last paid AI paths to free tier, committed scoped, and deployed to prod.
+- `lib/agents/MentalCoachAgent.ts` (used by `/api/daily-coach` cron): Gemini → Groq
+  (`llama-3.3-70b-versatile`) via a small `invokeModel()` adapter that maps LangChain messages to
+  Groq chat format and returns an `AIMessage`, so the LangGraph nodes are unchanged. Per-node
+  deterministic fallback when `GROQ_API_KEY` is unset (no crash, no cost). GROQ_API_KEY is set in
+  prod, so it runs free.
+- `lib/ai/memory.ts`: OpenAI embeddings (the only paid dep; Groq has no embeddings API) gated behind
+  `embeddingsEnabled()` — no real `OPENAI_API_KEY` ⇒ `storeMemory` no-ops, `searchMemory` returns [].
+- Deleted unused `lib/agents/tools/recipeGenerator.ts` (dead code; last `@ai-sdk/google` ref).
+- Also committed the earlier squad session-start notify wiring.
+Commits (branch backend-hardening): `b73a2ff` (free-AI) + `96f9712` (squad notify). `tsc` exit 0.
+Deployed `dpl_C4V8iL24TAdtZU5pgKVQTa9P61J5` → satyashift.vercel.app READY. Post-deploy verified:
+landing 200, real authenticated `/api/ingest` → `{"success":true,"inserted":1}` (env carried over,
+no regression). Test rows cleaned. AI stack is now entirely free (Groq generation + heuristic/local;
+embeddings gated off).
+
+---
+
+## 2026-07-02 — Popup deep-session launcher + gentler nudge (manifest v2.5.0)
+
+Product decision (discussed): the popup is the primary place to START a deep session (lowest
+friction, always present, where squad accountability will live); the web /focus page stays as the
+setup/history "home base". Popup is a MODE switch, not a pile of buttons, to keep it calm.
+
+Phase 1 shipped (extension only — the /api/focus/start + /stop endpoints were already live, so no
+web deploy needed):
+- `background.js`: `SESSION_KEY` in storage.local + `getSession/startSession/stopSession`. Start POSTs
+  `/api/focus/start` (empty body ⇒ notify ALL squads via the helper), stores `{id, startedAt}`; stop
+  POSTs `/api/focus/stop` (finds the active session server-side) and clears local even if the network
+  call fails (UI never stuck). Bearer-authed ⇒ exempt from the `proxy.ts` CSRF origin gate. Added
+  `START_SESSION`/`STOP_SESSION` messages; `buildStatus` now returns `session`. Verification is free:
+  the passive `domain_logs` we already flush are what `/api/focus/stop` reads for quality.
+- `popup.{html,js}`: mode switch. Idle → "Start deep session" (primary) + tracking status. In-session
+  → status shows "In deep work" with calm minute-level elapsed (ticks every 20s), button becomes
+  "End session" (ghost), Pause is hidden (pausing would undercut the session it's verifying). "Open
+  SatyaShift" demoted to a ghost secondary. Start/end errors surface in the amber note.
+- Nudge polish: gentler, non-judgmental copy in a pure, tested `nudgeCopy()` (rotates 3 phrasings,
+  title "A quiet check-in", no shame words), buttons "Return to focus" / "Stay, on purpose" (was
+  "Refocus" / "Keep scrolling"). Principle: name what's real, zero blame, hand back the choice.
+- Tests: `node --test` 18/18 (added a nudgeCopy tone guard). Phase 2 (live squad presence in the
+  popup) not started. Needs user Load-unpacked reload of v2.5.0 to take effect.
+
+---
+
+## 2026-07-01 — Extension popup-focus fix (manifest v2.4.0)
+
+Fixed the "Timing youtube.com → Waiting for a focused tab" flip users saw when opening the popup.
+Cause: on Windows, opening the action popup fires `windows.onFocusChanged(WINDOW_ID_NONE)`, which the
+worker treated as "left the browser" and paused the segment — so *checking* the popup paused it.
+Fix (extension, no core.js change so unit tests unaffected, 17/17 still pass):
+- Popup opens a long-lived `chrome.runtime.connect({name:'popup'})` port; worker stores
+  `POPUP_OPEN_KEY` in `storage.session` while connected.
+- `handleFocusChange` ignores a `WINDOW_ID_NONE` blur while the popup port is open.
+- `GET_STATUS` clears any popup-induced blur + resumes before replying, so the popup shows "Tracking"
+  immediately. On port disconnect (popup closed) `reconcileFocus()` re-derives the real focus via
+  `windows.getLastFocused({windowTypes:['normal']})`.
+- `seedActiveTab` hardened with fallbacks (`currentWindow`, then any active http(s) tab) for when
+  `lastFocusedWindow` returns nothing because the popup holds focus.
+Needs user Load-unpacked reload of v2.4.0 to take effect (harness can't drive the extension).
+
+---
+
+## 2026-07-01 — LIVE backend diagnosis: two real prod bugs found (RLS fixed; key = user)
+
+User reported (with screenshots) that the extension popup flips "Timing youtube.com" → "Waiting
+for a focused tab" across tabs and suspected tracking/JITAI/squad were fundamentally broken. Ran a
+live backend investigation (Supabase MCP: SQL + api/postgres logs + advisors). Findings:
+
+- **Popup tab-switch display = red herring (Windows popup-focus quirk).** Opening the action popup
+  on Windows fires `windows.onFocusChanged(WINDOW_ID_NONE)` → the tracker treats it as "left the
+  browser" → pauses the segment → popup shows "Waiting for a focused tab." So *checking* the popup
+  is what makes it look paused. Not the cause of data loss. (Fix still TODO — see below.)
+
+- **BUG 1 (master, DATA LOSS) — FIXED + VERIFIED.** `domain_logs` = 0 rows/24h, `processed_batches`
+  = 0 EVER; API logs every ~5 min: `GET /auth/v1/user 200` then `POST rpc/check_rate_limit 401`.
+  Root cause pinned exactly: `SUPABASE_SERVICE_ROLE_KEY` in Vercel Production was set to an EMPTY
+  string `""` (a botched `vercel env add` also left junk vars named `Key`/`Value`). Empty key →
+  PostgREST 401 on every `createAdminClient()` call → `/api/ingest` 500 (popup amber) → nothing
+  ingested, no JITAI signal, squad-notify no-op. FIX: user supplied a valid `sb_secret_...` key
+  (validated 200 vs PostgREST); set it via the Vercel REST API `POST /v10/projects/{id}/env?upsert=true`
+  (CLI `env add` stdin piping does not feed the value under Git Bash), removed the junk vars, and
+  `vercel redeploy`ed the latest prod deployment (kept code, picked up the new env). VERIFIED
+  end-to-end: real authenticated POST to prod `/api/ingest` → `{"success":true,"inserted":1}`, then
+  the user's extension drained its whole stuck backlog (real youtube.com/facebook.com rows landed
+  17:51:47). Secret is now in that session's chat history — rotate in Supabase if desired.
+
+- **BUG 2 (FIXED this session): squad_members RLS infinite recursion.** Postgres logs flooded with
+  `infinite recursion detected in policy for relation "squad_members"`. The SELECT/DELETE policies
+  queried squad_members inside a policy ON squad_members. Applied migration
+  `fix_squad_members_rls_recursion`: added `is_squad_admin(uuid)` SECURITY DEFINER (mirrors the
+  pre-existing `is_squad_member(uuid)`), rewrote `squad_members_select` → `is_squad_member(squad_id)`
+  and `squad_members_delete` → `user_id = auth.uid() OR is_squad_admin(squad_id)`. Verified live by
+  impersonating user 8ff85973 (authenticated role + jwt claim): SELECT returns 7 rows, no recursion.
+  Live immediately (no deploy). This restores squad dashboard/radar/sync reads.
+
+Remaining: (1) user sets the Vercel service-role key → then verify ingest lands rows + squad notify
+fires; (2) optional: fix the Windows popup-focus display quirk in the extension; (3) Groq/free-AI
+TODOs still open. Other advisors (WARN): `vector` ext in public, waitlist INSERT `WITH CHECK true`,
+SECURITY DEFINER fns callable by authenticated (is_squad_member/is_squad_admin — intended),
+leaked-password protection off.
+
+---
+
+## 2026-07-01 — "Critical recovery" audit + squad-notify wiring
+
+Given a full "extension is fundamentally broken" recovery brief (tracking dies with the popup,
+"Waiting for connection" on tab switch, login doesn't sync, squad notifications dead). Read the
+entire extension surface (`manifest.json`, `background.js`, `core.js`, `popup.js`, `bridge.js`) and
+the focus/squad backend before touching anything.
+
+**Root-cause finding:** the reported symptoms describe the PRE-hardening architecture, not the
+committed one. v2.3.0 already satisfies the whole recovery spec — tracking lives in the SW with all
+state in `chrome.storage` (popup is read-only via `GET_STATUS`), the flush alarm is created once in
+`onInstalled`/`onStartup` (C2), `seedActiveTab()` starts the already-open tab on install/startup/
+wake/popup-open, auth syncs via `bridge.js` (`SESSION_FROM_PAGE`) + `chrome.cookies` fallback +
+token refresh, Web Locks serialize state, poison batches quarantine, nudge engine wired. The most
+likely cause of the user's live symptoms is running an OLD unpacked build → fix is a
+`chrome://extensions` reload of v2.3.0 (harness cannot drive the browser to do this).
+
+**Real gap fixed (backend, this pass):** squad session-start notifications were unwired.
+`web/lib/squad/notifySessionStart.ts` existed but `/api/focus/start` never called it. Wired
+`notifySquadOnSessionStart({ admin, actorId, squadId, sessionId })` after the fresh-session insert
+(NOT the resumed branch); helper is fully guarded + de-duped 1/hour so it can't break start. With
+`squad_id` absent (the focus page doesn't send one today) it notifies ALL the actor's squads, which
+is the intended default. Recipients see it: both `app/(app)/notifications/page.tsx` and the layout
+bell read the `notifications` table.
+
+Verification: `npx tsc --noEmit` (web) → exit 0; `node --test` (extension) → 17/17.
+
+**Remaining risks / open items:** (1) live extension behavior still needs a user Load-unpacked
+verify of v2.3.0 — cannot be proven from the harness; (2) `web/app/(app)/focus/page.tsx`
+`startSession()` doesn't pass `squad_id` (notifies all squads by default — fine, revisit if
+per-squad scoping is wanted); (3) still-open Groq/free-AI TODOs (`MentalCoachAgent.ts` Gemini→Groq,
+`lib/ai/memory.ts` OpenAI-embeddings guard) — untouched this pass.
+
+---
+
 ## 2026-07-01 — Live debug + JITAI reconnect (auth, tracking seed, domain-only nudge)
 
 Debugged the extension against the user's live browser (Chrome MCP + Supabase MCP). Findings and

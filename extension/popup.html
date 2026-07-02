@@ -27,6 +27,8 @@
       font: inherit; font-size: 13px; font-weight: 600; padding: 10px; border-radius: 10px; cursor: pointer;
       border: 1px solid transparent; margin-top: 12px; }
     .primary { background: #2E7D32; color: #fff; }
+    .ghost { background: #fff; color: #374151; border: 1px solid rgba(0,0,0,0.12); }
+    .btn:disabled { opacity: 0.55; cursor: default; }
     .toggle { width: 100%; margin-top: 8px; background: #fff; color: #6B7280; border: 1px solid rgba(0,0,0,0.1);
       font: inherit; font-size: 12.5px; font-weight: 600; padding: 9px 10px; border-radius: 10px; cursor: pointer; }
     .priv { margin-top: 12px; font-size: 11px; color: #9CA3AF; display: flex; align-items: center; gap: 5px; }
@@ -59,7 +61,8 @@
     <div id="synced" class="synced"></div>
     <div id="note" class="note"></div>
 
-    <a id="open" class="btn primary" href="#">Open SatyaShift</a>
+    <button id="session" class="btn primary" type="button" style="display:none">Start deep session</button>
+    <a id="open" class="btn ghost" href="#">Open SatyaShift</a>
     <button id="pause" class="toggle" type="button">Pause tracking</button>
 
     <div class="priv">

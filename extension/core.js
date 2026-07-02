@@ -132,32 +132,79 @@ export function parseSupabaseSession(rawJoined) {
 // ---------------------------------------------------------------------------
 export const NUDGE_AFTER_MIN = 5;      // sustained minutes on a distraction domain before nudging
 export const NUDGE_COOLDOWN_MIN = 10;  // quiet window after a nudge
+export const NUDGE_GRACE_TICKS = 2;    // non-counting ticks the streak survives (brief alt-tab / idle blip)
 
 // Pure state machine, ticked once per minute by the service worker. Given the previous nudge
 // state and the current attention context, return the next state and whether to nudge now.
-//   prev: { domain, minutes, lastNudgeAt }
+//   prev: { domain, minutes, gap, lastNudgeAt }
 //   ctx:  { domain, counting, category, now }   (now = Date.now())
 // Returns { state, fire, domain?, minutes? }. Kept pure (no chrome.*, no timers) so it's testable.
+//
+// Streak grace: one alt-tab to Slack or a momentary idle blip used to erase a 4-minute streak,
+// which made the nudge nearly impossible to hit in real browsing. Now a streak PAUSES (doesn't
+// grow) for up to NUDGE_GRACE_TICKS non-counting ticks, and only resets when the gap outlasts
+// the grace or attention actually lands somewhere else (counting on a different context).
 export function nextNudge(prev, ctx, cfg = {}) {
   const afterMin = cfg.afterMin ?? NUDGE_AFTER_MIN;
+  const graceTicks = cfg.graceTicks ?? NUDGE_GRACE_TICKS;
   const cooldownMs = (cfg.cooldownMin ?? NUDGE_COOLDOWN_MIN) * 60_000;
-  const lastNudgeAt = (prev && prev.lastNudgeAt) || 0;
+  const p = prev || {};
+  const lastNudgeAt = p.lastNudgeAt || 0;
 
-  // Not actively attending a distraction domain -> reset the streak, keep the cooldown clock.
-  if (!ctx.counting || ctx.category !== 'distraction' || !ctx.domain) {
-    return { state: { domain: null, minutes: 0, lastNudgeAt }, fire: false };
+  const attending = !!ctx.counting && ctx.category === 'distraction' && !!ctx.domain;
+
+  if (!attending) {
+    // Not counting at all (blur/idle/pause) -> hold the streak through a short gap.
+    if (!ctx.counting && p.domain && (p.gap || 0) < graceTicks) {
+      return { state: { domain: p.domain, minutes: p.minutes || 0, gap: (p.gap || 0) + 1, lastNudgeAt }, fire: false };
+    }
+    // Gap outlasted the grace, or attention moved to a non-distraction context -> reset.
+    return { state: { domain: null, minutes: 0, gap: 0, lastNudgeAt }, fire: false };
   }
 
   // Same domain extends the streak; a different distraction domain starts a fresh one.
-  const minutes = prev && prev.domain === ctx.domain ? (prev.minutes || 0) + 1 : 1;
+  const minutes = p.domain === ctx.domain ? (p.minutes || 0) + 1 : 1;
 
   // Never-nudged (lastNudgeAt === 0) is always past cooldown, regardless of clock scale.
   const cooledDown = !lastNudgeAt || ctx.now - lastNudgeAt >= cooldownMs;
   if (minutes >= afterMin && cooledDown) {
     // Fire, then zero the streak so the next nudge is a full interval away (cooldown also applies).
-    return { state: { domain: ctx.domain, minutes: 0, lastNudgeAt: ctx.now }, fire: true, domain: ctx.domain, minutes };
+    return { state: { domain: ctx.domain, minutes: 0, gap: 0, lastNudgeAt: ctx.now }, fire: true, domain: ctx.domain, minutes };
   }
-  return { state: { domain: ctx.domain, minutes, lastNudgeAt }, fire: false };
+  return { state: { domain: ctx.domain, minutes, gap: 0, lastNudgeAt }, fire: false };
+}
+
+// ---------------------------------------------------------------------------
+// Attention gate (BALANCED policy + media exemption). Pure so the exact conditions under
+// which time counts are provable in tests.
+//   gate: { blurred, idleState: 'active' | 'idle' | 'locked' }  (old shape { idle: bool } tolerated)
+//   opts: { audible, paused }
+// The media exemption: chrome.idle reports 'idle' after 5 minutes without input, but watching a
+// video IS attention without input. If the active tab is audibly playing, 'idle' does not pause
+// timing. 'locked' always pauses (screen off/locked means gone), and blur always pauses (an
+// audible tab behind another app is background music, not attention).
+// ---------------------------------------------------------------------------
+export function gateAllowsCounting(gate, opts = {}) {
+  if (opts.paused) return false;
+  const g = gate || {};
+  if (g.blurred) return false;
+  const idleState = g.idleState || (g.idle ? 'idle' : 'active');
+  if (idleState === 'locked') return false;
+  if (idleState === 'idle') return !!opts.audible;
+  return true;
+}
+
+// Gentle, conscious nudge copy. The principle (सत्य / truth): name what's real, add zero blame,
+// hand the choice back to the user, keep it short. We rotate a few phrasings so a repeat nudge
+// never feels like a robot repeating itself. Pure + tested so the tone can't silently regress.
+const NUDGE_PROMPTS = [
+  (d, m) => `About ${m} minutes on ${d}. No judgment. Is this where you want your attention right now?`,
+  (d, m) => `You've been with ${d} for ${m} minutes. Worth a breath: keep going, or come back to what matters?`,
+  (d, m) => `${m} quiet minutes on ${d}. Notice how it feels, then choose the next moment on purpose.`,
+];
+export function nudgeCopy(domain, minutes, seed = 0) {
+  const idx = Math.abs(Math.trunc(Number(seed) || 0)) % NUDGE_PROMPTS.length;
+  return { title: 'A quiet check-in', message: NUDGE_PROMPTS[idx](domain, minutes) };
 }
 
 // expires_at is unix SECONDS. True if the token is missing or within `skewS` of expiry,

@@ -38,7 +38,22 @@ The extension is the product's core (ambient, domain-only attention tracker). Re
 - The agent harness cannot click the extension. After changes, hand the user the Load-unpacked
   checklist in `docs/project-status.md` and update that doc.
 
-## Attention policy (BALANCED — locked)
+## Attention policy (BALANCED + media exemption — locked)
 Timing pauses on window blur and on `chrome.idle` idle/lock, with a 5-minute idle threshold so
 reading without keyboard input is not penalized. Don't switch to strict per-keystroke idle
 (under-counts reading) or lenient lock-only (counts other-app time).
+
+Media exemption (v2.6.0): `chrome.idle` reports 'idle' after 5 min without input, but watching
+a video IS attention without input — so an ACTIVE tab that is `audible` keeps counting through
+'idle'. It never counts through 'locked' (gone) or blur (audible tab behind another app is
+background music, not attention). Known limitation: a MUTED video during idle still pauses —
+indistinguishable from reading, accepted. The exact policy is the pure `gateAllowsCounting()`
+in core.js; change it only there, with tests.
+
+## Nudge policy
+`nextNudge()` in core.js, ticked by a 1-min alarm: 5 sustained minutes on one distraction
+domain → one gentle notification, 10-min cooldown. The streak survives short gaps
+(`NUDGE_GRACE_TICKS` = 2 non-counting ticks) so an alt-tab or idle blip pauses it instead of
+erasing it; it resets when attention lands on a different context. Nudges depend on OS-level
+Chrome notification permission — if a user reports "no nudges", test with a manual
+`chrome.notifications.create` in the SW console before touching the policy.

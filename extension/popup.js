@@ -4,7 +4,8 @@
 
 const $ = (id) => document.getElementById(id);
 
-let current = null; // last status, so the pause toggle knows what to flip to
+let current = null; // last status, so the toggles know what to flip to
+let tick = null;    // interval that refreshes the in-session elapsed time
 
 function timeAgo(ts) {
   if (!ts) return 'never';
@@ -17,6 +18,20 @@ function timeAgo(ts) {
 
 function hostOf(url) {
   try { return new URL(url).host; } catch { return 'the app'; }
+}
+
+// Calm, minute-level elapsed for a running deep session (no frantic ticking seconds).
+function sessionElapsed(ts) {
+  const m = Math.floor((Date.now() - ts) / 60000);
+  if (m < 1) return 'Just started';
+  if (m < 60) return `${m} min`;
+  return `${Math.floor(m / 60)}h ${m % 60}m`;
+}
+function sessionDetail(s) {
+  return `${sessionElapsed(s.session.startedAt)} of deep work. We're verifying it quietly.`;
+}
+function paintSession() {
+  if (current && current.session) $('detail').textContent = sessionDetail(current);
 }
 
 // A calm, human line for a transient sync failure. Only shown when work is actually waiting.
@@ -32,13 +47,27 @@ function transientNote(s) {
   }
 }
 
+// Why a start/end action didn't take (surfaced only right after the click).
+function actionErrorNote(kind, s) {
+  if (kind === 'offline') return "Couldn't reach SatyaShift. Check your connection and try again.";
+  if (kind === 'not_signed_in') return `Sign in at ${hostOf(s?.baseUrl)} to start a session.`;
+  return 'Could not start the session just now. Give it a moment and try again.';
+}
+
 function render(s) {
   current = s;
+  const inSession = !!(s && s.session);
+
+  // Keep the elapsed time fresh while a session runs; stop the ticker otherwise.
+  if (tick) { clearInterval(tick); tick = null; }
+  if (inSession) tick = setInterval(paintSession, 20000);
 
   // Status line
   let dot = 'off', state, detail;
   if (!s) {
     dot = 'off'; state = 'Not connected'; detail = 'The tracker is starting up. Reopen in a moment.';
+  } else if (inSession) {
+    dot = 'ok'; state = 'In deep work'; detail = sessionDetail(s);
   } else if (s.sessionExpired) {
     dot = 'warn'; state = 'Session expired';
     detail = `Sign in again at ${hostOf(s.baseUrl)} to resume verifying your focus.`;
@@ -59,19 +88,29 @@ function render(s) {
   $('state').textContent = state;
   $('detail').textContent = detail;
 
-  // Quiet sync reassurance — no counts, no environment, nothing to manage. Shown only when
-  // things are healthy; real problems are surfaced by the note below instead.
-  const showSynced = s && s.signedIn && !s.paused && !s.sessionExpired && s.lastSync && !transientNote(s);
+  // Quiet sync reassurance — hidden during a session (the session view speaks for itself).
+  const showSynced = s && s.signedIn && !s.paused && !s.sessionExpired && !inSession && s.lastSync && !transientNote(s);
   $('synced').textContent = showSynced ? `Synced ${timeAgo(s.lastSync)}` : '';
   if (s) $('open').href = s.baseUrl;
 
-  // Transient note
-  const note = transientNote(s);
+  // Note: a transient sync problem, or (right after a click) why a start/end didn't take.
+  let note = transientNote(s);
+  if (s && s.actionError) note = actionErrorNote(s.actionError, s);
   $('note').style.display = note ? 'block' : 'none';
   $('note').textContent = note || '';
 
-  // Pause toggle
+  // Deep-session button: the primary action when idle, "End session" while running. Only offered
+  // to a signed-in user (you can't verify a session we can't attribute).
+  const sessBtn = $('session');
+  const canSession = !!(s && s.signedIn && !s.sessionExpired);
+  sessBtn.style.display = canSession ? 'block' : 'none';
+  sessBtn.textContent = inSession ? 'End session' : 'Start deep session';
+  sessBtn.className = 'btn ' + (inSession ? 'ghost' : 'primary');
+  sessBtn.disabled = false;
+
+  // Pause toggle — hidden during a session (pausing would undercut the very focus we're verifying).
   const pauseBtn = $('pause');
+  pauseBtn.style.display = inSession ? 'none' : 'block';
   pauseBtn.textContent = s && s.paused ? 'Resume tracking' : 'Pause tracking';
   pauseBtn.disabled = false;
 }
@@ -85,12 +124,28 @@ async function refresh() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Tell the worker we're open. Opening the popup makes Chrome report the browser window as
+  // "unfocused" (WINDOW_ID_NONE) on Windows; this port lets the worker ignore that so glancing at
+  // the popup never pauses tracking. The port closes automatically when the popup closes.
+  try { chrome.runtime.connect({ name: 'popup' }); } catch { /* worker asleep; GET_STATUS will wake it */ }
+
   refresh();
 
   $('open').addEventListener('click', (e) => {
     e.preventDefault();
     const url = $('open').getAttribute('href');
     if (url && url !== '#') chrome.tabs.create({ url });
+  });
+
+  $('session').addEventListener('click', async () => {
+    const btn = $('session');
+    btn.disabled = true;
+    const type = current && current.session ? 'STOP_SESSION' : 'START_SESSION';
+    try {
+      render(await chrome.runtime.sendMessage({ type }));
+    } catch {
+      btn.disabled = false;
+    }
   });
 
   $('pause').addEventListener('click', async () => {
