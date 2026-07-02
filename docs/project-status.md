@@ -5,6 +5,39 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-02 — Payment architecture DECIDED (research pass, NO implementation)
+
+Full deliverable: `docs/payments-architecture-2026-07-02.md` (comparison, security design,
+customer journey, DB/API plan, roadmap, risks, rejected alternatives, challenge log).
+Durable rules added to `docs/DECISIONS.md`. Nothing was built, applied, or deployed —
+this session's output is the decision itself, per the Fable workflow
+(research → challenge → compare → recommend → verify; implement later).
+
+**Decision: Paddle (Paddle Billing) as Merchant of Record.**
+The founder is in Nepal: Stripe direct and PayPal receiving are impossible, Polar's
+payout list (Stripe Connect) excludes Nepal, and Lemon Squeezy is dissolving into
+invite-gated Stripe Managed Payments (Stripe-country sellers only). Of the eligible MoRs
+(Paddle, Creem, Dodo Payments), Paddle wins on the priority order security > trust >
+simplicity: 14-year track record vs 1–2-year-old startups holding all revenue as legal
+seller, zero setup/monthly fees (5% + $0.50 only on success), Payoneer payout path to
+Nepal, hosted checkout with Apple/Google Pay, hosted cancel portal, signed webhooks.
+At our price points the "cheaper" newcomers save only $0.02–$0.19 per transaction.
+Creem/Dodo are the named fallbacks behind a `lib/billing/` provider seam.
+
+**Architecture (to build later, roadmap §10 of the doc):** cardless 14-day trial stays
+app-managed (migration 016, unchanged); Paddle owns PAID truth; a webhook-only mirror
+(`billing_subscriptions` + append-only `billing_events`, future migration 019) with HMAC
+verification, timestamp replay protection, and event-id idempotency (same pattern as
+ingest); entitlement derived in one place (`lib/subscription.ts` extended); success
+redirects never grant anything. Pricing: $8/mo, standard annual $72, $30 founding first
+year (honest label, renews at $72 with notice). When gating ships: social layer gates,
+never the user's own data; export free forever; extension never touches billing.
+
+**Prerequisite work identified (belongs to the implementation session, step 1):** public
+`/terms` + `/refunds` (≥30-day money-back) pages — required by Paddle verification.
+
+---
+
 ## 2026-07-02 — Phase 2 SHIPPED: the hook (popup presence, Welcome back, seal), squad-cluster deletion, Focus-idle merge (web DEPLOYED, ext v2.7.0)
 
 Phase 2 of `docs/experience-audit-2026-07-02.md` (§4, §5, §8, §13) plus the deferred

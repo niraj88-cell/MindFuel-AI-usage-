@@ -4,6 +4,35 @@ Newest first. Each entry is a decision that should not be silently reversed. For
 change log see `docs/project-status.md`; for the full security reference see
 `docs/security-review-2026-07-02.md`.
 
+## Payment architecture (2026-07-02 — decided, NOT yet implemented)
+
+Full reasoning: `docs/payments-architecture-2026-07-02.md`. Supersedes the earlier
+"Stripe webhook verification when payments ship" note (Stripe direct is impossible from
+Nepal).
+
+- **Paddle (Paddle Billing) is the Merchant of Record.** Nepal-eligible, zero
+  setup/monthly/annual fees (pays only on successful transactions), 14-year track record,
+  handles VAT/sales tax, chargebacks, and compliance as the legal seller. Payouts via
+  Payoneer (or wire). Fallbacks if verification fails: Creem or Dodo Payments, behind the
+  same provider seam (`lib/billing/`) — do not couple handlers to Paddle types outside it.
+- **Paddle is the source of truth for PAID state; our DB holds a webhook-written mirror.**
+  Only the signature-verified webhook handler (service role) may write billing tables or
+  `profiles.subscription_plan`. Users have read-only RLS on their own row. A checkout
+  success redirect never grants entitlement — only webhooks do.
+- **Webhooks are HMAC-verified, replay-protected (timestamp tolerance), and idempotent**
+  via an append-only `billing_events` table (PK event_id), the same pattern as ingest's
+  `processed_batches`. Handlers must be safely re-runnable.
+- **The trial stays cardless** (opt-in, 14 days, app-managed via `trial_ends_at`). No
+  payment details before value; this is a brand decision as much as a funnel one.
+- **Pricing: one plan, two periods.** $8/mo; standard annual $72 ("$6/mo, save 25%");
+  $30 first-year founding offer, honestly labeled, renews at $72 with advance notice.
+  No tiers, no seats. No fake urgency, no countdown theatrics, cancel is one click
+  (Paddle portal).
+- **When gating ships, the social layer gates — never the user's own data.** Export stays
+  free forever; the extension and popup never touch billing code.
+- **Prerequisite before Paddle verification:** public `/terms` and `/refunds`
+  (≥30-day money-back) pages on the live site.
+
 ## Security architecture (2026-07-02)
 
 - **RLS is the authorization boundary, not the API layer.** The browser talks to Supabase

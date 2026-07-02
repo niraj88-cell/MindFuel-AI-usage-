@@ -37,7 +37,14 @@ only, never URLs/content) · trust over engagement · calm, premium UX.
   surfaces — they contradict zero-manual-input and privacy.
 - Subscription status is DERIVED, never stored: `web/lib/subscription.ts` computes
   active/trialing/free from `profiles.trial_ends_at` + `subscription_plan` (migration 016).
-  No billing is wired; don't add gating or an upgrade CTA until payments exist.
+  No billing is wired YET; don't add gating or an upgrade CTA until payments ship.
+- Payments are DECIDED but not built (2026-07-02): **Paddle as Merchant of Record**
+  (founder is in Nepal — Stripe/Polar/Lemon Squeezy are impossible; Creem/Dodo are the
+  fallbacks). Read `docs/payments-architecture-2026-07-02.md` + the DECISIONS entry before
+  writing ANY billing code. Non-negotiables: cardless trial stays; only the HMAC-verified
+  webhook (service role) writes billing state; success redirects grant nothing; the
+  extension never touches billing; `/terms` + `/refunds` pages must ship before Paddle
+  verification.
 - The middleware (`web/proxy.ts`) is default-deny: any new public page must be added to its
   `isPublicRoute` list, and any new static file type to the static regex, or visitors get
   bounced to /login (this silently broke the PWA manifest once).
