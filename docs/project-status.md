@@ -5,6 +5,71 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-02 — Phase 0 SHIPPED: ghost product deleted, subscription foundation, password-reset fixed (web DEPLOYED, ext v2.6.1)
+
+Implemented Phase 0 of `docs/experience-audit-2026-07-02.md` plus the subscription
+foundation (mission Priority 4). Commits `d093dcd` (Phase 0), `de7a8eb` (subscription +
+ext), `+1` (manifest gate fix); deployed `web-hyunu9j37` → satyashift.vercel.app, alias
+verified.
+
+**Deleted the ghost legacy product (commit d093dcd):** 10 page routes (/log /coach
+/insights /pulse /challenges /weekly-report /mood-scan /intercept /subscription
+/promo-simulate) now 307 → /dashboard via `next.config.ts`; 17 legacy-only API route
+groups incl. stripe, daily-coach (+ its vercel cron), cron/predictive-push, push/send;
+the whole `lib/agents` + `lib/ai` stack; all orphaned components (chat, challenges, fuel,
+insights, log, mood-scan, progress, 8 dead dashboard widgets). `next build` route map now
+contains ONLY the real product. Verified live: /coach 307→/dashboard, /api/coach dead.
+
+**Core-flow bugs found & fixed in passing:**
+- **Password reset was broken since forever**: `/reset-password` never existed (email
+  link → 404). Now: reset email → `/api/auth/callback?next=/reset-password` (server-side
+  code exchange) → new session-gated reset page. Forgot-password page rebuilt in cream
+  (was black MindFuel).
+- **PWA manifest was login-gated**: proxy static regex omitted `.json`, so
+  /manifest.json redirected to /login for everyone. Fixed + manifest rebranded
+  (was "MindFuel — Focus & Productivity App", start_url now /dashboard).
+- Stale `getmindfuel.vercel.app` domain in robots/sitemap; MindFuel branding in
+  maintenance page and reset-email fallback origin.
+
+**Renames + honesty (labels only, routes unchanged):** nav Squad→Circle,
+Reminders→Activity; "circle" wording across squads/login/focus/profile/session pages;
+session detail no longer says "watching" ("wasn't connected, so this one is yours on
+trust"). Onboarding cut to ONE step (privacy boundary → Today): the persona step
+configured the deleted coach, nudge copy never read it, and "Blunt" contradicted the
+extension's own no-harshness rule. Settings' two dead knobs (persona, nudge timing)
+removed — nothing read them (`jitai_threshold_minutes` and `coach_persona` columns
+remain in DB, unread).
+
+**A11y pass:** informational `#9CA3AF` → `#6B7280` on every surviving page + popup
+(placeholders/decorative icons keep the light tier); `motion-reduce:animate-none` on the
+running-screen ping and circle presence pulse; popup status gets `aria-live="polite"`.
+
+**Subscription foundation (de7a8eb, NO billing):** migration 016 APPLIED live (44
+profiles backfilled): `profiles.trial_ends_at` (signup+14d default; existing users got a
+fresh founding window ending 2026-07-16), `subscription_plan` ('monthly' $8/mo |
+'annual' $30 first year), `subscribed_at`. Status is DERIVED in `web/lib/subscription.ts`
+(active/trialing/free) — never stored. Settings has an honest Plan section: prices, trial
+state, and "billing isn't switched on, nothing can be charged, subscribing will always be
+an explicit step". No upgrade button until one can work.
+
+**Extension v2.6.1** (UI-only: popup contrast + aria-live; tests 21/21). Supersedes the
+pending v2.6.0 reload — the user's one load-unpacked reload now gets both.
+
+**Confirmed orphaned, deliberately NOT deleted (uncommitted WIP, Phase 2 decision):**
+`components/squads/SquadDashboard.tsx` + its dark cluster (LiveActivityRing,
+MomentumMeter, ProofFeed, SquadLeaderboard, DailyMissionBoard, CheckInModal, MapCheckIn,
+SquadRadarMap, CuratedInteractionMenu) — nothing renders SquadDashboard; the calm
+`squads/page.tsx` replaced it. Note: SquadLeaderboard contradicts the no-leaderboards
+line; recommend delete-or-rebuild when Phase 2 touches squad UI. Same for the
+checkins/missions/radar API routes + migrations 012-015 that only serve that cluster.
+
+**Still needs the user:** (1) load-unpacked reload to **v2.6.1** + the YouTube nudge
+test from the previous entry; (2) optional Supabase leaked-password toggle + service-key
+rotation. **Next session:** Phase 1 — Chrome Web Store submission + onboarding install
+step (the audit's release gate).
+
+---
+
 ## 2026-07-02 — Product experience audit (analysis only, NOTHING implemented)
 
 Full experience audit written to `docs/experience-audit-2026-07-02.md` (all 13 deliverables:

@@ -32,3 +32,16 @@ only, never URLs/content) · trust over engagement · calm, premium UX.
 - All extension state lives in `chrome.storage`; the MV3 worker dies at any time.
 - Squad membership checks in RLS go through SECURITY DEFINER `is_squad_member` /
   `is_squad_admin` (never query `squad_members` inside its own policy — recursion).
+- The legacy MindFuel product is DELETED (2026-07-02): its ten routes 307 → /dashboard via
+  `next.config.ts` redirects. Do not resurrect manual logging, mood, coach, or streak
+  surfaces — they contradict zero-manual-input and privacy.
+- Subscription status is DERIVED, never stored: `web/lib/subscription.ts` computes
+  active/trialing/free from `profiles.trial_ends_at` + `subscription_plan` (migration 016).
+  No billing is wired; don't add gating or an upgrade CTA until payments exist.
+- The middleware (`web/proxy.ts`) is default-deny: any new public page must be added to its
+  `isPublicRoute` list, and any new static file type to the static regex, or visitors get
+  bounced to /login (this silently broke the PWA manifest once).
+- Password reset flows through `/api/auth/callback?next=/reset-password` (server-side code
+  exchange); the reset page requires the resulting session.
+- In UI copy the words are "circle" (not squad) and "Activity" (not reminders); routes and
+  DB tables keep the squad names.
