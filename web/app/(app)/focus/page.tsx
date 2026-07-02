@@ -1,28 +1,18 @@
 'use client'
 
-// SatyaShift — focus session control (start / running / stop).
-// Ambient model: the user starts a session, works normally while the extension
-// verifies in the background, then stops. Duration and quality are measured
-// SERVER-SIDE (/api/focus/start anchors the start time, /api/focus/stop computes
-// the rest from domain_logs) — the client never fabricates focus data. On stop we
-// route to the session-detail screen for the verified result.
+// SatyaShift — the running focus screen. Starting now lives on Today (the intention
+// field folded into the dashboard), so this route is only the full-screen state you are
+// placed into while a session runs — not a destination you browse to. Arriving here with
+// no active session sends you back to Today with the starter open.
+// Duration and quality remain SERVER-side (/api/focus/start anchors the start time,
+// /api/focus/stop computes the rest from domain_logs) — the client never fabricates focus.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
-import { Play, Square, ShieldCheck, Shield, ChevronRight, Loader2 } from 'lucide-react'
+import { Square, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { FocusAudio } from '@/components/focus/FocusAudio'
-
-interface SessionRow {
-  id: string
-  created_at: string
-  status: string | null
-  duration_s: number | null
-  session_quality: string | null
-  intention: string | null
-}
 
 // Quiet, minute-level elapsed for the running screen. Deliberately NOT a ticking
 // seconds stopwatch — the product's promise is "just work", not "watch the clock".
@@ -33,24 +23,15 @@ function humanElapsed(totalSeconds: number) {
   return h === 0 ? `${m} min` : `${h}h ${String(m % 60).padStart(2, '0')}m`
 }
 
-// Humanized duration for the recent list, matching the dashboard/session format
-// (8040s -> "2h 14m") so one session reads the same on every screen.
-function humanDuration(totalSeconds: number) {
-  const m = Math.round(totalSeconds / 60)
-  const h = Math.floor(m / 60)
-  return h === 0 ? `${m % 60}m` : `${h}h ${m % 60}m`
-}
-
 export default function FocusPage() {
   const router = useRouter()
   const [ready, setReady] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [startedAt, setStartedAt] = useState<number | null>(null)
+  const [intention, setIntention] = useState<string | null>(null)
   const [elapsed, setElapsed] = useState(0)
-  const [intention, setIntention] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [history, setHistory] = useState<SessionRow[]>([])
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const loadState = useCallback(async () => {
@@ -61,30 +42,25 @@ export default function FocusPage() {
 
       const { data: active } = await supabase
         .from('focus_sessions')
-        .select('id, created_at')
+        .select('id, created_at, intention')
         .eq('user_id', user.id)
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
 
-      if (active) {
-        setActiveId(active.id)
-        setStartedAt(new Date(active.created_at).getTime())
+      if (!active) {
+        // Nothing running — this screen has no idle state anymore.
+        router.replace('/dashboard?start=1')
+        return
       }
-
-      const { data: past } = await supabase
-        .from('focus_sessions')
-        .select('id, created_at, status, duration_s, session_quality, intention')
-        .eq('user_id', user.id)
-        .neq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(8)
-      setHistory((past as SessionRow[]) || [])
+      setActiveId(active.id)
+      setStartedAt(new Date(active.created_at).getTime())
+      setIntention(active.intention ?? null)
     } finally {
       setReady(true)
     }
-  }, [])
+  }, [router])
 
   useEffect(() => { loadState() }, [loadState])
 
@@ -99,25 +75,6 @@ export default function FocusPage() {
     tickRef.current = setInterval(update, 1000)
     return () => { if (tickRef.current) clearInterval(tickRef.current) }
   }, [startedAt])
-
-  async function startSession() {
-    setBusy(true); setError(null)
-    try {
-      const res = await fetch('/api/focus/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ intention: intention.trim() || undefined }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Could not start')
-      setActiveId(data.session_id)
-      setStartedAt(new Date(data.started_at).getTime())
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not start')
-    } finally {
-      setBusy(false)
-    }
-  }
 
   async function stopSession() {
     if (!activeId) return
@@ -137,7 +94,7 @@ export default function FocusPage() {
     }
   }
 
-  if (!ready) {
+  if (!ready || activeId == null || startedAt == null) {
     return (
       <div className="mx-auto max-w-lg animate-pulse py-16">
         <div className="mx-auto h-48 w-full rounded-3xl bg-black/[0.05]" />
@@ -145,119 +102,40 @@ export default function FocusPage() {
     )
   }
 
-  // ── Running ───────────────────────────────────────────────
   // A calm presence, not a stopwatch. Elapsed time is quiet and secondary so the screen
   // invites work instead of clock-watching (the whole point of "just work in the background").
-  if (activeId && startedAt != null) {
-    return (
-      <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center py-8 text-center">
-        <span className="relative flex h-16 w-16 items-center justify-center">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#4CAF50] opacity-20 motion-reduce:animate-none" />
-          <span className="relative inline-flex h-4 w-4 rounded-full bg-[#4CAF50]" />
-        </span>
-
-        <p className="mt-8 text-xl font-bold tracking-tight text-[#111827]">You&rsquo;re focusing.</p>
-        {intention.trim() && (
-          <p className="mt-2 text-sm italic text-[#6B7280]">&ldquo;{intention.trim()}&rdquo;</p>
-        )}
-
-        <p className="mt-6 max-w-xs text-sm leading-relaxed text-[#6B7280]">
-          Just work like you normally would. SatyaShift is verifying this in the background. There&rsquo;s nothing to watch here.
-        </p>
-
-        <p className="mt-6 font-mono text-xs text-[#6B7280]">
-          Started {format(new Date(startedAt), 'h:mm a')} &middot; {humanElapsed(elapsed)} so far
-        </p>
-
-        <FocusAudio />
-
-        {error && <p className="mt-4 text-sm text-[#B45309]">{error}</p>}
-
-        <button
-          onClick={stopSession}
-          disabled={busy}
-          className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-[#111827] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#1f2937] disabled:opacity-60"
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
-          End session
-        </button>
-      </div>
-    )
-  }
-
-  // ── Idle / start ──────────────────────────────────────────
   return (
-    <div className="mx-auto max-w-lg py-6">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-[#111827]">Start a focus session</h1>
-        <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-[#6B7280]">
-          Begin, then work as usual. We measure the real time and verify it in the background — there&apos;s nothing to log.
-        </p>
-      </div>
+    <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center py-8 text-center">
+      <span className="relative flex h-16 w-16 items-center justify-center">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#4CAF50] opacity-20 motion-reduce:animate-none" />
+        <span className="relative inline-flex h-4 w-4 rounded-full bg-[#4CAF50]" />
+      </span>
 
-      <div className="mt-8 rounded-3xl border border-black/[0.07] bg-white p-5">
-        <label htmlFor="intention" className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-[#6B7280]">
-          What are you working on? <span className="font-normal normal-case tracking-normal text-[#6B7280]">(optional)</span>
-        </label>
-        <input
-          id="intention"
-          value={intention}
-          onChange={(e) => setIntention(e.target.value)}
-          maxLength={280}
-          placeholder="Deep work on the redesign"
-          className="w-full rounded-2xl border border-black/[0.08] bg-[#FAF8F4] px-4 py-3 text-sm text-[#111827] outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#4CAF50]"
-        />
-        <p className="mt-2 text-xs text-[#6B7280]">
-          Only your circle sees this — in your words. Your sites stay private either way.
-        </p>
-
-        {error && <p className="mt-3 text-sm text-[#B45309]">{error}</p>}
-
-        <button
-          onClick={startSession}
-          disabled={busy}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#2E7D32] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#256628] disabled:opacity-60"
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-          Begin focus
-        </button>
-      </div>
-
-      {history.length > 0 && (
-        <div className="mt-8">
-          <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280]">Recent sessions</p>
-          <div className="rounded-2xl border border-black/[0.07] bg-white">
-            {history.map((s) => {
-              const verified = !!s.session_quality && s.session_quality !== 'unverified'
-              return (
-                <Link
-                  key={s.id}
-                  href={`/session/${s.id}`}
-                  className="flex items-center gap-3 border-b border-black/[0.05] px-4 py-3 transition-colors last:border-0 hover:bg-black/[0.02]"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-[#111827]">
-                      {s.intention || (s.status === 'abandoned' ? 'Short session' : 'Focus session')}
-                    </p>
-                    <p className="text-xs text-[#6B7280]">{format(new Date(s.created_at), 'd MMM · h:mm a')}</p>
-                  </div>
-                  {verified ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#E8F5E9] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#2E7D32]">
-                      <ShieldCheck className="h-3 w-3" /> verified
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-black/[0.05] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#6B7280]">
-                      <Shield className="h-3 w-3" /> unverified
-                    </span>
-                  )}
-                  <span className="font-mono text-sm font-semibold text-[#2E7D32]">{humanDuration(s.duration_s ?? 0)}</span>
-                  <ChevronRight className="h-4 w-4 text-[#9CA3AF]" />
-                </Link>
-              )
-            })}
-          </div>
-        </div>
+      <p className="mt-8 text-xl font-bold tracking-tight text-[#111827]">You&rsquo;re focusing.</p>
+      {intention && (
+        <p className="mt-2 text-sm italic text-[#6B7280]">&ldquo;{intention}&rdquo;</p>
       )}
+
+      <p className="mt-6 max-w-xs text-sm leading-relaxed text-[#6B7280]">
+        Just work like you normally would. SatyaShift is verifying this in the background. There&rsquo;s nothing to watch here.
+      </p>
+
+      <p className="mt-6 font-mono text-xs text-[#6B7280]">
+        Started {format(new Date(startedAt), 'h:mm a')} &middot; {humanElapsed(elapsed)} so far
+      </p>
+
+      <FocusAudio />
+
+      {error && <p className="mt-4 text-sm text-[#B45309]">{error}</p>}
+
+      <button
+        onClick={stopSession}
+        disabled={busy}
+        className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-[#111827] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#1f2937] disabled:opacity-60"
+      >
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
+        End session
+      </button>
     </div>
   )
 }

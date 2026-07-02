@@ -6,12 +6,16 @@
 // and one honest line from Satya. Everything reads from the real focus_sessions
 // proof layer. The extension is the daily surface; this is the calm reflection.
 
-import { useCallback, useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { format, startOfDay } from 'date-fns'
-import { Play, ShieldCheck, Shield, ChevronRight, Users, Puzzle, Lock, UserPlus } from 'lucide-react'
+import { Play, ShieldCheck, Shield, ChevronRight, Users, Puzzle, Lock, UserPlus, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { EXTENSION_PUBLISHED, EXTENSION_STORE_URL } from '@/lib/extension'
+
+// Shown once, the first time an "unverified" chip appears, then never again.
+const VERIFY_NOTE_KEY = 'satya_verified_note_seen'
 
 interface SessionRow {
   id: string
@@ -36,7 +40,18 @@ function greeting() {
   return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'
 }
 
+// useSearchParams needs a Suspense boundary at build time; the page itself is below.
 export default function DashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <Dashboard />
+    </Suspense>
+  )
+}
+
+function Dashboard() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [name, setName] = useState('there')
   const [today, setToday] = useState<SessionRow[]>([])
@@ -46,6 +61,23 @@ export default function DashboardPage() {
   const [howOpen, setHowOpen] = useState(false)
   // null = unknown (don't push the invite on error); true = new or only-me circle.
   const [aloneInCircle, setAloneInCircle] = useState<boolean | null>(null)
+  // Inline session start (the old Focus idle screen, folded into Today).
+  const [startOpen, setStartOpen] = useState(false)
+  const [intention, setIntention] = useState('')
+  const [startBusy, setStartBusy] = useState(false)
+  const [startError, setStartError] = useState<string | null>(null)
+  // Teach the verified/unverified vocabulary exactly once.
+  const [showVerifyNote, setShowVerifyNote] = useState(false)
+
+  useEffect(() => {
+    // The mobile start button (and the retired /focus idle screen) land here with
+    // ?start=1 — open the intention field directly.
+    if (searchParams.get('start')) setStartOpen(true)
+  }, [searchParams])
+
+  useEffect(() => {
+    setShowVerifyNote(localStorage.getItem(VERIFY_NOTE_KEY) !== '1')
+  }, [])
 
   const load = useCallback(async () => {
     try {
@@ -95,6 +127,28 @@ export default function DashboardPage() {
 
   useEffect(() => { load() }, [load])
 
+  // Start a session right here — /focus is only the running screen now.
+  async function startSession() {
+    setStartBusy(true); setStartError(null)
+    try {
+      const res = await fetch('/api/focus/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ intention: intention.trim() || undefined }),
+      })
+      if (!res.ok) throw new Error('Could not start the session. Give it a moment and try again.')
+      router.push('/focus')
+    } catch (e) {
+      setStartError(e instanceof Error ? e.message : 'Could not start the session.')
+      setStartBusy(false)
+    }
+  }
+
+  function dismissVerifyNote() {
+    localStorage.setItem(VERIFY_NOTE_KEY, '1')
+    setShowVerifyNote(false)
+  }
+
   const totalS = today.reduce((sum, s) => sum + (s.duration_s ?? 0), 0)
   const verifiedCount = today.filter((s) => s.session_quality && s.session_quality !== 'unverified').length
 
@@ -141,20 +195,21 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Active session resume / connect-first / start CTA */}
+      {/* Active session resume / connect-first / inline start (the old Focus idle screen) */}
       {activeId ? (
         <Link
           href="/focus"
           className="mt-4 flex items-center justify-between rounded-2xl border border-[#A5D6A7] bg-white px-5 py-4 transition-colors hover:bg-[#F5FBF5]"
         >
           <span className="flex items-center gap-2.5 text-sm font-semibold text-[#2E7D32]">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[#4CAF50]" /> You&rsquo;re focusing now
+            <span className="h-2 w-2 animate-pulse rounded-full bg-[#4CAF50] motion-reduce:animate-none" /> You&rsquo;re focusing now
           </span>
           <span className="flex items-center gap-1 text-sm font-medium text-[#2E7D32]">Resume <ChevronRight className="h-4 w-4" /></span>
         </Link>
-      ) : connected === false ? (
+      ) : (
         <>
           {/* Not connected — verification is impossible until the extension runs, so lead with it. */}
+          {connected === false && (
           <div className="mt-4 rounded-3xl border border-[#A5D6A7] bg-white p-5">
             <div className="flex items-start gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#E8F5E9] text-[#2E7D32]">
@@ -200,21 +255,52 @@ export default function DashboardPage() {
               <Lock className="h-3 w-3" /> Domain only. Never the page, content, or keystrokes.
             </div>
           </div>
+          )}
 
-          <Link
-            href="/focus"
-            className="mt-3 flex w-full items-center justify-center gap-1.5 text-[13px] font-medium text-[#6B7280] transition-colors hover:text-[#111827]"
-          >
-            Start a session without verifying <ChevronRight className="h-3.5 w-3.5" />
-          </Link>
+          {/* Inline starter — press once, add an optional intention, begin. */}
+          {startOpen ? (
+            <div className="mt-4 rounded-3xl border border-black/[0.07] bg-white p-5">
+              <label htmlFor="intention" className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-[#6B7280]">
+                What are you working on? <span className="font-normal normal-case tracking-normal text-[#6B7280]">(optional)</span>
+              </label>
+              <input
+                id="intention"
+                value={intention}
+                onChange={(e) => setIntention(e.target.value)}
+                maxLength={280}
+                autoFocus
+                placeholder="Deep work on the redesign"
+                className="w-full rounded-2xl border border-black/[0.08] bg-[#FAF8F4] px-4 py-3 text-sm text-[#111827] outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#4CAF50]"
+              />
+              <p className="mt-2 text-xs text-[#6B7280]">
+                Only your circle sees this — in your words. Your sites stay private either way.
+              </p>
+              {startError && <p className="mt-3 text-sm text-[#B45309]">{startError}</p>}
+              <button
+                onClick={startSession}
+                disabled={startBusy}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#2E7D32] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#256628] disabled:opacity-60"
+              >
+                {startBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                Begin focus
+              </button>
+            </div>
+          ) : connected === false ? (
+            <button
+              onClick={() => setStartOpen(true)}
+              className="mt-3 flex w-full items-center justify-center gap-1.5 text-[13px] font-medium text-[#6B7280] transition-colors hover:text-[#111827]"
+            >
+              Start a session without verifying <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          ) : (
+            <button
+              onClick={() => setStartOpen(true)}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#2E7D32] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#256628]"
+            >
+              <Play className="h-4 w-4" /> Start a focus session
+            </button>
+          )}
         </>
-      ) : (
-        <Link
-          href="/focus"
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#2E7D32] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#256628]"
-        >
-          <Play className="h-4 w-4" /> Start a focus session
-        </Link>
       )}
 
       {/* Today's sessions */}
@@ -251,6 +337,20 @@ export default function DashboardPage() {
               )
             })}
           </div>
+          {/* Teach the vocabulary once: shown until dismissed, only when an unverified chip is on screen. */}
+          {showVerifyNote && today.some((s) => !s.session_quality || s.session_quality === 'unverified') && (
+            <div className="mt-2 flex items-start gap-3 px-1">
+              <p className="flex-1 text-xs leading-relaxed text-[#6B7280]">
+                Verified means the extension confirmed this time. Unverified sessions still count, they are just on trust.
+              </p>
+              <button
+                onClick={dismissVerifyNote}
+                className="shrink-0 text-xs font-semibold text-[#2E7D32] transition-colors hover:text-[#1B5E20]"
+              >
+                Got it
+              </button>
+            </div>
+          )}
         </div>
       )}
 

@@ -19,7 +19,7 @@ import {
   MIN_DWELL_S, MAX_QUEUE, MAX_BATCH,
   hostnameOf, isSensitive, isOwnApp, categoryFor,
   capDuration, parseSupabaseSession, selectAuthCookie, tokenExpiresSoon,
-  nextNudge, nudgeCopy, gateAllowsCounting,
+  nextNudge, nudgeCopy, gateAllowsCounting, nextWelcome,
 } from './core.js';
 
 const PRODUCTION_URL = 'https://satyashift.vercel.app';
@@ -45,8 +45,11 @@ const SESSION_KEY = 'focus_session';       // { id, startedAt } — active deep 
 const ACTIVE_KEY = 'active';               // { domain, segmentStart, accumulatedMs }
 const GATE_KEY = 'gate';                   // { blurred, idle }
 const NUDGE_STATE_KEY = 'nudge_state';     // { domain, minutes, lastNudgeAt } — distraction streak
-const NUDGE_TARGET_PREFIX = 'nudge_tgt_';  // per-notification: the domain to deep-link into /intercept
+const NUDGE_TARGET_PREFIX = 'nudge_tgt_';  // per-notification: the nudged domain (cleared on click)
 const POPUP_OPEN_KEY = 'popup_open';       // true while the action popup is on-screen (Windows blur guard)
+const WELCOME_STATE_KEY = 'welcome_state'; // { ackedNudgeAt } — nudges already welcomed/expired
+const WELCOME_PENDING_KEY = 'welcome_pending'; // one-shot: next popup open says "Welcome back."
+const PRESENCE_CACHE_KEY = 'presence_cache';   // { at, data } — circle presence, cached briefly
 
 // Web Locks (available in service workers) serialize concurrent handlers.
 const LOCK_STATE = 'satyashift_state';     // guards active-tab state + queue writes
@@ -352,6 +355,18 @@ async function checkNudge() {
   const { state, fire, domain, minutes } = nextNudge(await getNudgeState(), ctx);
   await chrome.storage.session.set({ [NUDGE_STATE_KEY]: state });
   if (fire) await fireNudge(domain, minutes);
+
+  // Welcome-back: if a recent nudge was heeded (attention landed back on non-distraction
+  // ground), greet once on the next popup open. Pure policy in core.js (nextWelcome).
+  const { [WELCOME_STATE_KEY]: w } = await chrome.storage.session.get(WELCOME_STATE_KEY);
+  const wr = nextWelcome(w, {
+    lastNudgeAt: state.lastNudgeAt,
+    counting: ctx.counting,
+    category: ctx.category,
+    now: ctx.now,
+  });
+  await chrome.storage.session.set({ [WELCOME_STATE_KEY]: wr.state });
+  if (wr.fire) await chrome.storage.session.set({ [WELCOME_PENDING_KEY]: true });
 }
 
 async function fireNudge(domain, minutes) {
@@ -372,13 +387,12 @@ async function fireNudge(domain, minutes) {
   } catch { /* notifications unavailable — skip silently */ }
 }
 
-// Open the existing /intercept friction flow for the nudged domain (domain-only in the query).
+// "Return to focus" opens the app's Today page (the old /intercept flow was retired; its
+// route now just redirects there anyway). We deliberately pass nothing in the URL.
 async function openIntercept(notificationId) {
-  const { [notificationId]: domain } = await chrome.storage.session.get(notificationId);
-  await chrome.storage.session.remove(notificationId);
+  await chrome.storage.session.remove(notificationId); // drop the remembered domain
   const base = await getBaseUrl();
-  const url = domain ? `${base}/intercept?target=${encodeURIComponent(domain)}` : base;
-  try { await chrome.tabs.create({ url }); } catch { /* ignore */ }
+  try { await chrome.tabs.create({ url: `${base}/dashboard` }); } catch { /* ignore */ }
   try { await chrome.notifications.clear(notificationId); } catch { /* ignore */ }
 }
 if (chrome.notifications) {
@@ -590,17 +604,56 @@ async function startSession() {
 async function stopSession() {
   const current = await getSession();
   const token = await getAccessToken();
+  // The server's verdict (it computed duration + quality from domain_logs) — the popup shows
+  // it as a settled seal: "44 min · verified ✓". Null when the stop didn't reach the server.
+  let ended = null;
   if (token) {
     try {
-      await fetch(`${await getBaseUrl()}/api/focus/stop`, {
+      const res = await fetch(`${await getBaseUrl()}/api/focus/stop`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(current?.id ? { session_id: current.id } : {}),
       });
+      if (res.ok) {
+        const data = await res.json().catch(() => null);
+        const s = data?.session;
+        if (s && typeof s.duration_s === 'number') {
+          ended = {
+            durationS: s.duration_s,
+            verified: !!s.session_quality && s.session_quality !== 'unverified',
+          };
+        }
+      }
     } catch { /* clear locally regardless so the UI is never stuck in a session */ }
   }
   await chrome.storage.local.remove(SESSION_KEY);
-  return { session: null };
+  return { session: null, ended };
+}
+
+// ---------------------------------------------------------------------------
+// Circle presence for the popup: one GET, cached briefly so opening the popup twice in a
+// minute costs one request. Returns { circle, live: { name, started_at } | null } or null
+// when we can't know (signed out / offline) — the popup shows nothing rather than guessing.
+// ---------------------------------------------------------------------------
+const PRESENCE_TTL_MS = 60_000;
+
+async function getPresence() {
+  const { [PRESENCE_CACHE_KEY]: cached } = await chrome.storage.session.get(PRESENCE_CACHE_KEY);
+  if (cached && Date.now() - cached.at < PRESENCE_TTL_MS) return cached.data;
+  const token = await getAccessToken().catch(() => null);
+  if (!token) return null;
+  let res;
+  try {
+    res = await fetch(`${await getBaseUrl()}/api/presence`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    return cached?.data ?? null; // offline — serve the stale line rather than a blank flicker
+  }
+  if (!res.ok) return cached?.data ?? null;
+  const data = await res.json().catch(() => null);
+  if (data) await chrome.storage.session.set({ [PRESENCE_CACHE_KEY]: { at: Date.now(), data } });
+  return data;
 }
 
 async function buildStatus() {
@@ -611,7 +664,9 @@ async function buildStatus() {
   const session = await getSession();
   const token = await getAccessToken().catch(() => null);
   const err = store[LAST_ERROR_KEY] || null;
+  const { [WELCOME_PENDING_KEY]: welcomePending } = await chrome.storage.session.get(WELCOME_PENDING_KEY);
   return {
+    welcomePending: !!welcomePending,
     session,
     env: store[ENV_KEY] === 'dev' ? 'dev' : 'prod',
     baseUrl: await getBaseUrl(),
@@ -667,8 +722,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       await withStateLock(async () => { await setGate({ ...(await getGate()), blurred: false }); await applyGate(); });
       await seedActiveTab();
       await reconcileSession(); // never show a forgotten session as "In deep work"
-      sendResponse(await buildStatus());
+      const status = await buildStatus();
+      // "Welcome back." is a one-shot: consumed by this popup open, never repeated.
+      if (status.welcomePending) await chrome.storage.session.remove(WELCOME_PENDING_KEY);
+      sendResponse(status);
     })();
+    return true;
+  }
+  if (msg?.type === 'GET_PRESENCE') {
+    getPresence().then(sendResponse);
     return true;
   }
   if (msg?.type === 'FLUSH_NOW') {
@@ -683,7 +745,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
   if (msg?.type === 'STOP_SESSION') {
-    stopSession().then(buildStatus).then(sendResponse);
+    (async () => {
+      const r = await stopSession();
+      // `ended` carries the server verdict so the popup can seal the moment of completion.
+      sendResponse({ ...(await buildStatus()), ended: r.ended || null });
+    })();
     return true;
   }
   if (msg?.type === 'SET_PAUSED') {

@@ -5,6 +5,79 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-02 — Phase 2 SHIPPED: the hook (popup presence, Welcome back, seal), squad-cluster deletion, Focus-idle merge (web DEPLOYED, ext v2.7.0)
+
+Phase 2 of `docs/experience-audit-2026-07-02.md` (§4, §5, §8, §13) plus the deferred
+squad-UI decision. Extension bumped 2.6.2 → 2.7.0; new store zip
+`dist/satyashift-extension-2.7.0.zip` (kit doc updated — upload THIS one).
+
+**Root-cause fix that unblocked the hook:** no session ever carried `squad_id` (web and
+extension both started without one), and `focus_select` RLS only shows a session to
+squadmates when `squad_id` is set — so the Circle page's "In it right now" and Recent feed
+could never see anything. `/api/focus/start` now attaches the user's newest circle when no
+`squad_id` is passed (matches the single circle the UI renders; `notifySquadOnSessionStart`
+is scoped to it). This also makes the member "focused today" dots work.
+
+**New `/api/presence` (GET, bearer or cookie, RLS, rate-limited `presence`/120):** returns
+`{ circle, live: { name, started_at } | null }` — one co-member first name, newest active
+squad-visible session inside the 4h cap. No domains, no feed, generic errors.
+
+**Extension v2.7.0 (all pure logic tested — `node --test` 25/25):**
+- **Presence line in the popup:** one row under the status card — "Maya is focusing · 24 min"
+  (breathing dot, `prefers-reduced-motion` respected) / "Your circle is quiet right now" /
+  hidden entirely when the user has no circle. Worker `GET_PRESENCE` message; response cached
+  60s in `storage.session`; fetched after first paint so a slow network never delays status.
+- **Post-nudge "Welcome back."** — new pure `nextWelcome()` in core.js (+5 tests): when a
+  nudge is heeded (attention counted on non-distraction ground within 30 min), the next popup
+  open greets ONCE (one-shot flag consumed by GET_STATUS, held for the popup's lifetime).
+- **Verification seal on end:** worker's stopSession now reads the server verdict; the popup
+  swaps the End button for a settled line — "44 min · verified ✓" (or "· saved" when
+  unverified) — soft opacity/2px-rise settle, reduced-motion honored, until the popup closes.
+- Nudge "Return to focus" now opens `/dashboard` directly (the /intercept route was deleted
+  in Phase 0; only the 307 redirect kept it working).
+
+**Squad-UI decision executed (the deferred dark cluster): DELETED, not rebuilt.**
+`components/squads/` (SquadDashboard, LiveActivityRing, MomentumMeter, ProofFeed,
+SquadLeaderboard, DailyMissionBoard, CheckInModal, MapCheckIn, SquadRadarMap,
+CuratedInteractionMenu, ActiveMissionCard, SquadPulse) — all confirmed orphaned, dark-themed
+in a cream app, and Leaderboard/missions/check-ins contradict the no-scoreboard +
+zero-manual-input product line. With them went their orphaned API routes
+(`squads/[id]/checkins/**`, `missions/**`, `radar`, `pings`, `squads/upload`), the leaflet
+deps + squad-animation CSS (reverted), and the stale planning docs (CRITICAL_FIX_PROMPT.md,
+UI_REDESIGN_DIRECTION.md). Migrations 012–015 committed as records — that schema EXISTS live
+(verified: tables + profiles policy) even though schema_migrations doesn't list them.
+**Residual:** unused live tables squad_checkins/squad_missions/squad_mission_participants/
+squad_checkin_reactions/squad_pings + squad_photos bucket — recommend dropping alongside
+legacy mental_logs (same cleanup pass, owner decision).
+
+**Focus-idle merged into Today (audit §8):** the dashboard grows an inline starter
+(collapsed "Start a focus session" → optional intention field → Begin → running screen);
+"Start a session without verifying" opens the same starter. `/focus` is now ONLY the
+running screen (redirects to `/dashboard?start=1` when idle, loads the active session's
+intention from the DB). Nav is four items (Today · Circle · Activity · Settings); the mobile
+FAB is a Play button → `/dashboard?start=1` (auto-opens the starter via useSearchParams in
+a Suspense boundary).
+
+**Vocabulary taught once (audit §5):** under Today's session list, when an unverified chip
+is visible: "Verified means the extension confirmed this time. Unverified sessions still
+count, they are just on trust." — "Got it" dismisses forever (localStorage).
+
+**Also committed:** the good half of the old uncommitted working-tree pile that is already
+live in prod (root layout + JsonLd rebrand MindFuel→SatyaShift, cream ui/button + ui/card,
+PushNotificationManager refactor, ingest counts-only logs, `.agents/AGENTS.md`).
+
+**Verification:** `extension node --test` 25/25 + `node --check` both scripts; `web npx tsc
+--noEmit` + `npx next build` green (route map: `/api/presence` present, five orphaned squad
+routes gone); deployed to satyashift.vercel.app and probed live (see commit).
+
+**Needs the user (harness cannot click the extension):**
+1. Load-unpacked reload → confirm v2.7.0, then: popup shows the presence line when a
+   circle-mate has an active session; "End session" shows the seal; after a heeded nudge the
+   next popup open says "Welcome back."
+2. Web Store upload now uses `dist/satyashift-extension-2.7.0.zip`.
+
+---
+
 ## 2026-07-02 — Security architecture review: defense-in-depth pass (web DEPLOYED, ext v2.6.2)
 
 Full trust-boundary audit of every layer. Deliverables in `docs/security-review-2026-07-02.md`

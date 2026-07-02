@@ -1,72 +1,58 @@
-// app/layout.tsx — Root layout with providers, fonts, metadata
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/react'
+import { PWARegister } from '@/components/PWARegister'
+import { JsonLd } from '@/components/seo/JsonLd'
 import './globals.css'
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-})
-
 export const metadata: Metadata = {
-  metadataBase: new URL('https://getmindfuel.vercel.app'),
-  title: 'MindFuel — AI-Powered Focus & Productivity App | Track Your Digital Wellness',
+  metadataBase: new URL('https://satyashift.vercel.app'),
+  title: 'SatyaShift — Focus you can prove',
   description:
-    'MindFuel is the AI-powered focus and productivity app that tracks your digital content consumption, builds healthier habits, and provides personalized coaching. Focus timer, mood tracking, habit streaks & AI insights. Start free today.',
+    'SatyaShift verifies your focus sessions in the background — no self-reporting, no manual logging. Your domains stay private to you; your squad sees only verified focus.',
   keywords: [
-    'focus app',
+    'focus',
+    'verified focus',
+    'deep work',
     'productivity app',
-    'digital wellness',
-    'AI coaching',
-    'focus timer',
-    'mood tracking',
-    'habit tracker',
-    'content tracker',
-    'mental health app',
-    'digital nutrition',
-    'screen time tracker',
-    'mindfulness app',
-    'digital detox',
-    'AI insights',
-    'productivity tracker',
-    'wellness app',
-    'digital habits',
-    'MindFuel',
+    'ambient tracking',
+    'focus sessions',
+    'accountability',
+    'SatyaShift',
   ],
-  applicationName: 'MindFuel',
+  applicationName: 'SatyaShift',
   category: 'productivity',
-  creator: 'MindFuel',
-  publisher: 'MindFuel',
+  creator: 'SatyaShift',
+  publisher: 'SatyaShift',
   alternates: {
-    canonical: 'https://getmindfuel.vercel.app',
+    canonical: 'https://satyashift.vercel.app',
   },
   openGraph: {
-    title: 'MindFuel — AI-Powered Focus & Productivity App | Track Your Digital Wellness',
+    title: 'SatyaShift — Focus you can prove',
     description:
-      'MindFuel is the AI-powered focus and productivity app that tracks your digital content consumption, builds healthier habits, and provides personalized coaching. Focus timer, mood tracking, habit streaks & AI insights. Start free today.',
+      'Verified focus, not self-reported. Sessions are confirmed in the background, your domains stay private, and your squad sees only that you showed up.',
     type: 'website',
-    siteName: 'MindFuel',
-    url: 'https://getmindfuel.vercel.app',
+    siteName: 'SatyaShift',
+    url: 'https://satyashift.vercel.app',
     images: [
       {
-        url: 'https://getmindfuel.vercel.app/og-image.png',
+        url: 'https://satyashift.vercel.app/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'MindFuel — AI-Powered Focus & Productivity App',
+        alt: 'SatyaShift — focus you can prove',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'MindFuel — AI-Powered Focus & Productivity App | Track Your Digital Wellness',
+    title: 'SatyaShift — Focus you can prove',
     description:
-      'MindFuel is the AI-powered focus and productivity app that tracks your digital content consumption, builds healthier habits, and provides personalized coaching. Focus timer, mood tracking, habit streaks & AI insights. Start free today.',
+      'Verified focus, not self-reported. Sessions are confirmed in the background, your domains stay private, and your squad sees only that you showed up.',
     images: [
       {
-        url: 'https://getmindfuel.vercel.app/og-image.png',
+        url: 'https://satyashift.vercel.app/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'MindFuel — AI-Powered Focus & Productivity App',
+        alt: 'SatyaShift — focus you can prove',
       },
     ],
   },
@@ -75,28 +61,22 @@ export const metadata: Metadata = {
   },
 }
 
-import { Analytics } from '@vercel/analytics/react'
-import { PWARegister } from '@/components/PWARegister'
-import { JsonLd } from '@/components/seo/JsonLd'
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#0b0f1a" />
+        <meta name="theme-color" content="#FAF8F4" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
         <JsonLd />
       </head>
-      <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className="font-sans antialiased" suppressHydrationWarning>
         {children}
         <Analytics />
         <PWARegister />

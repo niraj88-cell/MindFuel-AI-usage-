@@ -1,15 +1,13 @@
-// components/seo/JsonLd.tsx — Structured data (JSON-LD) for rich SERP results
 export function JsonLd() {
-  const baseUrl = 'https://getmindfuel.vercel.app'
+  const baseUrl = 'https://satyashift.vercel.app'
 
   const structuredData = {
     '@context': 'https://schema.org',
     '@graph': [
-      // ── Organization ──
       {
         '@type': 'Organization',
         '@id': `${baseUrl}/#organization`,
-        name: 'MindFuel',
+        name: 'SatyaShift',
         url: baseUrl,
         logo: {
           '@type': 'ImageObject',
@@ -19,35 +17,23 @@ export function JsonLd() {
         },
         sameAs: [],
       },
-
-      // ── WebSite ──
       {
         '@type': 'WebSite',
         '@id': `${baseUrl}/#website`,
         url: baseUrl,
-        name: 'MindFuel',
+        name: 'SatyaShift',
         description:
-          'AI-powered focus & productivity app with digital wellness tracking',
+          'Focus you can prove. SatyaShift verifies focus sessions in the background, keeps your domains private, and shows your squad only that you showed up.',
         publisher: { '@id': `${baseUrl}/#organization` },
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: {
-            '@type': 'EntryPoint',
-            urlTemplate: `${baseUrl}/?q={search_term_string}`,
-          },
-          'query-input': 'required name=search_term_string',
-        },
       },
-
-      // ── SoftwareApplication ──
       {
         '@type': 'SoftwareApplication',
         '@id': `${baseUrl}/#app`,
-        name: 'MindFuel',
-        operatingSystem: 'Web, iOS, Android',
+        name: 'SatyaShift',
+        operatingSystem: 'Web',
         applicationCategory: 'ProductivityApplication',
         description:
-          'MindFuel is the AI-powered focus and productivity app that tracks your digital content consumption, builds healthier habits, and provides personalized coaching. Features include focus timer, mood tracking, habit streaks, AI insights, mindful intercept, and weekly wellness reports.',
+          'SatyaShift confirms your focus sessions ambiently — no manual logging and no self-reporting. Your browsing domains stay private to you, while your squad sees only verified focus.',
         offers: [
           {
             '@type': 'Offer',
@@ -55,53 +41,43 @@ export function JsonLd() {
             price: '0',
             priceCurrency: 'USD',
           },
-          {
-            '@type': 'Offer',
-            name: 'Pro',
-            price: '9.99',
-            priceCurrency: 'USD',
-            billingIncrement: 1,
-            unitCode: 'MON',
-          },
         ],
         author: { '@id': `${baseUrl}/#organization` },
       },
-
-      // ── FAQPage ──
       {
         '@type': 'FAQPage',
         '@id': `${baseUrl}/#faq`,
         mainEntity: [
           {
             '@type': 'Question',
-            name: 'What is MindFuel?',
+            name: 'What is SatyaShift?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'MindFuel is an AI-powered focus and productivity app that works as a mental nutrition tracker. It monitors your digital content consumption and provides personalized insights to help you build healthier digital habits.',
+              text: 'SatyaShift is an ambient focus tracker. It verifies your focus sessions in the background so they can’t be faked, while keeping the sites you visit private to you.',
             },
           },
           {
             '@type': 'Question',
-            name: 'Is MindFuel free?',
+            name: 'How does SatyaShift protect my privacy?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'Yes! MindFuel offers a free plan with core features including content tracking, basic insights, and the focus timer. A Pro plan is available at $9.99/month for advanced AI coaching, detailed analytics, and premium features.',
+              text: 'The specific sites you visit are owner-only telemetry. Your squad never sees which domains you focused on — only that you completed a verified session.',
             },
           },
           {
             '@type': 'Question',
-            name: 'What features does MindFuel offer?',
+            name: 'Do I have to log anything manually?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'MindFuel includes a focus timer, mood tracking, AI-powered insights, personalized AI coaching, habit challenges with streaks, mindful intercept notifications, digital content consumption logging, and weekly wellness reports.',
+              text: 'No. SatyaShift runs ambiently through a browser extension. Focus sessions appear on their own — there is nothing to start or log.',
             },
           },
           {
             '@type': 'Question',
-            name: "How does MindFuel's AI coaching work?",
+            name: 'What does “verified focus” mean?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: "MindFuel's AI coaching analyzes your digital consumption patterns, focus sessions, and mood data to deliver personalized recommendations. It helps you identify unhealthy habits, suggests better alternatives, and provides actionable tips to improve your digital wellness and productivity.",
+              text: 'A session is confirmed in the background rather than self-reported, so the focus your squad sees is real and cannot be gamed.',
             },
           },
         ],

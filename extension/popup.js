@@ -6,6 +6,8 @@ const $ = (id) => document.getElementById(id);
 
 let current = null; // last status, so the toggles know what to flip to
 let tick = null;    // interval that refreshes the in-session elapsed time
+let welcomed = false; // "Welcome back." — one-shot flag held for this popup's lifetime
+let sealText = null;  // set after "End session": the settled verdict line, until close
 
 function timeAgo(ts) {
   if (!ts) return 'never';
@@ -54,9 +56,39 @@ function actionErrorNote(kind, s) {
   return 'Could not start the session just now. Give it a moment and try again.';
 }
 
+// "24 min", "1h 04m" — calm, minute-level, for the seal and the presence line.
+function humanMinutes(totalSeconds) {
+  const m = Math.max(1, Math.round(totalSeconds / 60));
+  if (m < 60) return `${m} min`;
+  return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`;
+}
+
+// One quiet line of circle presence under the status card. Hidden entirely when the user
+// has no circle (or we can't know) — a presence line with nobody behind it would be noise.
+function paintPresence(p) {
+  const row = $('presence');
+  if (!p || !p.circle) { row.style.display = 'none'; return; }
+  row.style.display = 'flex';
+  if (p.live && p.live.name) {
+    const startedAt = p.live.started_at ? new Date(p.live.started_at).getTime() : null;
+    const mins = startedAt ? Math.floor((Date.now() - startedAt) / 60000) : 0;
+    $('pdot').className = 'pdot live';
+    $('ptext').textContent = mins < 1
+      ? `${p.live.name} is focusing · just started`
+      : `${p.live.name} is focusing · ${mins} min`;
+  } else {
+    $('pdot').className = 'pdot';
+    $('ptext').textContent = 'Your circle is quiet right now';
+  }
+}
+
 function render(s) {
   current = s;
   const inSession = !!(s && s.session);
+
+  // "Welcome back." — the worker hands it over once; keep it for this popup's lifetime.
+  if (s && s.welcomePending) welcomed = true;
+  $('welcome').style.display = welcomed ? 'block' : 'none';
 
   // Keep the elapsed time fresh while a session runs; stop the ticker otherwise.
   if (tick) { clearInterval(tick); tick = null; }
@@ -100,13 +132,22 @@ function render(s) {
   $('note').textContent = note || '';
 
   // Deep-session button: the primary action when idle, "End session" while running. Only offered
-  // to a signed-in user (you can't verify a session we can't attribute).
+  // to a signed-in user (you can't verify a session we can't attribute). After a session just
+  // ended, the seal takes the button's place until the popup closes — completion gets a moment.
   const sessBtn = $('session');
-  const canSession = !!(s && s.signedIn && !s.sessionExpired);
-  sessBtn.style.display = canSession ? 'block' : 'none';
-  sessBtn.textContent = inSession ? 'End session' : 'Start deep session';
-  sessBtn.className = 'btn ' + (inSession ? 'ghost' : 'primary');
-  sessBtn.disabled = false;
+  const seal = $('seal');
+  if (sealText) {
+    seal.textContent = sealText;
+    seal.style.display = 'block';
+    sessBtn.style.display = 'none';
+  } else {
+    seal.style.display = 'none';
+    const canSession = !!(s && s.signedIn && !s.sessionExpired);
+    sessBtn.style.display = canSession ? 'block' : 'none';
+    sessBtn.textContent = inSession ? 'End session' : 'Start deep session';
+    sessBtn.className = 'btn ' + (inSession ? 'ghost' : 'primary');
+    sessBtn.disabled = false;
+  }
 
   // Pause toggle — hidden during a session (pausing would undercut the very focus we're verifying).
   const pauseBtn = $('pause');
@@ -131,6 +172,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   refresh();
 
+  // Circle presence arrives separately so a slow network never delays the status render.
+  chrome.runtime.sendMessage({ type: 'GET_PRESENCE' }).then(paintPresence).catch(() => {});
+
   $('open').addEventListener('click', (e) => {
     e.preventDefault();
     const url = $('open').getAttribute('href');
@@ -142,7 +186,13 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.disabled = true;
     const type = current && current.session ? 'STOP_SESSION' : 'START_SESSION';
     try {
-      render(await chrome.runtime.sendMessage({ type }));
+      const s = await chrome.runtime.sendMessage({ type });
+      // Session just ended: settle the verdict in the button's place — "44 min · verified ✓"
+      // (or "saved" when the extension had no signal to verify with).
+      if (type === 'STOP_SESSION' && s && s.ended) {
+        sealText = `${humanMinutes(s.ended.durationS)} · ${s.ended.verified ? 'verified ✓' : 'saved'}`;
+      }
+      render(s);
     } catch {
       btn.disabled = false;
     }

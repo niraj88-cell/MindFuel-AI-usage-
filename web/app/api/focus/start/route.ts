@@ -72,6 +72,31 @@ export async function POST(req: Request) {
         .eq('status', 'active')
     }
 
+    // Attach the user's circle so the session is visible to co-members. RLS (focus_select)
+    // only shows a session to squadmates when squad_id is set — without this, the circle's
+    // presence row and proof feed never see anything (web and extension both start sessions
+    // without an explicit squad_id). When the user is in several squads we pick the newest,
+    // matching the single circle the UI renders (GET /api/squads orders by created_at desc).
+    let squadId = parsed.data.squad_id ?? null
+    if (!squadId) {
+      const { data: memberships } = await supabase
+        .from('squad_members')
+        .select('squad_id')
+        .eq('user_id', userId)
+        .is('left_at', null)
+      const ids = (memberships ?? []).map((m) => m.squad_id)
+      if (ids.length > 0) {
+        const { data: newest } = await supabase
+          .from('squads')
+          .select('id')
+          .in('id', ids)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        squadId = newest?.id ?? null
+      }
+    }
+
     const { data: created, error } = await supabase
       .from('focus_sessions')
       // Cast: the generated type still carries the legacy duration_minutes/completed columns
@@ -81,7 +106,7 @@ export async function POST(req: Request) {
         user_id: userId,
         status: 'active',
         intention: parsed.data.intention ?? null,
-        squad_id: parsed.data.squad_id ?? null,
+        squad_id: squadId,
         mf_duration_minutes: 0,
         mf_completed: false,
       } as never)
@@ -99,7 +124,7 @@ export async function POST(req: Request) {
     await notifySquadOnSessionStart({
       admin,
       actorId: userId,
-      squadId: parsed.data.squad_id ?? null,
+      squadId, // the circle the session is attached to (resolved above)
       sessionId: created.id,
     })
 

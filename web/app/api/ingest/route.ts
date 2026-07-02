@@ -99,6 +99,7 @@ export async function POST(req: NextRequest) {
   if (batchError) {
     if (batchError.code === '23505') {
       // Duplicate delivery of an already-processed batch — safe no-op.
+      console.log(`[ingest] duplicate batch no-op (events=${events.length})`)
       return NextResponse.json({ success: true, duplicate: true, inserted: 0 })
     }
     console.error('[ingest] processed_batches insert error:', batchError)
@@ -127,5 +128,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to save events' }, { status: 500 })
   }
 
+  // Observability: counts only — never a domain or any user content.
+  console.log(`[ingest] ok inserted=${rows.length}`)
   return NextResponse.json({ success: true, inserted: rows.length })
 }

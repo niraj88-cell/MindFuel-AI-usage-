@@ -207,6 +207,34 @@ export function nudgeCopy(domain, minutes, seed = 0) {
   return { title: 'A quiet check-in', message: NUDGE_PROMPTS[idx](domain, minutes) };
 }
 
+// ---------------------------------------------------------------------------
+// Welcome-back acknowledgement. A nudge is the only time the extension speaks first; this
+// closes that loop with warmth. When attention lands back on non-distraction ground within
+// WELCOME_WINDOW_MIN of a nudge, the next popup open greets once: "Welcome back." Exactly
+// once per nudge — never a recurring pat on the head (that would be engagement mechanics).
+// ---------------------------------------------------------------------------
+export const WELCOME_WINDOW_MIN = 30; // a return later than this isn't a response to the nudge
+
+// Pure, ticked by the same 1-minute alarm as nextNudge.
+//   prev: { ackedNudgeAt }  — newest nudge already resolved (welcomed or expired)
+//   ctx:  { lastNudgeAt, counting, category, now }
+// Returns { state, fire }. fire=true exactly once, when the nudge was actually heeded.
+export function nextWelcome(prev, ctx, cfg = {}) {
+  const windowMs = (cfg.windowMin ?? WELCOME_WINDOW_MIN) * 60_000;
+  const acked = (prev && prev.ackedNudgeAt) || 0;
+  const nudgeAt = ctx.lastNudgeAt || 0;
+  // No nudge, or one we've already resolved — nothing to do.
+  if (!nudgeAt || nudgeAt <= acked) return { state: { ackedNudgeAt: acked }, fire: false };
+  // Came back too late to be a response to the nudge: resolve it silently.
+  if (ctx.now - nudgeAt > windowMs) return { state: { ackedNudgeAt: nudgeAt }, fire: false };
+  // Heeded: attention is being counted somewhere that isn't a distraction.
+  if (ctx.counting && ctx.category !== 'distraction') {
+    return { state: { ackedNudgeAt: nudgeAt }, fire: true };
+  }
+  // Still away (blur/idle) or still on the distraction — keep waiting inside the window.
+  return { state: { ackedNudgeAt: acked }, fire: false };
+}
+
 // expires_at is unix SECONDS. True if the token is missing or within `skewS` of expiry,
 // so we refresh proactively instead of waiting for a 401 (H3).
 export function tokenExpiresSoon(session, skewS = 60, now = Date.now()) {

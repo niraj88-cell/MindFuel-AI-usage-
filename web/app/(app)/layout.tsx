@@ -8,8 +8,8 @@ import {
   CalendarDays,
   LogOut,
   Menu,
+  Play,
   Shield,
-  Target,
   User,
   Users,
   X,
@@ -17,9 +17,9 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { SatyaMark } from '@/components/brand/SatyaMark'
 
+// Focus is an ACTION (started from Today), not a destination — the nav stays four items.
 const PRIMARY_NAV = [
   { href: '/dashboard', label: 'Today', icon: CalendarDays },
-  { href: '/focus', label: 'Focus', icon: Target },
   { href: '/squads', label: 'Circle', icon: Users },
 ]
 
@@ -224,9 +224,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-black/[0.08] bg-white/90 px-3 pb-2 pt-2 backdrop-blur-xl lg:hidden">
           <div className="mx-auto grid max-w-md grid-cols-5 items-center gap-1">
             <NavLink item={PRIMARY_NAV[0]} compact />
-            <NavLink item={PRIMARY_NAV[2]} compact />
-            <Link href="/focus" aria-label="Start focus" className="mx-auto flex h-14 w-14 -translate-y-4 items-center justify-center rounded-full bg-[#2E7D32] text-white shadow-lg">
-              <Target className="h-6 w-6" />
+            <NavLink item={PRIMARY_NAV[1]} compact />
+            <Link href="/dashboard?start=1" aria-label="Start a focus session" className="mx-auto flex h-14 w-14 -translate-y-4 items-center justify-center rounded-full bg-[#2E7D32] text-white shadow-lg">
+              <Play className="h-6 w-6" />
             </Link>
             <NavLink item={SECONDARY_NAV[0]} compact />
             <NavLink item={SECONDARY_NAV[1]} compact />

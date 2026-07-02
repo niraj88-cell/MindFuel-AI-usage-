@@ -7,6 +7,7 @@ import {
   hostnameOf, matchesDomain, isSensitive, isOwnApp, categoryFor,
   capDuration, parseSupabaseSession, selectAuthCookie, tokenExpiresSoon,
   nextNudge, NUDGE_AFTER_MIN, NUDGE_GRACE_TICKS, nudgeCopy, gateAllowsCounting,
+  nextWelcome, WELCOME_WINDOW_MIN,
   MAX_DWELL_S,
 } from './core.js';
 
@@ -240,4 +241,51 @@ test('tokenExpiresSoon: honors the skew window', () => {
   assert.equal(tokenExpiresSoon(fresh, 60, now), false); // plenty of runway
   assert.equal(tokenExpiresSoon(null, 60, now), true);
   assert.equal(tokenExpiresSoon({ expires_at: 999 }, 60, now), true); // no access_token
+});
+
+test('nextWelcome: fires exactly once when a nudge is heeded', () => {
+  const NUDGE_AT = 100 * 60000;
+  let s = { ackedNudgeAt: 0 };
+
+  // Still on the distraction right after the nudge: no welcome.
+  let r = nextWelcome(s, { lastNudgeAt: NUDGE_AT, counting: true, category: 'distraction', now: NUDGE_AT + 60000 });
+  assert.equal(r.fire, false);
+  s = r.state;
+
+  // Not counting at all (blur / idle / own app): still waiting, no welcome.
+  r = nextWelcome(s, { lastNudgeAt: NUDGE_AT, counting: false, category: 'neutral', now: NUDGE_AT + 2 * 60000 });
+  assert.equal(r.fire, false);
+  s = r.state;
+
+  // Attention lands on productive ground inside the window: welcome, once.
+  r = nextWelcome(s, { lastNudgeAt: NUDGE_AT, counting: true, category: 'productive', now: NUDGE_AT + 3 * 60000 });
+  assert.equal(r.fire, true);
+  s = r.state;
+
+  // Same nudge never greets twice.
+  r = nextWelcome(s, { lastNudgeAt: NUDGE_AT, counting: true, category: 'neutral', now: NUDGE_AT + 4 * 60000 });
+  assert.equal(r.fire, false);
+});
+
+test('nextWelcome: a return outside the window expires silently', () => {
+  const NUDGE_AT = 100 * 60000;
+  const late = NUDGE_AT + (WELCOME_WINDOW_MIN + 1) * 60000;
+  const r = nextWelcome({ ackedNudgeAt: 0 }, { lastNudgeAt: NUDGE_AT, counting: true, category: 'productive', now: late });
+  assert.equal(r.fire, false);
+  assert.equal(r.state.ackedNudgeAt, NUDGE_AT, 'expired nudge is resolved so it can never greet later');
+});
+
+test('nextWelcome: a NEW nudge re-arms the greeting', () => {
+  const FIRST = 100 * 60000;
+  const SECOND = 200 * 60000;
+  // First nudge heeded and acked.
+  let s = nextWelcome({ ackedNudgeAt: 0 }, { lastNudgeAt: FIRST, counting: true, category: 'neutral', now: FIRST + 60000 }).state;
+  // Second nudge later, heeded again: fires again.
+  const r = nextWelcome(s, { lastNudgeAt: SECOND, counting: true, category: 'neutral', now: SECOND + 2 * 60000 });
+  assert.equal(r.fire, true);
+});
+
+test('nextWelcome: no nudge, no greeting, tolerant of missing state', () => {
+  assert.equal(nextWelcome(undefined, { lastNudgeAt: 0, counting: true, category: 'neutral', now: 1000 }).fire, false);
+  assert.equal(nextWelcome(null, { lastNudgeAt: 0, counting: false, category: 'neutral', now: 1000 }).fire, false);
 });
