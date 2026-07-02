@@ -4,6 +4,63 @@ Newest first. Each entry is a decision that should not be silently reversed. For
 change log see `docs/project-status.md`; for the full security reference see
 `docs/security-review-2026-07-02.md`.
 
+## Behavioral intelligence + squad privacy architecture (2026-07-02)
+
+The product's edge is recognizing ATTENTION PATTERNS while staying domain-only. Durable
+rules (implementation: `web/lib/behavior.ts`, migration 019, this date's status entry):
+
+- **One pure module is the entire intelligence.** `web/lib/behavior.ts` turns the ordered
+  (domain, category, duration) timeline into `BehaviorSignals` (switch rate, longest
+  unbroken stretch, distraction bouts/returns, drift trend, recovery) and derives the
+  quality label + the Satya reflection from those signals. It is dependency-free and
+  unit-tested (`node --test lib/behavior.test.mjs`); new pattern logic goes THERE, with
+  tests — never inline in routes or pages.
+- **Stored signals contain zero domains.** `focus_sessions.behavior` (jsonb) holds counts,
+  durations, and shares only — verified by test. The raw sequence stays in `domain_logs`
+  under owner-only RLS. Never add a domain, a URL, or free text to the signals shape.
+- **Honesty is asymmetric: pattern rules only ever DOWNGRADE a quality label.** A
+  distraction loop diluted by neutral time must not read as praise; with zero distraction
+  signal we do not downgrade on suspicion (a work-site hop is not "scatter"). Reflections
+  state what happened; no flattery, no shame, no "should".
+- **Learning = the user compared to their own recent sessions, derived at read time.**
+  `noticeAgainstBaseline` needs 3+ verified sessions and returns at most ONE line, usually
+  none. No profiles, no stored aggregates, no cross-user comparison — ever.
+- **Event ORDER is part of measurement integrity.** `domain_logs.seq` preserves in-batch
+  order (ids are random, created_at is per-batch); the extension flushes before
+  /api/focus/stop so the verdict sees the final stretch. Don't break either.
+- **Squadmates read sessions ONLY through SECURITY DEFINER functions** (`get_squad_feed`,
+  `get_squad_live`, `get_squad_focused_today`); `focus_sessions` RLS is owner-only. RLS is
+  row-level, so the old squad-arm SELECT policy leaked quality/percentages to any squadmate
+  with devtools. What a circle sees is exactly: who, active/verified, duration, the
+  member's own intention words, when. Never a quality label, percentage, or behavior.
+  (These four fns join the accepted definer-executable advisor WARNs.)
+- **The only squad interaction is a fixed-phrase encouragement** (`encourage_session`:
+  membership + active-session + allowlist + one-per-member-per-session enforced in SQL).
+  No chat, no free text, no reactions feed, no reciprocity mechanics. Delivered as a quiet
+  notification + chips on the recipient's running focus screen.
+
+## Intervention (nudge) reliability architecture (2026-07-02)
+
+The gentle nudge is a core product promise; every stage of its pipeline must be either
+provably working or loudly diagnosable. Durable rules (details in `extension/CLAUDE.md`):
+
+- **The nudge is fully local.** It reads only the bare domain already being tracked, never
+  needs the network or auth, and works offline / with Supabase down. Do not add a server
+  dependency to the intervention path, and do not log nudge events server-side — the
+  distraction TIME already lands in `domain_logs` via ingest; the intervention itself is
+  private by design (trust over engagement).
+- **Alarms self-heal on every worker wake.** `ensureAlarm()` runs at top level of the
+  service worker (existence-checked, so it never resets a live countdown). Relying on
+  onInstalled/onStartup alone is forbidden — a lost alarm silently killed nudges AND sync
+  until a browser restart.
+- **Delivery is verified, never assumed.** `chrome.notifications.getPermissionLevel()` is
+  checked before firing; 'denied' is recorded and surfaced in the popup ("Gentle check-ins
+  are muted"). A create() that renders nothing must never be indistinguishable from success.
+- **The pipeline leaves evidence.** Every tick writes `nudge_diag` (storage.local); tick
+  errors are caught and recorded, never swallowed. Integration tests (`background.test.js`)
+  drive the real background.js through threshold, cooldown, grace, media exemption,
+  SW/browser restarts, lost alarms, muted delivery, and click-through — keep them green.
+
 ## Payment architecture (2026-07-02 — decided, NOT yet implemented)
 
 Full reasoning: `docs/payments-architecture-2026-07-02.md`. Supersedes the earlier
@@ -31,7 +88,36 @@ Nepal).
 - **When gating ships, the social layer gates — never the user's own data.** Export stays
   free forever; the extension and popup never touch billing code.
 - **Prerequisite before Paddle verification:** public `/terms` and `/refunds`
-  (≥30-day money-back) pages on the live site.
+  (≥30-day money-back) pages on the live site. (Shipped 2026-07-03.)
+
+### Foundation implemented 2026-07-03 (dormant until PADDLE_* env vars exist)
+
+- **The seam is `lib/billing/`** (types → paddle adapter → service → gate). Application
+  code may import the service/gate/entitlement modules only; provider payloads and SDK
+  shapes never leave the adapter. A provider swap = new adapter + env change.
+- **Entitlement is derived in exactly one place:** `lib/entitlement.ts` (pure, tested)
+  computes trial / active / grace_period / past_due / paused / cancelled / expired /
+  lifetime from profiles + the webhook-written mirror. `lib/subscription.ts` delegates
+  to it; future premium routes use `lib/billing/gate.ts` (`requirePremium`). Fail-closed:
+  unknown provider states never grant access.
+- **Webhook pipeline is synchronous ON PURPOSE (no queue/broker).** Verify (constant-time
+  HMAC, ±5 min replay window) → event-store insert (PK dedupe; unprocessed rows are
+  crash-recovery, completed on redelivery) → atomic SQL apply (`apply_billing_update`,
+  service-role-only EXECUTE, out-of-order guard `occurred_at`) → mark processed. A 500
+  makes the provider redeliver — the provider's retry schedule IS the queue. Do not add
+  a broker without new evidence (volume) — it would only add failure modes.
+- **`billing_events` has RLS enabled with NO policies — intentional** (service-role
+  only; the advisor INFO is accepted). Users read `billing_subscriptions` (own row) only.
+  Events store the NORMALIZED update, never raw provider payloads (no PII at rest).
+- **Mission-checklist mapping (deliberate simplifications):** plans live in code
+  (`PLANS`), not a table (a plans table drifts); entitlements are derived, not stored
+  (migration-016 philosophy); `payment_providers` is a column, not a table;
+  `webhook_events`/`audit`/`security` logs = `billing_events` + existing
+  `security_audit_logs` + structured `auditLog`; feature_flags deferred (no use case).
+- **Environments are configuration only:** `PADDLE_ENVIRONMENT` sandbox|production plus
+  keys/ids in env (`.env.example`). Billing disabled ⇒ `/api/billing/webhook` answers
+  404. The webhook route is exempt from the cookie-CSRF origin gate (HMAC-authed,
+  machine-to-machine) — keep that exemption path-exact.
 
 ## Security architecture (2026-07-02)
 

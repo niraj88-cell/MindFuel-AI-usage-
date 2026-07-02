@@ -36,8 +36,12 @@ export async function proxy(request: NextRequest) {
   // Origin header.
   if (isApiRoute && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
     const hasBearer = request.headers.get('authorization')?.startsWith('Bearer ')
+    // Billing webhooks are machine-to-machine: no cookies, no Origin header, and they
+    // authenticate with an HMAC signature verified in the route itself. CSRF does not
+    // apply (nothing is cookie-authed), so exempt them like Bearer requests.
+    const isSignedWebhook = request.nextUrl.pathname === '/api/billing/webhook'
 
-    if (!hasBearer) {
+    if (!hasBearer && !isSignedWebhook) {
       const origin = request.headers.get('origin')
       const host = request.headers.get('host')
 

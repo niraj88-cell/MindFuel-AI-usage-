@@ -17,6 +17,9 @@ type AuditEventType =
   | 'data.export_requested'
   | 'data.export_completed'
   | 'profile.tier_changed'
+  | 'billing.webhook_rejected'
+  | 'billing.event_unattributable'
+  | 'billing.subscription_updated'
 
 interface AuditEvent {
   type: AuditEventType

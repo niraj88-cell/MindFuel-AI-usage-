@@ -5,6 +5,64 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-03 — Payment FOUNDATION built + proven end-to-end (dormant; go-live = env config only)
+
+Roadmap step 3 of `docs/payments-architecture-2026-07-02.md`, built BEFORE Paddle
+approval so going live is configuration: set PADDLE_* env vars in Vercel (sandbox first),
+create the products, ship the checkout UI (deliberately NOT built), done. No business
+logic, schema, or UI rewrite will be needed. Durable rules: DECISIONS.md "Foundation
+implemented" section.
+
+**The seam (`web/lib/billing/`):** `types.ts` (canonical BillingUpdate + PaymentProvider
+interface) → `paddle.ts` (the only Paddle-aware file: constant-time HMAC-SHA256
+signature verify with ±5 min replay window, event→canonical mapping, fail-closed on
+unknown statuses) → `service.ts` (SubscriptionService, the only writer) → `gate.ts`
+(`getEntitlement`/`requirePremium` for future premium routes; nothing gated yet, per
+rule). `config.ts` validates env; billing disabled ⇒ webhook answers 404.
+
+**Entitlement engine:** `lib/entitlement.ts` — pure, ONE authoritative function
+(`entitlementOf`) deriving trial/active/grace_period/past_due/paused/cancelled/expired/
+lifetime from profiles + the mirror row; `lib/subscription.ts` now delegates to it
+(UI API unchanged). GRACE_DAYS=14. Fail-closed everywhere.
+
+**Webhook pipeline (`/api/billing/webhook`, thin handler):** raw-body HMAC verify →
+128KB cap → `billing_events` insert (PK event_id = dedupe; existing-unprocessed rows are
+crash recovery, finished on redelivery) → atomic `apply_billing_update` SQL fn
+(service-role-only EXECUTE; out-of-order guard on provider `occurred_at`; profiles cache
+refresh in the same transaction) → processed mark. 500 ⇒ Paddle redelivers; NO queue on
+purpose (documented in DECISIONS — the provider's retry schedule is the queue at our
+volume). Exempted from the cookie-CSRF origin gate in proxy.ts (HMAC-authed, path-exact).
+Audit: new `billing.*` events via `auditLog`; unattributable paid events log CRITICAL.
+
+**DB (migrations applied live + repo files):** 020 `billing_events` (RLS on, NO policies
+— service-role only, advisor INFO accepted) + `billing_subscriptions` (owner SELECT only,
+no user writes) + `apply_billing_update` + profiles.subscription_plan now allows
+'lifetime'. **021: fixed a REAL pre-existing prod bug found while smoke-testing** — the
+live `log_security_audit_event()` trigger still had the pre-fix body referencing
+OLD.user_id (profiles has `id`), so EVERY profiles UPDATE/DELETE raised 42703; the repo's
+20260525 fix file had never been applied live. Fixed + hardened (search_path).
+
+**Verification:** unit tests 15/15 (`node --test lib/entitlement.test.mjs
+lib/billing/paddle.test.mjs`: full state machine incl. fail-closed, signature/replay/
+tamper, mapping incl. unattributable) + tsc + build green. **Production end-to-end
+smoke test** with a temporary webhook secret (set → deploy → six-case suite → cleaned →
+secret removed → redeployed): activation 200, duplicate {duplicate:true}, older
+out-of-order cancel did NOT overwrite active (guard held), bad signature 401, replayed
+timestamp 401, unattributable 200+CRITICAL audit; crash-recovery path exercised for real
+(events stuck by the 021 bug completed on redelivery). Smoke rows deleted; founder
+profile reset; endpoint verified back to dormant 404. Advisors re-run: only the accepted
+INFO on billing_events; `apply_billing_update` NOT user-executable.
+
+**Also:** dead `lib/stripe.ts` + `stripe` npm dep removed (Paddle decision supersedes);
+`server-only` added to fence billing config/service/gate out of client bundles;
+Paddle placeholders documented in `.env.example`; billing table/RPC types added to
+`lib/supabase/types.ts`.
+
+**Deliberately NOT built:** checkout UI, portal link, upgrade surfaces, any gating —
+that is the go-live session, after Paddle approval, per the roadmap.
+
+---
+
 ## 2026-07-03 — Paddle-readiness trust pages SHIPPED (web DEPLOYED + probed live)
 
 The public trust surface Paddle's domain review requires (and users deserve), written as a

@@ -17,7 +17,7 @@ export type InsightType = 'daily_coach' | 'content_swap' | 'mood_correlation' | 
 export type ChallengeDifficulty = 'easy' | 'medium' | 'hard'
 export type NotificationType =
   | 'daily_coach' | 'swap_suggestion' | 'challenge' | 'streak'
-  | 'squad_focus_start' | 'squad_ping'
+  | 'squad_focus_start' | 'squad_ping' | 'squad_encouragement'
 
 export interface Database {
   public: {
@@ -330,6 +330,8 @@ export interface Database {
           duration_s?: number | null
           session_quality?: string | null
           distraction_pct?: number | null
+          // Behavioral signals from lib/behavior.ts (counts/durations only — never domains).
+          behavior?: Json | null
         }
         Insert: Omit<Database['public']['Tables']['focus_sessions']['Row'], 'id' | 'created_at'> & {
           id?: string
@@ -600,6 +602,7 @@ export interface Database {
           duration_s: number
           category: string
           batch_id: string | null
+          seq: number
           jitai_fired: boolean
           jitai_outcome: string | null
           created_at: string
@@ -611,6 +614,7 @@ export interface Database {
           duration_s: number
           category?: string
           batch_id?: string | null
+          seq?: number
           jitai_fired?: boolean
           jitai_outcome?: string | null
           created_at?: string
@@ -650,6 +654,64 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['rate_limits']['Insert']>
         Relationships: []
       }
+      // Billing foundation (migration 020). Service-role writes only; users may
+      // SELECT their own billing_subscriptions row, never billing_events.
+      billing_events: {
+        Row: {
+          event_id: string
+          provider: string
+          event_type: string
+          subscription_id: string | null
+          user_id: string | null
+          occurred_at: string
+          update: Json | null
+          received_at: string
+          processed_at: string | null
+        }
+        Insert: {
+          event_id: string
+          provider: string
+          event_type: string
+          subscription_id?: string | null
+          user_id?: string | null
+          occurred_at: string
+          update?: Json | null
+          received_at?: string
+          processed_at?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['billing_events']['Insert']>
+        Relationships: []
+      }
+      billing_subscriptions: {
+        Row: {
+          user_id: string
+          provider: string
+          provider_customer_id: string | null
+          provider_subscription_id: string
+          plan: string | null
+          status: string
+          current_period_end: string | null
+          cancel_at_period_end: boolean
+          occurred_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          provider?: string
+          provider_customer_id?: string | null
+          provider_subscription_id: string
+          plan?: string | null
+          status: string
+          current_period_end?: string | null
+          cancel_at_period_end?: boolean
+          occurred_at: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['billing_subscriptions']['Insert']>
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -676,6 +738,49 @@ export interface Database {
           p_max_calls: number
         }
         Returns: boolean
+      }
+      // Squad-safe reads (migration 019): the ONLY way squadmates see each other's
+      // sessions. Safe columns only — never quality, percentages, or behavior.
+      get_squad_feed: {
+        Args: { p_squad_id: string }
+        Returns: {
+          id: string
+          user_id: string
+          full_name: string | null
+          avatar_url: string | null
+          active: boolean
+          verified: boolean
+          duration_s: number | null
+          intention: string | null
+          created_at: string
+        }[]
+      }
+      get_squad_live: {
+        Args: Record<string, never>
+        Returns: { user_id: string; full_name: string | null; started_at: string }[]
+      }
+      get_squad_focused_today: {
+        Args: { p_squad_id: string }
+        Returns: string[]
+      }
+      encourage_session: {
+        Args: { p_session_id: string; p_phrase: number }
+        Returns: { ok: boolean; recipient: string | null }[]
+      }
+      // Billing (migration 020): the webhook service's atomic apply. Service role only.
+      apply_billing_update: {
+        Args: {
+          p_user_id: string
+          p_provider: string
+          p_customer_id: string | null
+          p_subscription_id: string
+          p_plan: string | null
+          p_status: string
+          p_period_end: string | null
+          p_cancel_at_period_end: boolean
+          p_occurred_at: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

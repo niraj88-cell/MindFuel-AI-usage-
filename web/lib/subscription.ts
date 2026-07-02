@@ -1,8 +1,9 @@
-// lib/subscription.ts — subscription foundation (no payment processor wired yet).
-// The product has one plan: SatyaShift. Everyone starts with a 14-day trial;
-// until billing opens nobody can be charged and nothing is gated. Status is
-// DERIVED (never stored) so it can't drift from the two facts that define it:
-// trial_ends_at and subscription_plan on profiles.
+// lib/subscription.ts — plan constants + the display-level subscription summary.
+// The AUTHORITATIVE access decision lives in lib/entitlement.ts (entitlementOf);
+// this module keeps the stable UI-facing API (profile + pricing pages) and derives
+// its answer from the same engine so the two can never disagree.
+
+import { entitlementOf, type ProfileBillingRow } from '@/lib/entitlement'
 
 export const TRIAL_DAYS = 14
 
@@ -33,26 +34,21 @@ export interface SubscriptionState {
   trialDaysLeft: number
 }
 
-export function getSubscriptionState(row: {
-  subscription_plan?: string | null
-  trial_ends_at?: string | null
-} | null): SubscriptionState {
+export function getSubscriptionState(row: ProfileBillingRow | null): SubscriptionState {
+  // Display summary from the profile cache only (the webhook keeps subscription_plan
+  // in sync with the provider). Access gating must use entitlementOf with the mirror row.
+  const e = entitlementOf(row, null)
   const plan = row?.subscription_plan === 'monthly' || row?.subscription_plan === 'annual'
-    ? row.subscription_plan
+    ? (row.subscription_plan as PlanId)
     : null
-  const trialEndsAt = row?.trial_ends_at ? new Date(row.trial_ends_at) : null
 
-  if (plan) {
-    return { status: 'active', plan, trialEndsAt, trialDaysLeft: 0 }
+  if (plan || e.state === 'lifetime') {
+    return { status: 'active', plan, trialEndsAt: e.trialEndsAt, trialDaysLeft: 0 }
   }
-
-  const msLeft = trialEndsAt ? trialEndsAt.getTime() - Date.now() : 0
-  const trialDaysLeft = Math.max(0, Math.ceil(msLeft / 86_400_000))
-
   return {
-    status: trialDaysLeft > 0 ? 'trialing' : 'free',
+    status: e.state === 'trial' ? 'trialing' : 'free',
     plan: null,
-    trialEndsAt,
-    trialDaysLeft,
+    trialEndsAt: e.trialEndsAt,
+    trialDaysLeft: e.trialDaysLeft,
   }
 }

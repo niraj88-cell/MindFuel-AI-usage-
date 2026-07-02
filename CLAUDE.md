@@ -17,8 +17,11 @@ only, never URLs/content) · trust over engagement · calm, premium UX.
   one step at a time, exact commands, no code dumps).
 
 ## Verify, don't assume
-- Extension: `cd extension && node --test` (pure logic in `core.js` is fully unit-tested).
-  The agent harness cannot click the extension — hand the user a load-unpacked checklist.
+- Extension: `cd extension && node --test` (pure logic in `core.js` is unit-tested; the whole
+  service-worker pipeline — tracking, nudges, restarts — runs under a chrome stub in
+  `background.test.js`). The agent harness cannot click the extension — hand the user a
+  load-unpacked checklist. Nudge field debugging: `chrome.storage.local.get('nudge_diag')`
+  in the SW console (see `extension/CLAUDE.md`).
 - Web: `cd web && npx tsc --noEmit` then `npx next build`.
 - Backend: Supabase MCP (SQL, logs, advisors) against project `sztvvvphpawuxvvmuddm`.
 - Deploy: `cd web && npx vercel --prod --yes` (ships the working tree; aliases only on
@@ -27,6 +30,16 @@ only, never URLs/content) · trust over engagement · calm, premium UX.
 ## Architecture facts that bite
 - The server is the source of truth for focus data: `/api/focus/start` anchors start time,
   `/api/focus/stop` computes duration/quality from `domain_logs`. Clients never self-report.
+- Session intelligence is the pure `web/lib/behavior.ts` (pattern-aware quality, honest
+  reflection, baseline noticing) — tested via `node --test lib/behavior.test.mjs`. Signals
+  stored in `focus_sessions.behavior` contain ZERO domains. Event order = (created_at, seq);
+  the extension flushes before stop. Pattern logic changes go in that module WITH tests.
+- `focus_sessions` RLS is OWNER-ONLY (migration 019). Squadmates read sessions exclusively
+  through SECURITY DEFINER fns (`get_squad_feed`/`get_squad_live`/`get_squad_focused_today`)
+  that expose who/active/verified/duration/intention only — never quality, percentages, or
+  behavior. Do not add a squad SELECT policy back, and never widen the fns' columns.
+- The only squad interaction is `encourage_session` (fixed phrases, one per member per
+  session, all rules in SQL). No chat, no free text, no reaction feeds.
 - Sessions are capped at 4h: `/api/focus/start` auto-abandons a forgotten active session,
   and the extension worker auto-ends its local session past the same cap.
 - All extension state lives in `chrome.storage`; the MV3 worker dies at any time.
@@ -38,13 +51,17 @@ only, never URLs/content) · trust over engagement · calm, premium UX.
 - Subscription status is DERIVED, never stored: `web/lib/subscription.ts` computes
   active/trialing/free from `profiles.trial_ends_at` + `subscription_plan` (migration 016).
   No billing is wired YET; don't add gating or an upgrade CTA until payments ship.
-- Payments are DECIDED but not built (2026-07-02): **Paddle as Merchant of Record**
-  (founder is in Nepal — Stripe/Polar/Lemon Squeezy are impossible; Creem/Dodo are the
-  fallbacks). Read `docs/payments-architecture-2026-07-02.md` + the DECISIONS entry before
-  writing ANY billing code. Non-negotiables: cardless trial stays; only the HMAC-verified
-  webhook (service role) writes billing state; success redirects grant nothing; the
-  extension never touches billing; `/terms` + `/refunds` pages must ship before Paddle
-  verification.
+- Payments: **Paddle as Merchant of Record** (founder is in Nepal — Stripe/Polar/Lemon
+  Squeezy are impossible; Creem/Dodo are the fallbacks). The FOUNDATION IS BUILT and
+  dormant (2026-07-03): `lib/billing/` seam (adapter/service/gate), `lib/entitlement.ts`
+  state machine (tested), `/api/billing/webhook` (HMAC + replay + idempotent event store,
+  verified end-to-end in prod), migrations 020/021. It activates via PADDLE_* env vars
+  only — until then the webhook answers 404 and nothing grants paid state. Read
+  `docs/payments-architecture-2026-07-02.md` + the DECISIONS entries before touching
+  billing. Non-negotiables: cardless trial stays; only the webhook (service role) writes
+  billing state; entitlement checks go through `entitlementOf`/`requirePremium` only;
+  success redirects grant nothing; the extension never touches billing; no gating until
+  checkout ships (then gate the social layer, never the user's own data).
 - The middleware (`web/proxy.ts`) is default-deny: any new public page must be added to its
   `isPublicRoute` list, and any new static file type to the static regex, or visitors get
   bounced to /login (this silently broke the PWA manifest once).
@@ -65,7 +82,8 @@ only, never URLs/content) · trust over engagement · calm, premium UX.
 - Extension: least privilege, no npm deps, no externally_connectable. The token-bearing
   `SESSION_FROM_PAGE` message is origin-verified (sender.id + origin). Don't loosen either.
 - DB migrations applied via MCP must also be captured as repo files in
-  `web/supabase/migrations/NNN_*.sql` (latest: 018).
-- Known-accepted advisor WARNs: vector in public, waitlist anon INSERT, get_squad_by_invite
-  + is_squad_member/is_squad_admin executable by authenticated (used by RLS), leaked-password
+  `web/supabase/migrations/NNN_*.sql` (latest: 019).
+- Known-accepted advisor WARNs: vector in public, waitlist anon INSERT, definer fns
+  executable by authenticated (get_squad_by_invite, is_squad_member/is_squad_admin, and the
+  019 squad-read/encourage fns — membership checks live INSIDE them), leaked-password
   toggle (owner dashboard action). Do not "fix" these without reading the review doc.
