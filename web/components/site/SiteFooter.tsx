@@ -1,0 +1,37 @@
+// Quiet footer for the public site: the five trust pages, support contact, brand line.
+// Shared by the landing page and every trust page so a visitor (or a payments reviewer)
+// can reach policy pages from anywhere without hunting.
+
+import Link from 'next/link'
+
+const LINKS = [
+  { href: '/how-it-works', label: 'How it works' },
+  { href: '/pricing', label: 'Pricing' },
+  { href: '/privacy', label: 'Privacy' },
+  { href: '/terms', label: 'Terms' },
+  { href: '/refund', label: 'Refunds' },
+]
+
+export function SiteFooter() {
+  return (
+    <footer className="border-t border-black/[0.06]">
+      <div className="mx-auto max-w-2xl px-6 py-8">
+        <nav aria-label="Site" className="flex flex-wrap gap-x-5 gap-y-2">
+          {LINKS.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="text-[13px] font-medium text-[#6B7280] transition-colors hover:text-[#111827]"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+        <p className="mt-4 text-xs leading-relaxed text-[#6B7280]">
+          SatyaShift · सत्य · truth — focus you can prove.{' '}
+          Questions: <a href="mailto:niraj2055adk@gmail.com" className="underline underline-offset-2 hover:text-[#111827]">niraj2055adk@gmail.com</a>
+        </p>
+      </div>
+    </footer>
+  )
+}

@@ -5,6 +5,193 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-03 — Paddle-readiness trust pages SHIPPED (web DEPLOYED + probed live)
+
+The public trust surface Paddle's domain review requires (and users deserve), written as a
+production trust review: every sentence checked against implementation, no invented
+features. This clears roadmap step 1 of `docs/payments-architecture-2026-07-02.md`
+(/terms + /refund with a 30-day money-back guarantee were the Paddle verification
+prerequisites).
+
+**New public pages** (all on a shared quiet shell `components/site/TrustPage.tsx`, all in
+`proxy.ts` isPublicRoute, sitemap, and a shared footer `components/site/SiteFooter.tsx`
+that now also renders on the landing page):
+- **/how-it-works** — first-time-visitor walkthrough: what happens after install, how
+  server-side verification works, exactly what the extension sees (domain + audible +
+  away) and never sees (URLs/content/keystrokes/incognito/sensitive-site skip list), what
+  the circle sees (DB-enforced), nudges never block, pause/export/delete.
+- **/pricing** — reads prices from `lib/subscription.ts` (can't drift): 14-day cardless
+  trial, $8/mo, $30 first-year founding annual with plain renewal-notice promise, why
+  annual exists, what happens after trial (data never hostage), Paddle as merchant of
+  record, founding-preview note pointing to the waitlist.
+- **/terms** — 13 plain-words sections: sole-proprietor identity, service description,
+  trial/billing via Paddle MoR, one-click cancellation, acceptable use, user data
+  ownership, IP, availability, liability cap, suspension, governing law (Nepal), support,
+  effective date.
+- **/refund** — one-minute read: cardless trial first, 30-day money-back on every charge
+  (Paddle's required minimum, made a feature), how to claim (email or via Paddle receipt),
+  cancel ≠ refund, post-30-day fairness clause.
+- **/privacy** — upgraded on the shared shell; added: browser-permissions section (each
+  permission + why), retention/deletion section, incognito + sensitive-domain-skip bullets,
+  waitlist email disclosure, Paddle card-handling line. All claims re-verified against
+  extension/core.js, manifest, export/delete routes.
+
+Also: `/refunds` and `/tos` 308 → canonical pages (next.config); sitemap rebuilt (dropped
+the stale `/#pricing` anchor and login-priority cruft); landing gained "See how it works /
+what it costs" links + footer.
+
+**Review simulation run** (Paddle reviewer / privacy customer / security engineer / buyer /
+first-time extension user): fixed in-pass — "extension cannot run code on pages" corrected
+to the exact bridge.js truth (own-site-only), waitlist collection disclosed, refund page
+kept to one screen, terms carry the brand + sole-proprietor identity Paddle checks for.
+
+**Verification:** next build green (all five pages static in the route map); local preview
+checked (pages render, footer nav, prices correct, /refunds redirect); deployed and probed
+live: /pricing /terms /refund /how-it-works /privacy /refunds all 200 on
+satyashift.vercel.app; sitemap lists the five pages.
+
+**Commit scope note:** only the trust-page files were committed; the working tree's
+uncommitted extension v2.7.2 + behavioral-intelligence work from the previous session
+remains untouched, awaiting the user's own commit.
+
+---
+
+## 2026-07-02 — Behavioral intelligence redesign: pattern-aware sessions, squad column-privacy, encouragement (web DEPLOYED, ext v2.7.2, migration 019)
+
+The Deep Session intelligence was percentage-only ("visited Instagram briefly but still
+completed") and the squad layer leaked private columns. Full redesign; durable model in
+`docs/DECISIONS.md` ("Behavioral intelligence + squad privacy architecture").
+
+**What was wrong (verified, not guessed):**
+1. `/api/focus/stop` reduced a session to summed `distraction_pct` — a loop
+   (YouTube→Reddit→TikTok→…→YouTube) diluted by neutral time read as "focused. Steady
+   work." Falsely reassuring by construction.
+2. Event ORDER was unrecoverable: `domain_logs.id` is a random uuid and every row of a
+   flush batch shares one `created_at`, so no sequence-aware analysis was even possible.
+3. The extension stopped sessions WITHOUT flushing: the final ≤5 min of signal was
+   invisible to the verdict it produced.
+4. PRIVACY LEAK: the `focus_select` RLS squad arm let any squadmate SELECT a co-member's
+   entire session row from the browser (session_quality, distraction_pct, status='mixed'
+   which encodes distraction ≥ 50%) — contradicting "verified time, no site, no score".
+   The feed route + Circle UI were also shipping session_quality to squadmates outright.
+
+**Built:**
+- **`web/lib/behavior.ts`** (pure, dependency-free): `analyzeSession` → BehaviorSignals
+  (switches/hr, longest unbroken stretch, distraction bouts + returns, top-domain revisit
+  count, drift trend thirds, ended_clean) — ZERO domains in the output (tested);
+  `qualityOf` (same 4 DB labels, pattern caps only ever downgrade: loops cap at
+  focused/mixed, deep requires a real unbroken stretch, fragmentation counts only when
+  distraction is in the mix — work-site hopping is not "scatter"); `reflectionFor` (honest
+  Satya line: names loops, escalation, recovery; no flattery/shame); `noticeAgainstBaseline`
+  (user vs their own last ≤10 sessions, ≥3 required, at most one quiet line, derived never
+  stored). 15 tests in `lib/behavior.test.mjs` (`node --test`, Node type-stripping, no
+  runner dep) including the mission's literal loop example and the diluted-loop trap.
+- **Migration 019** (applied + repo file): `domain_logs.seq` (in-batch order),
+  `focus_sessions.behavior` jsonb, `focus_select` → OWNER-ONLY, four SECURITY DEFINER fns:
+  `get_squad_feed` (who/active/verified/duration/intention/when — nothing else),
+  `get_squad_live` (presence), `get_squad_focused_today` (dot ids only),
+  `encourage_session` (fixed-phrase cheer: membership, active+4h cap, phrase allowlist,
+  one-per-member-per-session dedupe, all in SQL; service role untouched).
+- **Backend:** ingest writes `seq` (+ fixed the `jitai_outcome` zod enum that mismatched
+  the DB CHECK and would have poisoned batches); focus/stop analyzes the ORDERED timeline,
+  stores `behavior`, quality now pattern-aware; feed/presence/squads routes moved to the
+  definer fns (old direct queries would return empty under owner-only RLS — deployed
+  immediately to close the window). New `POST /api/squads/encourage` (rate-limited
+  `encourage`/30, RPC, best-effort push via new shared `lib/squad/push.ts`;
+  notifySessionStart refactored onto it). `NotificationType` + `squad_encouragement`.
+- **UI:** session page Satya line = `reflectionFor(signals)` (stored behavior; legacy
+  sessions analyzed client-side from ordered logs) + optional baseline notice; Circle page
+  consumes the privacy-shaped feed (verified boolean — quality label no longer exists
+  client-side), active rows get four cheer chips ("With you" / "Cheering you on" / "Stay
+  strong" / "You've got this") that collapse to "Sent." after one use; /focus running
+  screen polls own notifications (45s) and shows cheers as quiet chips.
+- **Extension v2.7.2:** stopSession flushes BEFORE `/api/focus/stop` (new integration test
+  asserts ingest precedes stop through the real worker; 38/38). New zip
+  `dist/satyashift-extension-2.7.2.zip`, kit doc updated.
+
+**Verification evidence:** behavior tests 15/15; extension 38/38; `tsc --noEmit` clean;
+`next build` green (route map has /api/squads/encourage); migration probed live (columns,
+owner-only policy, 4 fns anon=false/authenticated=true); deployed to satyashift.vercel.app
+and probed (presence 401 anon, encourage 403 anon origin-gate, landing 200); security
+advisors: only the expected definer-executable WARNs (same accepted class as
+is_squad_member), no new criticals.
+
+**Known limits (accepted, documented):** pre-019 rows have seq=0 so within-batch order of
+LEGACY sessions is approximate (labels stored at stop time are untouched; only the
+client-side reflection fallback is affected); a dwell that started before /focus/start but
+flushed after it still counts into the session window (pre-existing, unchanged);
+`encourage_session` dedupe is check-then-insert (a same-instant double-click could slip a
+duplicate cheer — cosmetic); time-of-day tendencies are in the signals' reach but not yet
+surfaced (future: dashboard weekly line).
+
+**Needs the user:** load-unpacked reload → v2.7.2; store upload now
+`dist/satyashift-extension-2.7.2.zip`; a real two-account circle test of cheer → /focus
+chips would be the final human verification.
+
+---
+
+## 2026-07-02 — Gentle Intervention (nudge) reliability investigation + hardening (ext v2.7.1)
+
+Production-critical audit of the whole intervention pipeline (tab → gate → 1-min alarm →
+`nextNudge` threshold → `chrome.notifications` → click-through), prompted by "nudges never
+appear". Full RCA + durable rules in `docs/DECISIONS.md` ("Intervention reliability
+architecture") and `extension/CLAUDE.md` ("Nudge reliability + observability").
+
+**Findings.** The DECISION logic (`nextNudge`, `gateAllowsCounting`) is correct — the two
+historical root causes (idle killing the mid-video streak; one alt-tab erasing a 4-min
+streak) were already fixed in v2.6.0 and are test-locked. The remaining failure surface was
+entirely in scheduling + delivery, and all three holes failed SILENTLY:
+1. **Unrecoverable alarm loss** — `NUDGE_ALARM`/`FLUSH_ALARM` were created only in
+   onInstalled/onStartup; a dropped alarm (crashed profile, missed onStartup) killed nudges
+   AND sync until a full browser restart, with zero signal.
+2. **Muted delivery invisible** — `chrome.notifications.getPermissionLevel()` was never
+   checked; if the user muted the extension's notifications (one click in Chrome),
+   `create()` rendered nothing forever and nothing anywhere said so.
+3. **Zero observability** — `fireNudge` swallowed every error (`catch {}`); the alarm
+   handler's `checkNudge()` rejection vanished; no way to prove the pipeline even ticked.
+
+**Fixes (background.js, popup.js; ext 2.7.0 → 2.7.1):**
+- `ensureAlarm()` now also runs at worker top level on EVERY wake (existence-checked first,
+  so it can never reset a live countdown — no C2 regression). Any event that wakes the
+  worker self-heals lost alarms.
+- `fireNudge` checks `getPermissionLevel()`; 'denied' is recorded, not ignored;
+  `buildStatus` exposes `nudgesMuted` and the popup shows "Gentle check-ins are muted:
+  Chrome has notifications turned off for SatyaShift."
+- New `nudge_diag` record (storage.local) written every tick: { tickAt, counting, domain,
+  streak, permission, lastFire: fired|blocked|error }. Tick exceptions are caught into it.
+  Field debugging: `chrome.storage.local.get('nudge_diag')` in the SW console.
+
+**Verification — new `background.test.js` (12 integration tests) runs the REAL
+background.js under a faithful chrome stub, plus the 25 existing unit tests = `node --test`
+37/37 green.** Proven end to end: 5 sustained YouTube minutes → exactly one gentle
+notification (copy, buttons, zero network calls); cooldown blocks then releases;
+blur + ≤2-tick grace holds the streak, 3 ticks resets; same-domain multi-tab/multi-window
+switches keep the streak; SW restart mid-streak continues on schedule; full browser restart
+(session storage + alarms gone, onStartup deliberately NOT fired) self-heals and nudges;
+lost alarms recreated on any wake without clobbering live ones; muted delivery detected,
+recorded, surfaced, and recovers when re-granted; media exemption (idle + audible counts,
+silent idle pauses); notification click opens /dashboard and cleans its stored target.
+`node --check` green on all edited scripts. New store zip
+`dist/satyashift-extension-2.7.1.zip` (kit doc updated).
+
+**Scope notes (deliberate):** the nudge stays fully local (offline-proof, no auth, no
+server writes — distraction TIME already syncs via domain_logs, which is what the dashboard
+shows); LinkedIn / user-custom distraction domains remain out of the built-in list — a
+product decision for a future settings pass, not a bug.
+
+**Needs the user (the harness cannot click the extension or see the OS layer):**
+1. chrome://extensions → Reload SatyaShift (confirm v2.7.1), or Load unpacked `extension/`.
+2. Open youtube.com and actually attend it (scroll/play a video) for ~5 minutes → expect
+   ONE "A quiet check-in" notification.
+3. If silent: SW console → `chrome.storage.local.get('nudge_diag')` — `tickAt` fresh +
+   `streak` climbing + `permission: 'granted'` + `lastFire.result: 'fired'` means Chrome
+   delivered it and Windows suppressed it → check Windows Settings → System → Notifications
+   (Chrome ON, Do Not Disturb / Focus Assist OFF). `permission: 'denied'` → the popup will
+   already be saying check-ins are muted; re-enable Chrome notifications for the extension.
+4. Store upload now uses `dist/satyashift-extension-2.7.1.zip`.
+
+---
+
 ## 2026-07-02 — Payment architecture DECIDED (research pass, NO implementation)
 
 Full deliverable: `docs/payments-architecture-2026-07-02.md` (comparison, security design,

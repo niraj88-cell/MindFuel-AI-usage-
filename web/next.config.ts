@@ -39,9 +39,14 @@ const nextConfig: NextConfig = {
   // on Today instead of a 404. Temporary (307) so a path can be reused later.
   async redirects() {
     return [
-      '/log', '/coach', '/insights', '/pulse', '/challenges', '/weekly-report',
-      '/mood-scan', '/intercept', '/subscription', '/promo-simulate',
-    ].map((source) => ({ source, destination: '/dashboard', permanent: false }))
+      ...[
+        '/log', '/coach', '/insights', '/pulse', '/challenges', '/weekly-report',
+        '/mood-scan', '/intercept', '/subscription', '/promo-simulate',
+      ].map((source) => ({ source, destination: '/dashboard', permanent: false })),
+      // Common aliases for the trust pages (older docs said /refunds).
+      { source: '/refunds', destination: '/refund', permanent: true },
+      { source: '/tos', destination: '/terms', permanent: true },
+    ]
   },
 
   async headers() {

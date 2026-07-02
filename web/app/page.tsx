@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SatyaMark } from '@/components/brand/SatyaMark'
 import { WaitlistForm } from '@/components/landing/WaitlistForm'
+import { SiteFooter } from '@/components/site/SiteFooter'
 
 // Pre-launch validation page (public). The app itself stays private behind auth.
 // Four beats only: what it is, why it's different, how to be notified, how data is used.
@@ -46,7 +47,19 @@ export default function LandingPage() {
         </p>
 
         <WaitlistForm />
+
+        <p className="mt-8 text-[13px] leading-relaxed text-[#6B7280]">
+          New here?{' '}
+          <Link href="/how-it-works" className="font-medium text-[#111827] underline-offset-2 hover:underline">
+            See how it works
+          </Link>{' '}
+          and{' '}
+          <Link href="/pricing" className="font-medium text-[#111827] underline-offset-2 hover:underline">
+            what it costs
+          </Link>.
+        </p>
       </div>
+      <SiteFooter />
     </main>
   )
 }

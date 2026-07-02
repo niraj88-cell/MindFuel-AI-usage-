@@ -85,7 +85,11 @@ export async function proxy(request: NextRequest) {
   // we iterate, so the signup surface is closed at the edge (belt-and-suspenders with
   // Supabase "allow new sign-ups" being off). Re-add '/signup' here to reopen public signup.
   const { pathname } = request.nextUrl
-  const isPublicRoute = ['/', '/login', '/forgot-password', '/privacy', '/sitemap.xml', '/robots.txt'].includes(pathname)
+  const isPublicRoute = [
+    '/', '/login', '/forgot-password',
+    '/privacy', '/terms', '/refund', '/pricing', '/how-it-works',
+    '/sitemap.xml', '/robots.txt',
+  ].includes(pathname)
   const isStatic = pathname.startsWith('/_next') || /\.(ico|png|jpg|jpeg|svg|css|js|xml|txt|json|webmanifest)$/.test(pathname)
 
   if (!user && !isPublicRoute && !isApiRoute && !isStatic) {
