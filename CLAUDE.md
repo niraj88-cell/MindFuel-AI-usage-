@@ -45,3 +45,20 @@ only, never URLs/content) · trust over engagement · calm, premium UX.
   exchange); the reset page requires the resulting session.
 - In UI copy the words are "circle" (not squad) and "Activity" (not reminders); routes and
   DB tables keep the squad names.
+
+## Security posture (see docs/security-review-2026-07-02.md + docs/DECISIONS.md)
+- RLS is the authorization boundary (the browser hits Supabase directly with the anon key).
+  Every new table MUST have RLS policies; route `getUser()` checks are defense in depth only.
+- Service role (`createAdminClient`) is used narrowly — rate-limit RPC, ingest idempotency,
+  ping delivery, aggregate COUNTs. Never use it to read user content (domain-only privacy
+  applies to the owner admin panel too).
+- Routes return GENERIC errors to clients; log detail server-side. Never return err.message.
+- Client IP for rate limiting comes from `x-real-ip` (Vercel-set); never trust leftmost
+  `x-forwarded-for`. See `lib/security.ts` getClientIP.
+- Extension: least privilege, no npm deps, no externally_connectable. The token-bearing
+  `SESSION_FROM_PAGE` message is origin-verified (sender.id + origin). Don't loosen either.
+- DB migrations applied via MCP must also be captured as repo files in
+  `web/supabase/migrations/NNN_*.sql` (latest: 018).
+- Known-accepted advisor WARNs: vector in public, waitlist anon INSERT, get_squad_by_invite
+  + is_squad_member/is_squad_admin executable by authenticated (used by RLS), leaked-password
+  toggle (owner dashboard action). Do not "fix" these without reading the review doc.

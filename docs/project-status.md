@@ -5,6 +5,46 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-02 — Security architecture review: defense-in-depth pass (web DEPLOYED, ext v2.6.2)
+
+Full trust-boundary audit of every layer. Deliverables in `docs/security-review-2026-07-02.md`
+(threat model, risk ranking, checklist, residual risks, roadmap) and durable decisions in
+`docs/DECISIONS.md`. Commit `b37b889`, deployed + probed live. Verdict: no Critical/High
+open; one Medium residual (CSP unsafe-inline); rest accepted with rationale.
+
+**Fixed & verified this pass:**
+- **[HIGH] `/api/admin/stats`** queried columns dropped in Phase 0 → 500 + leaked raw DB
+  error to the admin, and exposed `mental_logs` CONTENT in an admin feed (breaks domain-only
+  privacy). Rewrote to live schema (profiles + focus_sessions.duration_s/status), service
+  role for COUNTs only, removed the content feed, generic errors. `/admin` page updated.
+- **[MED] IP spoofing / rate-limit evasion:** `getClientIP`/`getRequestFingerprint` trusted
+  the client-controllable leftmost `x-forwarded-for`. Now prefer Vercel `x-real-ip`
+  (unspoofable), fall back to last XFF hop for local dev.
+- **[MED] Info leak:** `/api/push/subscribe` returned `err.message`. Now generic.
+- **[MED] Extension token handoff:** `SESSION_FROM_PAGE` now requires
+  `sender.id === runtime.id` AND origin ∈ {prod, localhost} before storing a session.
+- **[MED] Upload:** `squads/upload` now validates MIME + size server-side and writes a
+  server-chosen name in `${uid}/` (was client filename/ext at root).
+- **[LOW] DB migrations (applied live + captured as repo files 017/018):** revoked
+  anon/PUBLIC EXECUTE on `is_squad_member`/`is_squad_admin` (advisor anon finding cleared,
+  authenticated retained for RLS); dropped the loose `squad_photos` INSERT policy that
+  overrode per-user folder scoping.
+
+**Confirmed sound (no change):** squad_pings RLS (sender+recipient must be co-members),
+ingest auth/idempotency/rate-limit, focus start/stop ownership, CSRF gate, OAuth callback,
+forgot-password (no enumeration).
+
+**Verification:** tsc + next build green; extension `node --test` 21/21 + `node --check`;
+advisors re-run; live probes — admin/stats→401, push/subscribe→401, ingest→403 (CSRF gate),
+landing→200.
+
+**Residual / owner actions:** strict nonce CSP (deferred, larger change); enable Supabase
+leaked-password protection (dashboard toggle); rotate service-role key (runbook); drop
+legacy `mental_logs`; move `vector` out of public; add dependency scanning to CI; Stripe
+webhook verification when payments ship.
+
+---
+
 ## 2026-07-02 — Phase 1 SHIPPED (agent side): onboarding install step, /privacy, Web Store kit (web DEPLOYED; store upload = user)
 
 Same session as Phase 0 below. Commit `abff2c8`, deployed + verified live
