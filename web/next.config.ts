@@ -6,23 +6,24 @@ import type { NextConfig } from 'next'
 const CSP = [
   "default-src 'self'",
   // Scripts: self + Next.js inline scripts (hashes preferred over 'unsafe-inline' in prod)
-  `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"}`,
+  // Paddle.js (overlay checkout) loads from cdn.paddle.com; *.paddle.com covers sandbox + live.
+  `script-src 'self' 'unsafe-inline' https://*.paddle.com ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"}`,
   // Styles: self + Google Fonts
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   // Fonts
   "font-src 'self' https://fonts.gstatic.com",
   // Images: self + Supabase storage + data URIs for avatars
-  "img-src 'self' data: blob: https://*.supabase.co https://avatars.githubusercontent.com https://lh3.googleusercontent.com",
-  // API connections: self + Supabase (realtime WebSocket + REST)
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  "img-src 'self' data: blob: https://*.supabase.co https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://*.paddle.com",
+  // API connections: self + Supabase (realtime WebSocket + REST) + Paddle checkout API
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.paddle.com",
   // No plugins, no object embeds
   "object-src 'none'",
   // Media: self only
   "media-src 'self'",
   // Workers: self + blob for Next.js
   "worker-src 'self' blob:",
-  // Frames: deny all
-  "frame-src 'none'",
+  // Frames: only Paddle's checkout overlay iframe (sandbox + live). We still refuse to be framed.
+  "frame-src https://*.paddle.com",
   "frame-ancestors 'none'",
   // Form actions: self only
   "form-action 'self'",
