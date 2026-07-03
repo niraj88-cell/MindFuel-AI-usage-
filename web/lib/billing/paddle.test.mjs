@@ -75,6 +75,18 @@ test('map: paused / past_due / canceled statuses map through; unknown status is 
   assert.equal(mapPaddleEvent(evt('some_future_status')), null)
 })
 
+test('map: price→plan map resolves plan without custom_data, and custom_data still wins', () => {
+  // A price with NO custom_data.plan resolves via the configured map.
+  const noPlanData = JSON.parse(body({ items: [{ price: { id: 'pri_yearly_live' } }] })).data
+  const evt = { eventId: 'e', eventType: 'subscription.activated', occurredAt: new Date(NOW).toISOString(), data: noPlanData }
+  assert.equal(mapPaddleEvent(evt, { pri_yearly_live: 'annual' }).plan, 'annual')
+  // Without the map (and no custom_data), plan falls back to the raw price id (forensic only).
+  assert.equal(mapPaddleEvent(evt).plan, 'pri_yearly_live')
+  // custom_data.plan is an explicit override and takes precedence over the map.
+  const withCustom = JSON.parse(body({ items: [{ price: { id: 'pri_yearly_live', custom_data: { plan: 'monthly' } } }] })).data
+  assert.equal(mapPaddleEvent({ ...evt, data: withCustom }, { pri_yearly_live: 'annual' }).plan, 'monthly')
+})
+
 test('map: irrelevant event types are ignored; missing user id is unattributable', () => {
   const base = { eventId: 'e', occurredAt: new Date(NOW).toISOString() }
   assert.equal(mapPaddleEvent({ ...base, eventType: 'transaction.completed', data: {} }), null)

@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
+  CreditCard,
   FileJson,
   FileText,
   Loader2,
@@ -19,9 +20,12 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { PushNotificationManager } from '@/components/PushNotificationManager'
+import { CheckoutButtons } from '@/components/billing/CheckoutButtons'
+import { readPaddlePublicEnv } from '@/lib/billing/public-config'
 import { PLANS, getSubscriptionState, type SubscriptionState } from '@/lib/subscription'
 
 interface Profile {
+  id: string
   email: string
   fullName: string
   joinedAt: string
@@ -35,6 +39,10 @@ export default function SettingsPage() {
   const [exporting, setExporting] = useState<'json' | 'csv' | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [managing, setManaging] = useState(false)
+  const [manageError, setManageError] = useState<string | null>(null)
+
+  const checkoutEnabled = readPaddlePublicEnv().checkoutEnabled
 
   const load = useCallback(async () => {
     const supabase = createClient()
@@ -48,6 +56,7 @@ export default function SettingsPage() {
       .maybeSingle()
 
     setData({
+      id: user.id,
       email: user.email || '',
       fullName: user.user_metadata?.full_name || 'Member',
       joinedAt: new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
@@ -56,11 +65,44 @@ export default function SettingsPage() {
     setLoading(false)
   }, [])
 
+  // Open the Paddle customer portal (manage payment method / cancel).
+  async function handleManage() {
+    setManaging(true); setManageError(null)
+    try {
+      const res = await fetch('/api/billing/portal', { method: 'POST' })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok || !body.url) throw new Error(body.error || 'Could not open the portal')
+      window.location.href = body.url
+    } catch (err) {
+      setManageError(err instanceof Error ? err.message : 'Could not open the portal')
+      setManaging(false)
+    }
+  }
+
   useEffect(() => {
     let cancelled = false
     ;(async () => { if (!cancelled) await load() })()
     return () => { cancelled = true }
   }, [load])
+
+  // Entitlement flips via the webhook a beat after checkout. When we return from a
+  // successful checkout (?upgraded=1) or the overlay reports success, re-poll the profile
+  // a few times so "active" appears without a manual refresh, then stop.
+  const pollForActivation = useCallback(() => {
+    let tries = 0
+    const t = setInterval(async () => {
+      tries += 1
+      await load()
+      if (tries >= 5) clearInterval(t)
+    }, 2000)
+  }, [load])
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('upgraded')) {
+      window.history.replaceState(null, '', '/profile')
+      pollForActivation()
+    }
+  }, [pollForActivation])
 
   async function handleExport(format: 'json' | 'csv') {
     setExporting(format); setExportError(null)
@@ -144,25 +186,55 @@ export default function SettingsPage() {
               : <>Your trial has ended, but nothing is locked while billing is being set up.</>}
         </p>
 
-        <div className="grid gap-2 sm:grid-cols-2">
-          {(Object.values(PLANS)).map((p) => (
-            <div key={p.id} className={`rounded-lg border p-4 ${sub?.plan === p.id ? 'border-green-line bg-green-tint' : 'border-line bg-paper'}`}>
-              <div className="flex items-baseline justify-between">
-                <span className="text-sm font-semibold text-ink">{p.label}</span>
-                <span className="font-mono text-sm font-medium text-ink">${p.priceUsd}<span className="text-xs font-normal text-faint">/{p.period}</span></span>
-              </div>
-              <p className="mt-1 text-xs leading-snug text-faint">
-                {p.note ?? 'Verified sessions, your circle, gentle nudges — all of it.'}
-              </p>
+        {/* Active subscriber: manage / cancel through Paddle's portal. */}
+        {sub?.status === 'active' ? (
+          <>
+            <button
+              onClick={handleManage}
+              disabled={managing}
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-line bg-paper text-sm font-semibold text-ink transition-colors hover:bg-green-wash disabled:opacity-60"
+            >
+              {managing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+              Manage subscription
+            </button>
+            <p className="mt-2 text-xs leading-relaxed text-faint">
+              Update your payment method or cancel any time — you keep access until the end of the
+              period you paid for. Card details are handled by Paddle, never stored by us.
+            </p>
+            {manageError && <p className="mt-2 text-sm font-medium text-rust">{manageError}</p>}
+          </>
+        ) : checkoutEnabled && data ? (
+          // Trial or free, billing live: let them choose a plan (Paddle overlay checkout).
+          <>
+            <CheckoutButtons userId={data.id} email={data.email} onSuccess={pollForActivation} />
+            <p className="mt-3 text-xs leading-relaxed text-faint">
+              Secure checkout by Paddle, our merchant of record. 30-day money-back guarantee;
+              cancel any time in one click. Your card details never touch our servers.
+            </p>
+          </>
+        ) : (
+          // Billing not configured yet: the honest, inert state.
+          <>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {(Object.values(PLANS)).map((p) => (
+                <div key={p.id} className={`rounded-lg border p-4 ${sub?.plan === p.id ? 'border-green-line bg-green-tint' : 'border-line bg-paper'}`}>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-sm font-semibold text-ink">{p.label}</span>
+                    <span className="font-mono text-sm font-medium text-ink">${p.priceUsd}<span className="text-xs font-normal text-faint">/{p.period}</span></span>
+                  </div>
+                  <p className="mt-1 text-xs leading-snug text-faint">
+                    {p.note ?? 'Verified sessions, your circle, gentle nudges — all of it.'}
+                  </p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-
-        <p className="mt-3 text-xs leading-relaxed text-faint">
-          Billing isn&rsquo;t switched on yet, so you can&rsquo;t be charged and nothing happens
-          automatically. Every new account starts with a 14-day trial; when billing opens,
-          choosing a plan will always be an explicit step you take.
-        </p>
+            <p className="mt-3 text-xs leading-relaxed text-faint">
+              Billing isn&rsquo;t switched on yet, so you can&rsquo;t be charged and nothing happens
+              automatically. Every new account starts with a 14-day trial; when billing opens,
+              choosing a plan will always be an explicit step you take.
+            </p>
+          </>
+        )}
       </section>
 
       {/* Your data */}

@@ -101,9 +101,12 @@ Nepal).
 
 - **Paddle (Paddle Billing) is the Merchant of Record.** Nepal-eligible, zero
   setup/monthly/annual fees (pays only on successful transactions), 14-year track record,
-  handles VAT/sales tax, chargebacks, and compliance as the legal seller. Payouts via
-  Payoneer (or wire). Fallbacks if verification fails: Creem or Dodo Payments, behind the
-  same provider seam (`lib/billing/`) — do not couple handlers to Paddle types outside it.
+  handles VAT/sales tax, chargebacks, and compliance as the legal seller. **Payout method
+  is payout-provider-agnostic and runtime-irrelevant** — preferred payout is Paddle →
+  direct bank transfer where Paddle supports it for the seller's country; whatever rail
+  Paddle offers is a dashboard/banking concern and MUST NOT influence any billing code.
+  Fallbacks if verification fails: Creem or Dodo Payments, behind the same provider seam
+  (`lib/billing/`) — do not couple handlers to Paddle types outside it.
 - **Paddle is the source of truth for PAID state; our DB holds a webhook-written mirror.**
   Only the signature-verified webhook handler (service role) may write billing tables or
   `profiles.subscription_plan`. Users have read-only RLS on their own row. A checkout

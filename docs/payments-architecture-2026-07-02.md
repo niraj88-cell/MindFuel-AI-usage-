@@ -44,8 +44,9 @@ company being the legal seller of record and custodian of all revenue.
 
 **Paddle (Paddle Billing) as Merchant of Record.**
 
-- Eligible for a Nepal-based sole proprietor; payouts via Payoneer (established Nepal path)
-  or wire. Zero setup / monthly / annual fees — Paddle earns only on successful payments,
+- Eligible for a Nepal-based sole proprietor; payout method is Paddle's concern and
+  runtime-irrelevant (preferred: direct bank transfer where Paddle supports it; other rails
+  as offered). Zero setup / monthly / annual fees — Paddle earns only on successful payments,
   exactly matching the cost requirement.
 - It is the most battle-tested MoR that will take us: 14 years, SOC 2, the default choice
   of indie SaaS. For priorities #1 (security) and #2 (customer trust), checkout provenance
@@ -65,7 +66,8 @@ abstraction seam (`lib/billing/`) keeps the webhook handler and entitlement mode
   direct processor at all from Nepal, plus tax/chargeback/compliance outsourcing we could
   not self-operate responsibly as a solo founder.
 - **Revenue custody**: MoR holds funds until payout (Paddle pays monthly, threshold-based).
-  Mitigated by choosing the oldest provider and Payoneer payouts.
+  Mitigated by choosing the oldest provider; payout rail (bank transfer where supported) is
+  a banking detail, not an architectural one.
 - **Checkout is Paddle-branded** ("order processed by Paddle.com"): mild brand dilution,
   but it is also the trust signal that makes a small unknown product safe to buy from.
 - **Verification friction upfront**: Paddle requires a live HTTPS site with Terms,
@@ -201,7 +203,8 @@ paid, friction-free.
    verification and simply owed to users.
 2. **Paddle account + verification:** sign up as Nepal sole proprietor, verify domain
    satyashift.vercel.app (or the custom domain if one lands first — do domain before
-   Paddle if both are planned), business + payout (Payoneer) verification. Sandbox keys.
+   Paddle if both are planned), business + payout verification (direct bank transfer where
+   supported). Sandbox keys.
 3. **Backend:** migration 019, `lib/billing/`, webhook route against **Paddle sandbox**,
    `lib/subscription.ts` extension + tests.
 4. **Checkout UI:** Plan section upgrade flow + `/upgrade`, overlay checkout, portal link,
@@ -213,14 +216,14 @@ paid, friction-free.
 
 - **Paddle rejects verification** (medium): mitigation — compliance pages first, honest
   product description; fallback Creem/Dodo behind the same seam.
-- **Payoneer payout friction in Nepal** (low-medium): established path, but confirm
-  account + NPR withdrawal before go-live; wire fallback.
+- **Payout friction in Nepal** (low-medium): confirm the chosen Paddle payout rail (direct
+  bank transfer where supported) and NPR settlement before go-live. Runtime-irrelevant.
 - **MoR platform/custody risk** (low for Paddle): monthly payouts bound exposure.
 - **Webhook bugs corrupt entitlement** (engineering): bounded by idempotent, replayable
   handlers + `billing_events` audit (can rebuild the mirror from history), sandbox first.
 - **Trial-abuse / multi-account** (low, accepted): cardless trials invite re-signups;
   at $8 the fraud surface is tiny. Do not add invasive fingerprinting — contradicts brand.
-- **Nepal FX/legal** (founder-owned): declare Payoneer income per Nepal rules; out of
+- **Nepal FX/legal** (founder-owned): declare Paddle payout income per Nepal rules; out of
   codebase scope but noted so it is never a surprise.
 
 ## 12. Rejected alternatives (and why)

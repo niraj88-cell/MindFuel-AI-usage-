@@ -14,6 +14,7 @@
     "@langchain/core": "^1.1.41",
     "@langchain/google-genai": "^2.1.28",
     "@langchain/langgraph": "^1.2.9",
+    "@paddle/paddle-js": "^1.6.4",
     "@prisma/client": "^7.8.0",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",

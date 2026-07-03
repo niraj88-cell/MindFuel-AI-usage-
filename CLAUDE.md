@@ -86,16 +86,22 @@ where something was verified. Trust is shown through restraint, not decoration. 
   active/trialing/free from `profiles.trial_ends_at` + `subscription_plan` (migration 016).
   No billing is wired YET; don't add gating or an upgrade CTA until payments ship.
 - Payments: **Paddle as Merchant of Record** (founder is in Nepal — Stripe/Polar/Lemon
-  Squeezy are impossible; Creem/Dodo are the fallbacks). The FOUNDATION IS BUILT and
-  dormant (2026-07-03): `lib/billing/` seam (adapter/service/gate), `lib/entitlement.ts`
-  state machine (tested), `/api/billing/webhook` (HMAC + replay + idempotent event store,
-  verified end-to-end in prod), migrations 020/021. It activates via PADDLE_* env vars
-  only — until then the webhook answers 404 and nothing grants paid state. Read
-  `docs/payments-architecture-2026-07-02.md` + the DECISIONS entries before touching
-  billing. Non-negotiables: cardless trial stays; only the webhook (service role) writes
-  billing state; entitlement checks go through `entitlementOf`/`requirePremium` only;
-  success redirects grant nothing; the extension never touches billing; no gating until
-  checkout ships (then gate the social layer, never the user's own data).
+  Squeezy are impossible; Creem/Dodo are the fallbacks; payout rail is runtime-irrelevant,
+  bank transfer preferred). FULLY WIRED and dormant until env config (2026-07-03):
+  `lib/billing/` seam (adapter/service/gate), `lib/entitlement.ts` state machine (tested),
+  `/api/billing/webhook` (HMAC + replay + idempotent event store, verified end-to-end in
+  prod), `/api/billing/portal` (Paddle customer-portal session for manage/cancel),
+  Paddle.js overlay checkout in Settings (`components/billing/CheckoutButtons.tsx`),
+  migrations 020/021. **Two env-var classes**: SECRET server-only = `PADDLE_WEBHOOK_SECRET`
+  (enables webhook), `PADDLE_API_KEY` (portal); PUBLIC client = `NEXT_PUBLIC_PADDLE_ENV`,
+  `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `NEXT_PUBLIC_PADDLE_PRICE_MONTHLY/YEARLY`. Webhook
+  answers 404 and checkout stays inert until set; price→plan resolves from the price-id env
+  (no dashboard custom_data needed). Read `docs/payments-architecture-2026-07-02.md` + the
+  DECISIONS entries before touching billing. Non-negotiables: cardless trial stays; only
+  the webhook (service role) writes billing state; entitlement checks go through
+  `entitlementOf`/`requirePremium` only; success redirects grant nothing; the extension
+  never touches billing; no gating until you deliberately add it (then gate the social
+  layer, never the user's own data).
 - The middleware (`web/proxy.ts`) is default-deny: any new public page must be added to its
   `isPublicRoute` list, and any new static file type to the static regex, or visitors get
   bounced to /login (this silently broke the PWA manifest once).

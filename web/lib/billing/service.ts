@@ -20,7 +20,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Json } from '@/lib/supabase/types'
 import { createAdminClient } from '@/lib/supabase/server'
 import { auditLog } from '@/lib/audit-log'
-import { getBillingConfig } from './config'
+import { getBillingConfig, priceToPlan } from './config'
 import { paddleProvider } from './paddle'
 import type { BillingUpdate, PaymentProvider } from './types'
 
@@ -33,7 +33,7 @@ export const MAX_WEBHOOK_BYTES = 128 * 1024
 
 function activeProvider(): PaymentProvider | null {
   const cfg = getBillingConfig()
-  return cfg.enabled && cfg.webhookSecret ? paddleProvider(cfg.webhookSecret) : null
+  return cfg.enabled && cfg.webhookSecret ? paddleProvider(cfg.webhookSecret, priceToPlan(cfg)) : null
 }
 
 export async function processWebhook(

@@ -84,8 +84,16 @@ const SUBSCRIPTION_EVENTS = new Set([
   'subscription.canceled',
 ])
 
-/** Pure mapping core — exported for tests. */
-export function mapPaddleEvent(event: VerifiedEvent): BillingUpdate | null | 'unattributable' {
+/**
+ * Pure mapping core — exported for tests.
+ * `priceToPlan` maps our configured price ids → canonical plan ('monthly' | 'annual'),
+ * so plan resolves from configuration and does NOT depend on custom_data being set on
+ * each Paddle price. Optional and backward compatible.
+ */
+export function mapPaddleEvent(
+  event: VerifiedEvent,
+  priceToPlan: Record<string, 'monthly' | 'annual'> = {},
+): BillingUpdate | null | 'unattributable' {
   if (!SUBSCRIPTION_EVENTS.has(event.eventType)) return null
   const d = event.data as {
     id?: string
@@ -105,10 +113,16 @@ export function mapPaddleEvent(event: VerifiedEvent): BillingUpdate | null | 'un
   const userId = d.custom_data?.user_id
   if (!userId || !/^[0-9a-f-]{36}$/i.test(userId)) return 'unattributable'
 
-  // Plan: prefer the price's custom_data.plan ('monthly' | 'annual'), set on the
-  // Paddle price when products are created; falls back to the price id for forensics.
+  // Plan resolution, in order: the price's custom_data.plan (explicit override) →
+  // the configured price-id map → the raw price id (forensic fallback only; note the
+  // profiles cache only accepts 'monthly'/'annual', so an unmapped price stays uncached).
   const item = d.items?.[0]
-  const plan = item?.price?.custom_data?.plan ?? item?.price?.id ?? null
+  const priceId = item?.price?.id
+  const plan =
+    item?.price?.custom_data?.plan ??
+    (priceId && priceToPlan[priceId]) ??
+    priceId ??
+    null
 
   return {
     userId,
@@ -122,10 +136,13 @@ export function mapPaddleEvent(event: VerifiedEvent): BillingUpdate | null | 'un
   }
 }
 
-export function paddleProvider(secret: string): PaymentProvider {
+export function paddleProvider(
+  secret: string,
+  priceToPlan: Record<string, 'monthly' | 'annual'> = {},
+): PaymentProvider {
   return {
     id: 'paddle',
     verifyWebhook: (rawBody, header, now) => verifyPaddleSignature(rawBody, header, secret, now),
-    mapEvent: mapPaddleEvent,
+    mapEvent: (event) => mapPaddleEvent(event, priceToPlan),
   }
 }

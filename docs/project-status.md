@@ -5,6 +5,66 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-03 — Paddle LIVE integration wired (checkout + portal); activates on env config only
+
+Connected the (already-proven) billing foundation to a now-live Paddle account with the
+minimum change set. No backend rewrite: the webhook pipeline, event store, idempotency,
+replay protection, entitlement engine, and migrations 020/021 are untouched. Checkout was
+the deliberately-deferred piece; it is now built. Everything stays DORMANT until the
+PADDLE_* env vars exist (webhook 404s, checkout shows the honest inert state).
+
+**Changed (additive, minimal):**
+- **Config split into secret vs public** (`lib/billing/config.ts` + new
+  `lib/billing/public-config.ts`, client-safe). Secrets server-only: `PADDLE_WEBHOOK_SECRET`,
+  `PADDLE_API_KEY`. Public (Paddle designs these to be client-visible):
+  `NEXT_PUBLIC_PADDLE_ENV`, `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`,
+  `NEXT_PUBLIC_PADDLE_PRICE_MONTHLY`, `NEXT_PUBLIC_PADDLE_PRICE_YEARLY`. Dropped the unused
+  `PADDLE_PRODUCT_ID`. `getBillingConfig()` gains `checkoutEnabled`; added `paddleApiBase()`
+  and `priceToPlan()`.
+- **Robust price→plan** (`paddle.ts` `mapPaddleEvent` gains an optional `priceToPlan` arg;
+  `paddleProvider`/service thread it from config). Plan now resolves from the configured
+  price ids, so the webhook no longer depends on `custom_data.plan` being set on each price
+  in the dashboard — removes a silent-failure mode (an unmapped plan would leave
+  `profiles.subscription_plan` null while `billing_subscriptions` looked active). custom_data
+  still wins if present. +1 test (16/16 billing, entitlement 15/15).
+- **Paddle.js overlay checkout** (`components/billing/CheckoutButtons.tsx`): official
+  `@paddle/paddle-js`, monthly/yearly, loading/error/success states, `customData.user_id`
+  for webhook attribution, `successUrl=/profile?upgraded=1`. Grants nothing client-side —
+  entitlement flips only via the webhook. Cancellation of the overlay is a no-op.
+- **Manage/cancel** (`app/api/billing/portal/route.ts`): mints a Paddle customer-portal
+  session (`POST /customers/{id}/portal-sessions`, API key server-side), returns the
+  single-use cancel/overview URL. Honors the "cancel in one click" promise the Terms/Pricing
+  pages already make. Cookie/bearer-authed, own mirror row only, rate-limited, generic errors.
+- **Settings Plan section** wired: active → Manage subscription; trial/free + configured →
+  overlay checkout; unconfigured → the prior honest inert copy. `?upgraded=1` return polls
+  the profile a few times so "active" appears without a manual refresh.
+- **Payout-agnostic docs**: Payoneer references (docs only — never in config) replaced with
+  "Paddle payout, bank transfer where supported; runtime-irrelevant" across DECISIONS,
+  architecture doc, project-status. No billing logic touched (payout ≠ runtime).
+
+**Untouched:** webhook route shell, service.ts pipeline shape, entitlement.ts, gate.ts,
+types.ts, migrations, proxy CSRF exemption, RLS. Backend remains the single source of truth.
+
+**Verification:** tsc + next build green (`/api/billing/portal` + `/api/billing/webhook`
+in the route map); billing tests 16/16, entitlement 15/15. Full webhook pipeline was already
+proven end-to-end in prod last session (idempotency, replay/sig rejection, out-of-order guard).
+
+**REMAINING — user, in Paddle dashboard + Vercel (no code):**
+1. Paddle → Developer Tools → Notifications: add destination
+   `https://satyashift.vercel.app/api/billing/webhook`, subscribe to `subscription.*`
+   events, copy the signing secret.
+2. Paddle → Developer Tools → Authentication: copy the **client-side token** and create a
+   **server API key**.
+3. Catalog: note the **monthly** and **annual** price ids (custom_data not required).
+4. Vercel env (production): set `PADDLE_WEBHOOK_SECRET`, `PADDLE_API_KEY`,
+   `NEXT_PUBLIC_PADDLE_ENV=production`, `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`,
+   `NEXT_PUBLIC_PADDLE_PRICE_MONTHLY`, `NEXT_PUBLIC_PADDLE_PRICE_YEARLY`; redeploy.
+5. Live smoke: one real subscription (Settings → Choose plan), confirm the row in
+   `billing_subscriptions` + `profiles.subscription_plan`, then cancel via Manage and refund
+   from the Paddle dashboard.
+
+---
+
 ## 2026-07-03 — Design identity rebuilt: "a ledger of truth" (web + extension, verified)
 
 The interface still read as generic AI-generated SaaS. Root cause (audit in
@@ -319,8 +379,9 @@ payout list (Stripe Connect) excludes Nepal, and Lemon Squeezy is dissolving int
 invite-gated Stripe Managed Payments (Stripe-country sellers only). Of the eligible MoRs
 (Paddle, Creem, Dodo Payments), Paddle wins on the priority order security > trust >
 simplicity: 14-year track record vs 1–2-year-old startups holding all revenue as legal
-seller, zero setup/monthly fees (5% + $0.50 only on success), Payoneer payout path to
-Nepal, hosted checkout with Apple/Google Pay, hosted cancel portal, signed webhooks.
+seller, zero setup/monthly fees (5% + $0.50 only on success), Nepal-eligible payouts
+(bank transfer where supported; rail is runtime-irrelevant), hosted checkout with
+Apple/Google Pay, hosted cancel portal, signed webhooks.
 At our price points the "cheaper" newcomers save only $0.02–$0.19 per transaction.
 Creem/Dodo are the named fallbacks behind a `lib/billing/` provider seam.
 

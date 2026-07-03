@@ -1,67 +1,85 @@
 // lib/billing/config.ts — billing environment, validated in one place. Server-only.
-// Going live is a configuration change: set the PADDLE_* variables in Vercel and the
-// pipeline lights up. Until then billing is DISABLED and every billing surface is inert
-// (the webhook route answers 404, no code path can grant paid entitlement).
+// Going live is a configuration change: set the PADDLE_* / NEXT_PUBLIC_PADDLE_* variables
+// in Vercel and the pipeline lights up. Until then billing is DISABLED and every billing
+// surface is inert (the webhook route answers 404, no code path grants paid entitlement).
 //
-// Placeholders (never hardcode values; secrets only in env):
-//   PADDLE_ENVIRONMENT     sandbox | production        (default: sandbox)
-//   PADDLE_WEBHOOK_SECRET  webhook signing secret      (server; enables the pipeline)
-//   PADDLE_API_KEY         server API key              (server; portal/checkout session use)
-//   PADDLE_CLIENT_TOKEN    client-side checkout token  (public by design, still env-driven)
-//   PADDLE_PRODUCT_ID      product id
-//   PADDLE_PRICE_MONTHLY   price id for the monthly plan
-//   PADDLE_PRICE_YEARLY    price id for the annual plan
+// Secret, server-only (never NEXT_PUBLIC):
+//   PADDLE_WEBHOOK_SECRET  webhook signing secret   — enables the webhook pipeline
+//   PADDLE_API_KEY         server API key           — portal sessions (server → Paddle API)
+// Non-secret, safe on the client (Paddle designs the client token + price ids to be public):
+//   NEXT_PUBLIC_PADDLE_ENV           sandbox | production
+//   NEXT_PUBLIC_PADDLE_CLIENT_TOKEN  Paddle.js client-side token
+//   NEXT_PUBLIC_PADDLE_PRICE_MONTHLY price id for the $8/mo plan
+//   NEXT_PUBLIC_PADDLE_PRICE_YEARLY  price id for the annual plan
+// (PADDLE_PRODUCT_ID is intentionally not used at runtime — the price ids drive checkout
+// and the price→plan map below; the product id lives only in the Paddle dashboard.)
 
 import 'server-only'
+import { readPaddlePublicEnv, type BillingEnvironment } from './public-config'
 
-export type BillingEnvironment = 'sandbox' | 'production'
+export type { BillingEnvironment }
 
 export interface BillingConfig {
+  /** Webhook pipeline is live (the minimum viable configuration). */
   enabled: boolean
+  /** Checkout UI can be shown (client token + both price ids present). */
+  checkoutEnabled: boolean
   environment: BillingEnvironment
   webhookSecret: string | null
   apiKey: string | null
   clientToken: string | null
-  productId: string | null
   priceMonthly: string | null
   priceYearly: string | null
 }
 
 export function getBillingConfig(): BillingConfig {
-  const environment: BillingEnvironment =
-    process.env.PADDLE_ENVIRONMENT === 'production' ? 'production' : 'sandbox'
+  const pub = readPaddlePublicEnv()
   const webhookSecret = process.env.PADDLE_WEBHOOK_SECRET || null
   return {
-    // The webhook secret is the minimum viable configuration; everything else is
-    // needed only when the checkout UI ships.
     enabled: webhookSecret !== null,
-    environment,
+    checkoutEnabled: !!(pub.clientToken && pub.priceMonthly && pub.priceYearly),
+    environment: pub.environment,
     webhookSecret,
     apiKey: process.env.PADDLE_API_KEY || null,
-    clientToken: process.env.PADDLE_CLIENT_TOKEN || null,
-    productId: process.env.PADDLE_PRODUCT_ID || null,
-    priceMonthly: process.env.PADDLE_PRICE_MONTHLY || null,
-    priceYearly: process.env.PADDLE_PRICE_YEARLY || null,
+    clientToken: pub.clientToken,
+    priceMonthly: pub.priceMonthly,
+    priceYearly: pub.priceYearly,
   }
 }
 
+/** Paddle REST API base for the configured environment (portal sessions live here). */
+export function paddleApiBase(env: BillingEnvironment = getBillingConfig().environment): string {
+  return env === 'production' ? 'https://api.paddle.com' : 'https://sandbox-api.paddle.com'
+}
+
 /**
- * Full-configuration gate for the future checkout flow: call before rendering any
- * upgrade surface so a half-configured environment fails loudly at the seam,
- * never silently at the customer.
+ * Maps a Paddle price id → our canonical plan ('monthly' | 'annual'). Derived from the
+ * same price-id env vars the checkout uses, so the webhook resolves plan WITHOUT relying
+ * on custom_data being set on each price in the dashboard (one less manual step, one less
+ * silent-failure mode: an unmapped plan would leave profiles.subscription_plan null).
  */
-export function assertCheckoutConfigured(cfg: BillingConfig = getBillingConfig()): void {
+export function priceToPlan(cfg: BillingConfig = getBillingConfig()): Record<string, 'monthly' | 'annual'> {
+  const map: Record<string, 'monthly' | 'annual'> = {}
+  if (cfg.priceMonthly) map[cfg.priceMonthly] = 'monthly'
+  if (cfg.priceYearly) map[cfg.priceYearly] = 'annual'
+  return map
+}
+
+/**
+ * Full-configuration gate for server billing actions (portal). Fails loudly at the seam,
+ * never silently at the customer. Checkout readiness is `checkoutEnabled` (client side).
+ */
+export function assertServerBillingConfigured(cfg: BillingConfig = getBillingConfig()): void {
   const missing = (
     [
       ['PADDLE_WEBHOOK_SECRET', cfg.webhookSecret],
       ['PADDLE_API_KEY', cfg.apiKey],
-      ['PADDLE_CLIENT_TOKEN', cfg.clientToken],
-      ['PADDLE_PRODUCT_ID', cfg.productId],
-      ['PADDLE_PRICE_MONTHLY', cfg.priceMonthly],
-      ['PADDLE_PRICE_YEARLY', cfg.priceYearly],
+      ['NEXT_PUBLIC_PADDLE_CLIENT_TOKEN', cfg.clientToken],
+      ['NEXT_PUBLIC_PADDLE_PRICE_MONTHLY', cfg.priceMonthly],
+      ['NEXT_PUBLIC_PADDLE_PRICE_YEARLY', cfg.priceYearly],
     ] as const
   ).filter(([, v]) => !v).map(([k]) => k)
   if (missing.length > 0) {
-    throw new Error(`Billing checkout not configured; missing: ${missing.join(', ')}`)
+    throw new Error(`Billing not fully configured; missing: ${missing.join(', ')}`)
   }
 }
