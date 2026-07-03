@@ -19,7 +19,8 @@ import {
   MIN_DWELL_S, MAX_QUEUE, MAX_BATCH,
   hostnameOf, isSensitive, isOwnApp, categoryFor,
   capDuration, parseSupabaseSession, selectAuthCookie, tokenExpiresSoon,
-  nextNudge, nudgeCopy, gateAllowsCounting, nextWelcome, NUDGE_AFTER_MIN,
+  nextNudge, nudgeCopy, gateAllowsCounting, nextWelcome, NUDGE_AFTER_MIN, NUDGE_COOLDOWN_MIN,
+  emptyNudgeProfile, updateNudgeOutcome, nudgeCooldownMultiplier, nudgeRegister,
 } from './core.js';
 
 const PRODUCTION_URL = 'https://satyashift.vercel.app';
@@ -41,6 +42,8 @@ const TOKEN_KEY = 'satyashift_token';      // extension-refreshed session (H3)
 const FORCE_REFRESH_KEY = 'force_refresh'; // set after a 401 so the next cycle refreshes
 const SESSION_KEY = 'focus_session';       // { id, startedAt } — active deep session started here
 const NUDGE_DIAG_KEY = 'nudge_diag';       // liveness proof for the nudge pipeline (see checkNudge)
+const NUDGE_PROFILE_KEY = 'nudge_profile'; // { responsiveness, consecutiveIgnored, ... } — LOCAL
+                                           // nudge-tone/fatigue learning. Never transmitted.
 
 // chrome.storage.session — cleared when the browser closes.
 const ACTIVE_KEY = 'active';               // { domain, segmentStart, accumulatedMs }
@@ -344,6 +347,13 @@ async function getNudgeState() {
   return s || { domain: null, minutes: 0, lastNudgeAt: 0 };
 }
 
+// The LOCAL nudge-learning profile (tone + fatigue). storage.local so it survives restarts;
+// it is never sent anywhere — the intervention is private by design.
+async function getNudgeProfile() {
+  const { [NUDGE_PROFILE_KEY]: p } = await chrome.storage.local.get(NUDGE_PROFILE_KEY);
+  return p || emptyNudgeProfile();
+}
+
 // Liveness proof. Every stage of the nudge pipeline used to fail silently (a lost alarm, a
 // muted notification, a thrown handler) and was indistinguishable from "working, just quiet".
 // This one small record in storage.local makes the pipeline auditable in the field:
@@ -372,7 +382,11 @@ async function checkNudge() {
     category: a.domain ? categoryFor(a.domain) : 'neutral',
     now: Date.now(),
   };
-  const { state, fire, decision, domain, minutes, distinctDomains, switches } = nextNudge(await getNudgeState(), ctx);
+  // Local intelligence: repeated ignores space check-ins further apart (cooldown only — the
+  // 5-min fire threshold is never touched). afterMin/graceTicks stay at their defaults.
+  const nudgeProfile = await getNudgeProfile();
+  const cfg = { cooldownMin: NUDGE_COOLDOWN_MIN * nudgeCooldownMultiplier(nudgeProfile) };
+  const { state, fire, decision, domain, minutes, distinctDomains, switches } = nextNudge(await getNudgeState(), ctx, cfg);
   await chrome.storage.session.set({ [NUDGE_STATE_KEY]: state });
   // Liveness + decision trace: one record per tick makes the whole pipeline auditable in the
   // field (chrome.storage.local.get('nudge_diag')). It answers, deterministically, WHY this tick
@@ -391,12 +405,19 @@ async function checkNudge() {
     switches: switches ?? (state.switches ?? 0),
     decision,                       // building | fire | cooldown | grace | reset | idle
     permission: await notificationPermission(),
+    // Observability for the local learning layer (all local, never sent).
+    responsiveness: Math.round((nudgeProfile.responsiveness ?? 0.5) * 100) / 100,
+    cooldownX: Math.round(nudgeCooldownMultiplier(nudgeProfile) * 100) / 100,
   });
-  if (fire) await fireNudge(domain, minutes, distinctDomains);
+  // HOW the check-in speaks is chosen from the local profile + the block's shape.
+  if (fire) await fireNudge(domain, minutes, distinctDomains, nudgeRegister(nudgeProfile, { distinctDomains }));
 
-  // Welcome-back: if a recent nudge was heeded (attention landed back on non-distraction
-  // ground), greet once on the next popup open. Pure policy in core.js (nextWelcome).
+  // Welcome-back + outcome learning. nextWelcome resolves each nudge exactly once: fire=true
+  // means it was HEEDED (attention returned within the window); an advance of ackedNudgeAt
+  // WITHOUT a fire means the window lapsed untouched — an IGNORED outcome. Either way we fold
+  // it into the local nudge profile. This is the only place the loop closes, and it stays local.
   const { [WELCOME_STATE_KEY]: w } = await chrome.storage.session.get(WELCOME_STATE_KEY);
+  const prevAcked = (w && w.ackedNudgeAt) || 0;
   const wr = nextWelcome(w, {
     lastNudgeAt: state.lastNudgeAt,
     counting: ctx.counting,
@@ -405,9 +426,15 @@ async function checkNudge() {
   });
   await chrome.storage.session.set({ [WELCOME_STATE_KEY]: wr.state });
   if (wr.fire) await chrome.storage.session.set({ [WELCOME_PENDING_KEY]: true });
+
+  const resolvedNudge = (wr.state && wr.state.ackedNudgeAt) || 0;
+  if (resolvedNudge > prevAcked) {
+    const next = updateNudgeOutcome(nudgeProfile, wr.fire, ctx.now); // fire=true heeded, else ignored
+    await chrome.storage.local.set({ [NUDGE_PROFILE_KEY]: next });
+  }
 }
 
-async function fireNudge(domain, minutes, distinctDomains = 1) {
+async function fireNudge(domain, minutes, distinctDomains = 1, register = 'curious') {
   const level = await notificationPermission();
   if (level !== 'granted') {
     // The user (or a missing API) muted us. Don't pretend we nudged — record it so the
@@ -419,7 +446,7 @@ async function fireNudge(domain, minutes, distinctDomains = 1) {
   await chrome.storage.session.set({ [id]: domain }); // remember where to send them on click
   // Seed the rotation with the block minutes; hand the scatter count so the copy names a
   // fragmented block ("a few different places") instead of over-claiming one domain.
-  const { title, message } = nudgeCopy(domain, minutes, minutes, { distinctDomains });
+  const { title, message } = nudgeCopy(domain, minutes, minutes, { distinctDomains, register });
   try {
     await chrome.notifications.create(id, {
       type: 'basic',

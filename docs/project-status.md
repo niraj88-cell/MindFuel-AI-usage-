@@ -5,6 +5,36 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-03 — Behavioral Intelligence, Phases 3 + 4 (local nudge loop + notif/squad personalization)
+
+Extended the intelligence layer with its two learning loops, both additive and privacy-preserving.
+
+**Phase 3 — extension LOCAL nudge intelligence (`extension/core.js` + `background.js`).** The
+deterministic `nextNudge` still decides WHETHER/WHEN (fixed 5-min block). New pure helpers decide
+only HOW it speaks and, when check-ins keep getting ignored, space them further apart:
+`nudgeRegister` (curious | reflective | gentle from local responsiveness + block shape),
+`updateNudgeOutcome` (EWMA of the extension's OWN heeded/ignored signal), `nudgeCooldownMultiplier`
+(fatigue back-off, capped at 3×). Two invariants held: it only ever backs OFF (never lowers the
+fire threshold — no silent adaptive-lowering), and it learns from a `nudge_profile` in
+`chrome.storage.local` that is NEVER transmitted (no server dependency, no server-side nudge log).
+The heeded/ignored outcome is read from the existing `nextWelcome` transition. `background.js` wires
+it: cooldown via `cfg`, register on fire, outcome fold after the welcome check. `node --test` 49/49.
+
+**Phase 4 — notification + squad personalization (server loop, derive-on-read).** Two pure modules,
+no new data collected. `lib/intelligence/notifications.ts`: per-recipient responsiveness from the
+`notifications.is_read` we already store → `notificationDecision` backs off recipients who let
+`squad_focus_start` pass unread (fail-open; wired into `lib/squad/notifySessionStart.ts`).
+`lib/intelligence/squad.ts`: `squadImpact` (encouraged vs own baseline outcomes) + `recommendSquadSupport`
+(invite | solo | silent) — wired into the dashboard so a thriving-solo worker is quietly left alone
+instead of pushed to socialize. Confidence-gated, user-vs-own-past only. The squad still sees exactly
+what it saw before (who/active/verified/duration/intention).
+
+**Verified.** web `tsc` clean, `node --test` 75/75 (adds phase4 + reflection/emotion/etc), extension
+`node --test` 49/49, `next build` green (deploy). Harness can't drive the extension — the local nudge
+loop needs a load-unpack pass to see tone/back-off live (`chrome.storage.local.get('nudge_profile')`).
+
+---
+
 ## 2026-07-03 — Behavioral Intelligence System, Phase 1 (the longitudinal layer)
 
 Built the additive intelligence layer the product's edge depends on: a slowly-evolving,

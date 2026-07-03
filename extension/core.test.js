@@ -9,6 +9,8 @@ import {
   nextNudge, NUDGE_AFTER_MIN, NUDGE_GRACE_TICKS, nudgeCopy, gateAllowsCounting,
   nextWelcome, WELCOME_WINDOW_MIN,
   MAX_DWELL_S,
+  emptyNudgeProfile, updateNudgeOutcome, nudgeCooldownMultiplier, nudgeRegister,
+  NUDGE_BACKOFF_MAX, NUDGE_COOLDOWN_MIN,
 } from './core.js';
 
 const REF = 'sztvvvphpawuxvvmuddm';
@@ -374,4 +376,85 @@ test('nextWelcome: a NEW nudge re-arms the greeting', () => {
 test('nextWelcome: no nudge, no greeting, tolerant of missing state', () => {
   assert.equal(nextWelcome(undefined, { lastNudgeAt: 0, counting: true, category: 'neutral', now: 1000 }).fire, false);
   assert.equal(nextWelcome(null, { lastNudgeAt: 0, counting: false, category: 'neutral', now: 1000 }).fire, false);
+});
+
+// ---------------------------------------------------------------------------
+// Local nudge intelligence (Intervention Intelligence — HOW, fully local).
+// ---------------------------------------------------------------------------
+test('emptyNudgeProfile: neutral, no history', () => {
+  const p = emptyNudgeProfile();
+  assert.equal(p.responsiveness, 0.5);
+  assert.equal(p.consecutiveIgnored, 0);
+  assert.equal(p.heeded, 0);
+  assert.equal(p.ignored, 0);
+});
+
+test('updateNudgeOutcome: heeded lifts responsiveness + resets the ignore streak; gradual', () => {
+  let p = emptyNudgeProfile();
+  const before = p.responsiveness;
+  p = updateNudgeOutcome(p, true, 1000);
+  assert.ok(p.responsiveness > before, 'heed raises responsiveness');
+  assert.ok(Math.abs(p.responsiveness - before) <= 0.3 + 1e-9, 'move bounded by the EWMA rate');
+  assert.equal(p.consecutiveIgnored, 0);
+  assert.equal(p.heeded, 1);
+});
+
+test('updateNudgeOutcome: ignores lower responsiveness + build the streak, staying in [0,1]', () => {
+  let p = emptyNudgeProfile();
+  for (let i = 0; i < 8; i++) p = updateNudgeOutcome(p, false, i);
+  assert.ok(p.responsiveness < 0.2 && p.responsiveness >= 0, `responsiveness ${p.responsiveness}`);
+  assert.equal(p.consecutiveIgnored, 8);
+  assert.equal(p.ignored, 8);
+  // A single heed resets the streak immediately.
+  p = updateNudgeOutcome(p, true, 100);
+  assert.equal(p.consecutiveIgnored, 0);
+});
+
+test('nudgeCooldownMultiplier: 1x until repeated ignores, then rises, capped', () => {
+  assert.equal(nudgeCooldownMultiplier({ consecutiveIgnored: 0 }), 1);
+  assert.equal(nudgeCooldownMultiplier({ consecutiveIgnored: 1 }), 1);
+  assert.equal(nudgeCooldownMultiplier({ consecutiveIgnored: 2 }), 1.5);
+  assert.equal(nudgeCooldownMultiplier({ consecutiveIgnored: 3 }), 2);
+  assert.equal(nudgeCooldownMultiplier({ consecutiveIgnored: 50 }), NUDGE_BACKOFF_MAX);
+});
+
+test('nudgeRegister: scattered→reflective, chronic-ignorer→gentle, else curious', () => {
+  assert.equal(nudgeRegister(emptyNudgeProfile(), { distinctDomains: 4 }), 'reflective');
+  assert.equal(nudgeRegister({ responsiveness: 0.2 }, { distinctDomains: 1 }), 'gentle');
+  assert.equal(nudgeRegister(emptyNudgeProfile(), { distinctDomains: 1 }), 'curious');
+  // A scattered block outranks tone (name the pattern honestly).
+  assert.equal(nudgeRegister({ responsiveness: 0.1 }, { distinctDomains: 5 }), 'reflective');
+});
+
+test('nudgeCopy gentle register: softer, asks for nothing, still names the site, no shame', () => {
+  const shame = /waste|lazy|should|fail|stop scrolling|procrastinat/i;
+  const seen = new Set();
+  for (let s = 0; s < 3; s++) {
+    const { title, message } = nudgeCopy('youtube.com', 6, s, { register: 'gentle' });
+    assert.equal(title, 'A quiet check-in');
+    assert.match(message, /youtube\.com/);
+    assert.doesNotMatch(message, shame);
+    seen.add(message);
+  }
+  assert.equal(seen.size, 3, 'gentle set rotates');
+  // Gentle differs from the default curious voice.
+  assert.notEqual(nudgeCopy('youtube.com', 0, 0, { register: 'gentle' }).message,
+    nudgeCopy('youtube.com', 0, 0, { register: 'curious' }).message);
+});
+
+test('fatigue back-off delays the NEXT nudge but never the 5-minute threshold of the first', () => {
+  const cfg = { cooldownMin: NUDGE_COOLDOWN_MIN * nudgeCooldownMultiplier({ consecutiveIgnored: 4 }) };
+  // A fresh block (never nudged) still fires exactly at the fixed threshold, regardless of cooldown.
+  let state = { domain: null, minutes: 0, gap: 0, domains: [], switches: 0, lastNudgeAt: 0 };
+  let fired = -1;
+  for (let m = 1; m <= NUDGE_AFTER_MIN; m++) {
+    const r = nextNudge(state, { domain: 'x.com', counting: true, category: 'distraction', now: m * 60000 }, cfg);
+    state = r.state;
+    if (r.fire) { fired = m; break; }
+  }
+  assert.equal(fired, NUDGE_AFTER_MIN, 'threshold is untouched by back-off');
+  // But the SECOND nudge is muzzled for the longer, backed-off cooldown.
+  const soon = nextNudge({ domain: 'x.com', minutes: NUDGE_AFTER_MIN, gap: 0, domains: ['x.com'], switches: 0, lastNudgeAt: fired * 60000 },
+    { domain: 'x.com', counting: true, category: 'distraction', now: fired * 60000 + NUDGE_COOLDOWN_MIN * 60000 + 1 }, cfg);
+  assert.equal(soon.fire, false, 'the normal 10-min cooldown is no longer enough when fatigued');
 });

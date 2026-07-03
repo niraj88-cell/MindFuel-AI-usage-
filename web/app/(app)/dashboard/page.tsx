@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase/client'
 import { VerifiedMark } from '@/components/brand/VerifiedMark'
 import { EXTENSION_PUBLISHED, EXTENSION_STORE_URL } from '@/lib/extension'
 import { weeklyInsight } from '@/lib/intelligence/insights'
+import { recommendSquadSupport } from '@/lib/intelligence/squad'
 import type { BehavioralProfile } from '@/lib/intelligence/types'
 
 // Shown once, the first time an "unverified" chip appears, then never again.
@@ -163,6 +164,12 @@ function Dashboard() {
   // One weekly realization from the behavioral profile — or nothing. The generator only
   // speaks when a pattern clears the confidence bar, so most weeks this is simply null.
   const insight = profile ? weeklyInsight(profile) : null
+
+  // Squad recommendation: only ever OFFER support, never expose anything. When the profile
+  // shows someone sustaining focus well on their own, we quietly leave them be rather than
+  // push the invite (privacy/solo can be the better answer). Silent/invite → unchanged UI.
+  const squadRec = profile ? recommendSquadSupport({ profile, aloneInCircle: aloneInCircle === true }) : null
+  const showInvite = aloneInCircle === true && squadRec?.recommend !== 'solo'
 
   // One honest, non-punitive reflection derived from the real day.
   const reflection = activeId
@@ -370,7 +377,7 @@ function Dashboard() {
 
       {/* Squad entry point. Still on your own? Echo the landing promise with a real
           invitation. Already have a circle? A quiet link is enough. */}
-      {aloneInCircle ? (
+      {showInvite ? (
         <div className="mt-6 rounded-xl border border-line bg-card p-5">
           <div className="flex items-center gap-2 text-green">
             <UserPlus className="h-4 w-4" />

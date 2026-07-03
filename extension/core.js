@@ -245,12 +245,83 @@ const NUDGE_PROMPTS_SCATTERED = [
   (d, m) => `A few different places in ${m} minutes. Worth a breath: keep going, or come back to what matters?`,
   (d, m) => `${m} minutes, several tabs. Notice the pull, then choose the next moment on purpose.`,
 ];
-// opts.distinctDomains: how many distinct distraction domains the block spanned (>=3 => scattered).
+// The GENTLE register: for someone who tends to let check-ins pass. We speak even more
+// softly and ask for nothing — pure acknowledgement, maximum autonomy. Backing off in tone
+// (and in frequency, see nudgeCooldownMultiplier) is how the product respects a "no".
+const NUDGE_PROMPTS_GENTLE = [
+  (d, m) => `Still on ${d}. Nothing to do with this — just a quiet marker of the time.`,
+  (d, m) => `${m} minutes on ${d}. Whenever you're ready is fine. Only noticing.`,
+  (d, m) => `A soft note on ${d}. Stay if you mean to; this won't ask again for a while.`,
+];
+// opts.distinctDomains: distinct distraction domains the block spanned (>=3 => scattered).
+// opts.register: 'curious' | 'reflective' | 'gentle' — HOW it speaks (see nudgeRegister).
+// Backward compatible: with no register, a scattered block still picks the reflective set.
 export function nudgeCopy(domain, minutes, seed = 0, opts = {}) {
-  const scattered = (opts.distinctDomains || 1) >= 3;
-  const prompts = scattered ? NUDGE_PROMPTS_SCATTERED : NUDGE_PROMPTS;
+  const register = opts.register || ((opts.distinctDomains || 1) >= 3 ? 'reflective' : 'curious');
+  const prompts = register === 'reflective' ? NUDGE_PROMPTS_SCATTERED
+    : register === 'gentle' ? NUDGE_PROMPTS_GENTLE
+      : NUDGE_PROMPTS;
   const idx = Math.abs(Math.trunc(Number(seed) || 0)) % prompts.length;
   return { title: 'A quiet check-in', message: prompts[idx](domain, minutes) };
+}
+
+// ---------------------------------------------------------------------------
+// Local nudge intelligence (Intervention Intelligence — the "HOW", fully local).
+//
+// The deterministic policy (nextNudge) still decides WHETHER and WHEN to intervene, on the
+// fixed 5-minute block. This layer decides only HOW the check-in speaks, and — when a person
+// repeatedly lets check-ins pass — spaces them FURTHER apart. Two hard rules keep it honest:
+//   * It only ever backs OFF. It never lowers the fire threshold or nudges more aggressively;
+//     adaptive threshold-lowering stays a deliberate, visible decision, never a silent one.
+//   * It learns ONLY from the extension's own local heeded/ignored signal (did attention
+//     return to non-distraction within the welcome window?), kept in chrome.storage.local and
+//     NEVER transmitted. No server call, no server-side nudge log — the intervention stays
+//     private by design.
+// Pure + tested, like the rest of core.js.
+// ---------------------------------------------------------------------------
+export const NUDGE_RESP_ALPHA = 0.3;   // outcome EWMA rate (gradual, never lurching)
+export const NUDGE_BACKOFF_MAX = 3;    // cap on the cooldown multiplier
+
+function clamp01(x) {
+  return x < 0 ? 0 : x > 1 ? 1 : x;
+}
+
+export function emptyNudgeProfile() {
+  return { responsiveness: 0.5, consecutiveIgnored: 0, heeded: 0, ignored: 0, updatedAt: 0 };
+}
+
+// Fold one outcome into the local profile. heeded=true when attention came back to
+// non-distraction within the welcome window; false when the window lapsed untouched.
+export function updateNudgeOutcome(prev, heeded, now = Date.now()) {
+  const p = prev || emptyNudgeProfile();
+  const r = p.responsiveness == null ? 0.5 : p.responsiveness;
+  return {
+    responsiveness: clamp01(r + NUDGE_RESP_ALPHA * ((heeded ? 1 : 0) - r)),
+    consecutiveIgnored: heeded ? 0 : (p.consecutiveIgnored || 0) + 1,
+    heeded: (p.heeded || 0) + (heeded ? 1 : 0),
+    ignored: (p.ignored || 0) + (heeded ? 0 : 1),
+    updatedAt: now,
+  };
+}
+
+// Fatigue back-off: after repeated ignores, MULTIPLY the cooldown so check-ins get rarer.
+// 0-1 ignored => 1x; then 1.5x, 2x, 2.5x, capped at NUDGE_BACKOFF_MAX. A single heed resets
+// consecutiveIgnored, so responsiveness restores the normal cadence immediately.
+export function nudgeCooldownMultiplier(prof) {
+  const c = (prof && prof.consecutiveIgnored) || 0;
+  if (c < 2) return 1;
+  return Math.min(NUDGE_BACKOFF_MAX, 1 + 0.5 * (c - 1));
+}
+
+// HOW the next nudge should speak. Deterministic from the local profile + the block shape.
+//   scattered block            -> 'reflective' (name the pattern, never one site)
+//   often lets check-ins pass  -> 'gentle'     (softest, asks for nothing)
+//   otherwise                  -> 'curious'    (the default, warm question)
+export function nudgeRegister(prof, opts = {}) {
+  if ((opts.distinctDomains || 1) >= 3) return 'reflective';
+  const r = prof && prof.responsiveness;
+  if (r != null && r < 0.35) return 'gentle';
+  return 'curious';
 }
 
 // ---------------------------------------------------------------------------
