@@ -1,17 +1,15 @@
 // app/api/presence/route.ts — one quiet answer for the extension popup:
 // "is anyone in my circle focusing right now?"
-// Bearer-authed (extension) or cookie-authed (web), always under RLS: focus_select only
-// exposes co-members' sessions that carry a squad_id the caller belongs to. Returns a
-// single first name + start time — never domains, never a feed.
+// Bearer-authed (extension) or cookie-authed (web). Since migration 019 focus_sessions RLS
+// is owner-only; co-member presence flows through the SECURITY DEFINER get_squad_live,
+// which enforces membership and the 4h forgotten-session cap in SQL. Returns a single
+// first name + start time — never domains, never a feed.
 
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getUserContext } from '@/lib/supabase/route-auth'
 
 export const runtime = 'nodejs'
-
-// Matches the focus start/stop cap: anything older was a forgotten session, not presence.
-const MAX_SESSION_S = 4 * 60 * 60
 
 export async function GET(req: Request) {
   try {
@@ -42,29 +40,15 @@ export async function GET(req: Request) {
       return NextResponse.json({ circle: false, live: null })
     }
 
-    const cutoff = new Date(Date.now() - MAX_SESSION_S * 1000).toISOString()
-    const { data: sessions } = await supabase
-      .from('focus_sessions')
-      .select('user_id, created_at')
-      .in('squad_id', squadIds)
-      .eq('status', 'active')
-      .neq('user_id', userId)
-      .gte('created_at', cutoff)
-      .order('created_at', { ascending: false })
-      .limit(1)
-
-    const live = sessions?.[0]
+    // focus_sessions RLS is owner-only (migration 019); co-member presence comes through
+    // the SECURITY DEFINER get_squad_live, which returns at most one safe row.
+    const { data: rows } = await supabase.rpc('get_squad_live')
+    const live = rows?.[0]
     if (!live) return NextResponse.json({ circle: true, live: null })
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', live.user_id)
-      .maybeSingle()
-
     // First name only — the popup is a companion, not a roster.
-    const name = (profile?.full_name || 'A friend').trim().split(/\s+/)[0]
-    return NextResponse.json({ circle: true, live: { name, started_at: live.created_at } })
+    const name = (live.full_name || 'A friend').trim().split(/\s+/)[0]
+    return NextResponse.json({ circle: true, live: { name, started_at: live.started_at } })
   } catch (e) {
     console.error('[presence] error:', e instanceof Error ? e.message : e)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })

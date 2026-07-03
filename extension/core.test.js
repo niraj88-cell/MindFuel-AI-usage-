@@ -40,6 +40,23 @@ test('nudgeCopy: gentle, non-judgmental, includes domain + minutes, rotates, no 
   assert.equal(set.size, 3);
 });
 
+test('nudgeCopy: a scattered block names the pattern, not one domain, and stays gentle', () => {
+  // >=3 distinct distraction domains => naming a single site would be a lie; name the scatter.
+  const scattered = nudgeCopy('tiktok.com', 6, 0, { distinctDomains: 5 });
+  assert.equal(scattered.title, 'A quiet check-in');
+  assert.match(scattered.message, /6/);
+  assert.doesNotMatch(scattered.message, /tiktok\.com/, 'a fragmented block must not over-claim one domain');
+  // Tone guard on the scattered register too — no shame, no callout.
+  for (const seed of [0, 1, 2, 9]) {
+    const { message } = nudgeCopy('x.com', 7, seed, { distinctDomains: 4 });
+    assert.doesNotMatch(message, /still on|keep scrolling|stop|wasting|should|lazy|procrastinat/i);
+  }
+  // Rotates across three scattered phrasings.
+  assert.equal(new Set([0, 1, 2].map((s) => nudgeCopy('x.com', 5, s, { distinctDomains: 3 }).message)).size, 3);
+  // Two distinct domains is not yet "scattered" -> still the single-domain register (names it).
+  assert.match(nudgeCopy('youtube.com', 5, 0, { distinctDomains: 2 }).message, /youtube\.com/);
+});
+
 test('matchesDomain: exact + subdomain only, never substring', () => {
   assert.equal(matchesDomain('x.com', 'x.com'), true);
   assert.equal(matchesDomain('mobile.x.com', 'x.com'), true);
@@ -172,14 +189,83 @@ test('nextNudge: respects cooldown (no second nudge inside the quiet window)', (
   assert.equal(r.fire, false);
 });
 
-test('nextNudge: resets streak off distraction and on domain change', () => {
-  const base = { domain: 'facebook.com', minutes: 4, gap: 0, lastNudgeAt: 0 };
-  // Attention landed somewhere else (counting on a productive domain) -> reset, no fire.
-  assert.deepEqual(
-    nextNudge(base, { domain: 'github.com', counting: true, category: 'productive', now: 5 * 60000 }),
-    { state: { domain: null, minutes: 0, gap: 0, lastNudgeAt: 0 }, fire: false });
-  // Switch to a different distraction domain -> streak restarts at 1.
-  assert.equal(nextNudge(base, { domain: 'reddit.com', counting: true, category: 'distraction', now: 5 * 60000 }).state.minutes, 1);
+test('nextNudge: a brief work glance holds the block; a sustained return is recovery and resets', () => {
+  const cfg = { afterMin: 5, cooldownMin: 10, graceTicks: 2 };
+  const base = { domain: 'facebook.com', minutes: 4, gap: 0, domains: ['facebook.com'], switches: 0, lastNudgeAt: 0 };
+  // One productive tick (a quick tab-check) is inside the grace -> the block HOLDS, no reset.
+  const glance = nextNudge(base, { domain: 'github.com', counting: true, category: 'productive', now: 5 * 60000 }, cfg);
+  assert.equal(glance.fire, false);
+  assert.equal(glance.decision, 'grace');
+  assert.equal(glance.state.minutes, 4, 'a brief glance must not erase a real block');
+  // A sustained return (grace exhausted) is genuine recovery -> reset.
+  let s = base;
+  for (let t = 0; t < 3; t++) {
+    s = nextNudge(s, { domain: 'github.com', counting: true, category: 'productive', now: (5 + t) * 60000 }, cfg).state;
+  }
+  assert.equal(s.minutes, 0, 'three ticks of real work reset the block');
+  assert.equal(s.domain, null);
+});
+
+test('nextNudge: fragmentation — switching between distraction domains CONTINUES the block (the fix)', () => {
+  const cfg = { afterMin: 5, cooldownMin: 10, graceTicks: 2 };
+  // The channel-surfer the check-in exists for: a new distraction domain every minute. The OLD
+  // logic reset to 1 on each switch and never nudged; the block must now climb and fire at min 5.
+  const surf = ['youtube.com', 'instagram.com', 'reddit.com', 'x.com', 'tiktok.com'];
+  let s = { domain: null, minutes: 0, gap: 0, domains: [], switches: 0, lastNudgeAt: 0 };
+  let fired = null;
+  for (let m = 0; m < surf.length; m++) {
+    const r = nextNudge(s, { domain: surf[m], counting: true, category: 'distraction', now: (m + 1) * 60000 }, cfg);
+    s = r.state;
+    if (r.fire) fired = r;
+  }
+  assert.ok(fired, 'a fragmented 5-minute spiral fires (it did not before the fix)');
+  assert.equal(fired.minutes, 5);
+  assert.equal(fired.distinctDomains, 5, 'the block spanned five distinct sites');
+  assert.equal(fired.switches, 4, 'four domain switches inside the block');
+  assert.equal(fired.domain, 'tiktok.com', 'names where attention is right now');
+});
+
+// The mission's acceptance matrix, run minute-by-minute through the REAL policy. A distracted
+// user reliably earns a timely check-in; a brief or intentional detour never does. counting=false
+// models blur / idle / another app (e.g. VS Code in the foreground). Kept table-driven so a new
+// scenario is one line, and a regression names the exact scenario that broke.
+test('mission scenarios: fragmentation intervenes; brief/intentional detours stay quiet', () => {
+  const cfg = { afterMin: 5, cooldownMin: 10, graceTicks: 2 };
+  const run = (timeline) => {
+    let s = { domain: null, minutes: 0, gap: 0, domains: [], switches: 0, lastNudgeAt: 0 };
+    let fires = 0;
+    let minute = 0;
+    for (const step of timeline) {
+      minute += 1;
+      const category = step.domain ? categoryFor(step.domain) : 'neutral';
+      const r = nextNudge(s, { domain: step.domain, counting: step.counting, category, now: minute * 60000 }, cfg);
+      s = r.state;
+      if (r.fire) fires += 1;
+    }
+    return fires;
+  };
+  const on = (domain, n, counting = true) => Array.from({ length: n }, () => ({ domain, counting }));
+
+  const scenarios = [
+    { name: '15 min single-domain YouTube', timeline: on('youtube.com', 15), intervene: true },
+    { name: 'fragmentation: YouTube→IG→Reddit→X→TikTok→… 12 min', intervene: true,
+      timeline: Array.from({ length: 12 }, (_, i) =>
+        ({ domain: ['youtube.com', 'instagram.com', 'reddit.com', 'x.com', 'tiktok.com', 'facebook.com'][i % 6], counting: true })) },
+    { name: 'VS Code→Docs→YouTube(2m)→VS Code (intentional short detour)', intervene: false,
+      timeline: [...on('github.com', 3), ...on('developer.mozilla.org', 3), ...on('youtube.com', 2), ...on('github.com', 4)] },
+    { name: 'intentional short distraction (2 min) then back to work', intervene: false,
+      timeline: [...on('github.com', 2), ...on('youtube.com', 2), ...on('github.com', 4)] },
+    { name: 'long single-domain distraction (12 min reddit)', timeline: on('reddit.com', 12), intervene: true },
+    { name: 'fragmentation interleaved with brief work glances', intervene: true,
+      timeline: [...on('youtube.com', 2), { domain: 'slack.com', counting: true }, ...on('instagram.com', 2),
+        { domain: 'github.com', counting: false }, ...on('reddit.com', 3)] },
+  ];
+
+  for (const sc of scenarios) {
+    const fires = run(sc.timeline);
+    assert.equal(fires > 0, sc.intervene,
+      `${sc.name}: expected ${sc.intervene ? 'an intervention' : 'silence'}, got ${fires} nudge(s)`);
+  }
 });
 
 test('nextNudge: a short non-counting gap pauses the streak instead of erasing it', () => {

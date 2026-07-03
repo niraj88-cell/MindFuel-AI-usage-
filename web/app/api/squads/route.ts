@@ -85,25 +85,13 @@ export async function GET() {
 
     if (squadsError) throw squadsError
 
-    // 3. Supportive status (NOT a leaderboard): who has a verified focus session today.
-    const startOfToday = new Date()
-    startOfToday.setHours(0, 0, 0, 0)
-
-    const memberIds = [
-      ...new Set(squadsData.flatMap((s) => s.squad_members.map((m: any) => m.user_id))),
-    ]
-
+    // 3. Supportive status (NOT a leaderboard): who has focused today. focus_sessions RLS
+    // is owner-only since migration 019, so the dots come from the SECURITY DEFINER
+    // get_squad_focused_today — member ids only, no session details of any kind.
     const checkedIn = new Set<string>()
-    if (memberIds.length > 0) {
-      const { data: sessions } = await supabase
-        .from('focus_sessions')
-        .select('user_id, status, created_at')
-        .in('user_id', memberIds)
-        .gte('created_at', startOfToday.toISOString())
-
-      sessions?.forEach((s) => {
-        if (s.status === 'completed' || s.status === 'mixed') checkedIn.add(s.user_id)
-      })
+    for (const squad of squadsData) {
+      const { data: ids } = await supabase.rpc('get_squad_focused_today', { p_squad_id: squad.id })
+      for (const id of ids ?? []) checkedIn.add(id)
     }
 
     // 4. Format — human statuses, ordered by name. No scores, no ranking.

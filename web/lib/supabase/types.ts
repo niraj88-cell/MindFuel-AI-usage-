@@ -603,8 +603,6 @@ export interface Database {
           category: string
           batch_id: string | null
           seq: number
-          jitai_fired: boolean
-          jitai_outcome: string | null
           created_at: string
         }
         Insert: {
@@ -615,8 +613,6 @@ export interface Database {
           category?: string
           batch_id?: string | null
           seq?: number
-          jitai_fired?: boolean
-          jitai_outcome?: string | null
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['domain_logs']['Insert']>

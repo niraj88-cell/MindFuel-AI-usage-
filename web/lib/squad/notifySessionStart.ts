@@ -7,22 +7,7 @@
 // Uses the ADMIN (service-role) client because it writes notification rows for OTHER users.
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import webpush from 'web-push'
-
-let vapidReady = false
-function ensureVapid() {
-  if (vapidReady) return true
-  const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-  const priv = process.env.VAPID_PRIVATE_KEY
-  if (!pub || !priv) return false
-  try {
-    webpush.setVapidDetails('mailto:hello@satyashift.app', pub, priv)
-    vapidReady = true
-  } catch {
-    return false
-  }
-  return true
-}
+import { sendPushTo } from './push'
 
 type NotifyArgs = {
   admin: SupabaseClient
@@ -77,24 +62,7 @@ export async function notifySquadOnSessionStart({ admin, actorId, squadId, sessi
     await admin.from('notifications').insert(rows)
 
     // 2. Soft web push (best-effort; never blocks or fails the session start).
-    if (ensureVapid()) {
-      const { data: subs } = await admin
-        .from('push_subscriptions')
-        .select('id, user_id, endpoint, p256dh, auth')
-        .in('user_id', recipientIds)
-      const payload = JSON.stringify({ title, body, url: '/dashboard', tag: 'squad_focus_start' })
-      await Promise.allSettled(
-        (subs ?? []).map(async (s) => {
-          try {
-            await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload)
-          } catch (err: any) {
-            if (err?.statusCode === 404 || err?.statusCode === 410) {
-              await admin.from('push_subscriptions').delete().eq('id', s.id)
-            }
-          }
-        })
-      )
-    }
+    await sendPushTo(admin, recipientIds, { title, body, url: '/dashboard', tag: 'squad_focus_start' })
 
     return { notified: recipientIds.length }
   } catch (err: any) {

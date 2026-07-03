@@ -124,26 +124,47 @@ export function parseSupabaseSession(rawJoined) {
 }
 
 // ---------------------------------------------------------------------------
-// Nudge policy (domain-only JITAI). When attention stays on a single distraction domain for
-// NUDGE_AFTER_MIN sustained minutes, fire one gentle local nudge, then stay quiet for
-// NUDGE_COOLDOWN_MIN so we never spam. This is the ONLY intervention the extension makes: it
-// reads nothing but the bare domain it already tracks, never blocks navigation, and only ever
-// deep-links into the app's existing /intercept flow.
+// Nudge policy (domain-only JITAI). The intervention watches for a sustained DISTRACTION BLOCK:
+// attention that stays inside the distraction category for NUDGE_AFTER_MIN counted minutes. When
+// it does, fire one gentle local nudge, then stay quiet for NUDGE_COOLDOWN_MIN so we never spam.
+// This is the ONLY intervention the extension makes: it reads nothing but the bare domain it
+// already tracks, never blocks navigation, and only ever deep-links into the app's dashboard.
+//
+// The block is CATEGORY-scoped, not domain-scoped. This is the fix for the fragmentation miss:
+// the old logic reset the streak to 1 on every distraction-domain switch, so a channel-surfing
+// user (YouTube -> Instagram -> Reddit -> X -> ...) never accrued 5 minutes on any single site
+// and was NEVER nudged — the exact person the check-in is for. Switching between distraction
+// domains now CONTINUES the block; drift is drift whether it sits on one site or scatters across
+// six. We still track how many distinct domains / switches the block spans, so the decision is
+// observable and the copy can name a scatter honestly instead of over-claiming one domain.
 // ---------------------------------------------------------------------------
-export const NUDGE_AFTER_MIN = 5;      // sustained minutes on a distraction domain before nudging
+export const NUDGE_AFTER_MIN = 5;      // sustained distraction minutes (any distraction domain) before nudging
 export const NUDGE_COOLDOWN_MIN = 10;  // quiet window after a nudge
-export const NUDGE_GRACE_TICKS = 2;    // non-counting ticks the streak survives (brief alt-tab / idle blip)
+export const NUDGE_GRACE_TICKS = 2;    // off-distraction ticks the block survives (brief alt-tab / work glance / idle blip)
+const MAX_TRACKED_DOMAINS = 8;         // bound the distinct-domain memory carried in state
+
+function freshNudge(lastNudgeAt) {
+  return { domain: null, minutes: 0, gap: 0, domains: [], switches: 0, lastNudgeAt };
+}
+function withDomain(list, domain) {
+  if (!domain || list.includes(domain)) return list;
+  const next = list.concat(domain);
+  return next.length > MAX_TRACKED_DOMAINS ? next.slice(next.length - MAX_TRACKED_DOMAINS) : next;
+}
 
 // Pure state machine, ticked once per minute by the service worker. Given the previous nudge
 // state and the current attention context, return the next state and whether to nudge now.
-//   prev: { domain, minutes, gap, lastNudgeAt }
+//   prev: { domain, minutes, gap, domains, switches, lastNudgeAt }
 //   ctx:  { domain, counting, category, now }   (now = Date.now())
-// Returns { state, fire, domain?, minutes? }. Kept pure (no chrome.*, no timers) so it's testable.
+// Returns { state, fire, decision, domain?, minutes?, distinctDomains?, switches? }.
+// Kept pure (no chrome.*, no timers) so every decision is provable in tests.
+//   decision ∈ 'building' | 'fire' | 'cooldown' | 'grace' | 'reset' | 'idle'  (observability)
 //
-// Streak grace: one alt-tab to Slack or a momentary idle blip used to erase a 4-minute streak,
-// which made the nudge nearly impossible to hit in real browsing. Now a streak PAUSES (doesn't
-// grow) for up to NUDGE_GRACE_TICKS non-counting ticks, and only resets when the gap outlasts
-// the grace or attention actually lands somewhere else (counting on a different context).
+// Recovery grace: a real block survives a SHORT detour off distraction — an alt-tab to Slack, a
+// 30-second glance at the docs, a momentary idle — for up to NUDGE_GRACE_TICKS ticks. It only
+// resets when the detour outlasts the grace (a genuine return to work / walking away). This is
+// what keeps a brief, intentional peek from ever earning a nudge while a fragmented 40-minute
+// spiral still does.
 export function nextNudge(prev, ctx, cfg = {}) {
   const afterMin = cfg.afterMin ?? NUDGE_AFTER_MIN;
   const graceTicks = cfg.graceTicks ?? NUDGE_GRACE_TICKS;
@@ -151,27 +172,39 @@ export function nextNudge(prev, ctx, cfg = {}) {
   const p = prev || {};
   const lastNudgeAt = p.lastNudgeAt || 0;
 
-  const attending = !!ctx.counting && ctx.category === 'distraction' && !!ctx.domain;
+  const onDistraction = !!ctx.counting && ctx.category === 'distraction' && !!ctx.domain;
 
-  if (!attending) {
-    // Not counting at all (blur/idle/pause) -> hold the streak through a short gap.
-    if (!ctx.counting && p.domain && (p.gap || 0) < graceTicks) {
-      return { state: { domain: p.domain, minutes: p.minutes || 0, gap: (p.gap || 0) + 1, lastNudgeAt }, fire: false };
+  if (!onDistraction) {
+    // Off the distraction context: a work glance, a blur, idle, or a pause. A live block holds
+    // through the grace window so a brief detour doesn't erase genuine drift; anything longer is
+    // real recovery and resets. (Both non-counting AND counting-on-non-distraction count as "off".)
+    if ((p.minutes || 0) > 0 && (p.gap || 0) < graceTicks) {
+      return {
+        state: { domain: p.domain || null, minutes: p.minutes, gap: (p.gap || 0) + 1, domains: p.domains || [], switches: p.switches || 0, lastNudgeAt },
+        fire: false,
+        decision: 'grace',
+      };
     }
-    // Gap outlasted the grace, or attention moved to a non-distraction context -> reset.
-    return { state: { domain: null, minutes: 0, gap: 0, lastNudgeAt }, fire: false };
+    return { state: freshNudge(lastNudgeAt), fire: false, decision: (p.minutes || 0) > 0 ? 'reset' : 'idle' };
   }
 
-  // Same domain extends the streak; a different distraction domain starts a fresh one.
-  const minutes = p.domain === ctx.domain ? (p.minutes || 0) + 1 : 1;
+  // On a distraction domain and counting -> extend the block, across domains.
+  const minutes = (p.minutes || 0) + 1;
+  const domains = withDomain(p.domains || [], ctx.domain);
+  const switches = (p.switches || 0) + (p.domain && p.domain !== ctx.domain ? 1 : 0);
+  const signals = { distinctDomains: domains.length, switches };
 
   // Never-nudged (lastNudgeAt === 0) is always past cooldown, regardless of clock scale.
   const cooledDown = !lastNudgeAt || ctx.now - lastNudgeAt >= cooldownMs;
   if (minutes >= afterMin && cooledDown) {
-    // Fire, then zero the streak so the next nudge is a full interval away (cooldown also applies).
-    return { state: { domain: ctx.domain, minutes: 0, gap: 0, lastNudgeAt: ctx.now }, fire: true, domain: ctx.domain, minutes };
+    // Fire, then zero the block so the next nudge is a full interval away (cooldown also applies).
+    return {
+      state: { domain: ctx.domain, minutes: 0, gap: 0, domains: [], switches: 0, lastNudgeAt: ctx.now },
+      fire: true, decision: 'fire', domain: ctx.domain, minutes, ...signals,
+    };
   }
-  return { state: { domain: ctx.domain, minutes, gap: 0, lastNudgeAt }, fire: false };
+  const decision = minutes >= afterMin ? 'cooldown' : 'building'; // reached threshold but muzzled by cooldown
+  return { state: { domain: ctx.domain, minutes, gap: 0, domains, switches, lastNudgeAt }, fire: false, decision, ...signals };
 }
 
 // ---------------------------------------------------------------------------
@@ -197,14 +230,27 @@ export function gateAllowsCounting(gate, opts = {}) {
 // Gentle, conscious nudge copy. The principle (सत्य / truth): name what's real, add zero blame,
 // hand the choice back to the user, keep it short. We rotate a few phrasings so a repeat nudge
 // never feels like a robot repeating itself. Pure + tested so the tone can't silently regress.
+//
+// Two registers. When the block sat mostly on ONE site we name it ("about 5 minutes on
+// youtube.com"). When it scattered across several (fragmentation), naming one site would be a
+// lie — so we name the pattern instead ("a bit scattered these last few minutes"). Neither ever
+// blames; both hand the next moment back to the user.
 const NUDGE_PROMPTS = [
   (d, m) => `About ${m} minutes on ${d}. No judgment. Is this where you want your attention right now?`,
   (d, m) => `You've been with ${d} for ${m} minutes. Worth a breath: keep going, or come back to what matters?`,
   (d, m) => `${m} quiet minutes on ${d}. Notice how it feels, then choose the next moment on purpose.`,
 ];
-export function nudgeCopy(domain, minutes, seed = 0) {
-  const idx = Math.abs(Math.trunc(Number(seed) || 0)) % NUDGE_PROMPTS.length;
-  return { title: 'A quiet check-in', message: NUDGE_PROMPTS[idx](domain, minutes) };
+const NUDGE_PROMPTS_SCATTERED = [
+  (d, m) => `The last ${m} minutes have wandered across a few sites. No judgment. Where do you want your attention right now?`,
+  (d, m) => `A few different places in ${m} minutes. Worth a breath: keep going, or come back to what matters?`,
+  (d, m) => `${m} minutes, several tabs. Notice the pull, then choose the next moment on purpose.`,
+];
+// opts.distinctDomains: how many distinct distraction domains the block spanned (>=3 => scattered).
+export function nudgeCopy(domain, minutes, seed = 0, opts = {}) {
+  const scattered = (opts.distinctDomains || 1) >= 3;
+  const prompts = scattered ? NUDGE_PROMPTS_SCATTERED : NUDGE_PROMPTS;
+  const idx = Math.abs(Math.trunc(Number(seed) || 0)) % prompts.length;
+  return { title: 'A quiet check-in', message: prompts[idx](domain, minutes) };
 }
 
 // ---------------------------------------------------------------------------

@@ -32,6 +32,11 @@ The extension is the product's core (ambient, domain-only attention tracker). Re
 - Reuse the persisted `batch_id` across retries so the server dedupes via `processed_batches`.
 - Retry policy: `ok` → drop+clear; `401/403` → refresh + retry; `429/5xx/network` → retry;
   other `4xx` → drop the poison batch. Never loop forever on a permanently-rejected batch.
+- `stopSession` MUST flush before POSTing `/api/focus/stop`: the server computes the
+  session's quality + behavioral signals from `domain_logs` at that moment, and the queue
+  holds up to 5 minutes of dwell. Order is asserted by a background.test.js test.
+- Queue order IS the attention timeline: `/api/ingest` persists the batch index as
+  `domain_logs.seq`. Never reorder, coalesce, or parallel-split a batch's events.
 
 ## Testing / verifying
 - `cd extension && node --test` after any `core.js` change. Add a test for every bug you fix.
@@ -50,10 +55,41 @@ background music, not attention). Known limitation: a MUTED video during idle st
 indistinguishable from reading, accepted. The exact policy is the pure `gateAllowsCounting()`
 in core.js; change it only there, with tests.
 
-## Nudge policy
-`nextNudge()` in core.js, ticked by a 1-min alarm: 5 sustained minutes on one distraction
-domain → one gentle notification, 10-min cooldown. The streak survives short gaps
-(`NUDGE_GRACE_TICKS` = 2 non-counting ticks) so an alt-tab or idle blip pauses it instead of
-erasing it; it resets when attention lands on a different context. Nudges depend on OS-level
-Chrome notification permission — if a user reports "no nudges", test with a manual
-`chrome.notifications.create` in the SW console before touching the policy.
+## Nudge policy (distraction BLOCK, category-scoped — locked)
+`nextNudge()` in core.js, ticked by a 1-min alarm, watches a distraction BLOCK: attention that
+stays inside the distraction CATEGORY for `NUDGE_AFTER_MIN` (5) counted minutes → one gentle
+notification, `NUDGE_COOLDOWN_MIN` (10) cooldown. The block is category-scoped, NOT domain-scoped:
+switching between distraction domains (youtube → instagram → reddit → x…) CONTINUES the same
+block. Do not re-key the streak to a single domain — that was the fragmentation miss (a
+channel-surfer never sat on one site for 5 min and was never nudged; proven, then fixed, with a
+minute-by-minute trace). The block survives a SHORT detour off distraction (a blur, an idle blip,
+or a brief work/neutral glance) for `NUDGE_GRACE_TICKS` (2) ticks, then a sustained return is
+treated as real recovery and resets. State carries `{ domain, minutes, gap, domains[], switches,
+lastNudgeAt }`; `nextNudge` returns a `decision` tag (`building|fire|cooldown|grace|reset|idle`)
+plus `distinctDomains`/`switches` for observability. `nudgeCopy` names one site when the block sat
+on one, and names the pattern ("a few different places") when it scattered (≥3 distinct domains) —
+never over-claim a single domain it barely visited. Firing stays strictly deterministic on the
+5-minute block; fragmentation signals are recorded/observable but do NOT lower the threshold (keep
+it high-confidence — adaptive threshold-lowering is a deliberate future layer, not a silent one).
+
+## Nudge reliability + observability (2026-07-02 hardening — keep all three)
+The pipeline must never fail silently. Three invariants:
+- **Alarm self-heal:** `ensureAlarm()` runs at worker top level on EVERY wake (it checks
+  existence first, so it never resets a live countdown — the C2 regression). Don't move it
+  back to onInstalled/onStartup only; a lost alarm would kill nudges + flush until restart.
+- **Delivery is checked, not assumed:** `fireNudge` consults
+  `chrome.notifications.getPermissionLevel()`; 'denied' (user muted the extension) is
+  recorded and the popup says "Gentle check-ins are muted" via `status.nudgesMuted`.
+- **Liveness + decision proof:** every tick writes `nudge_diag` to storage.local
+  ({ tickAt, counting, domain, category, streak, threshold, distinctDomains, switches, decision,
+  permission, lastFire }). Field debugging: `chrome.storage.local.get('nudge_diag')` in the SW
+  console answers "did it tick / was it counting / how big is the block vs the threshold / how
+  fragmented / what did the policy DECIDE and why / did the last fire render". Tick errors land in
+  `nudge_diag.lastFire` too.
+Whole-pipeline behavior is covered by `background.test.js` (chrome-stub integration tests
+that run the real background.js: threshold, cooldown, grace, media exemption, SW/browser
+restarts, lost alarms, muted delivery, click-through). `node --test` runs them with the
+unit tests. What tests can't see: the OS layer. If nudges are silent with a 'granted'
+permission and a healthy diag, check Windows Settings → Notifications → Chrome, and
+Focus Assist / Do Not Disturb; verify with a manual `chrome.notifications.create` in the
+SW console.

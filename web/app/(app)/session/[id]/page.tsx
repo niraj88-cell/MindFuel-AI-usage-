@@ -46,7 +46,6 @@ interface DomainLog {
   domain: string
   duration_s: number
   category: string
-  jitai_fired: boolean
   created_at: string
 }
 
@@ -105,7 +104,7 @@ export default function SessionDetailPage() {
       const endMs = new Date(s.created_at).getTime() + (s.duration_s ?? 0) * 1000
       const { data: d } = await supabase
         .from('domain_logs')
-        .select('domain, duration_s, category, jitai_fired, created_at')
+        .select('domain, duration_s, category, created_at')
         .eq('user_id', user.id)
         .gte('created_at', start)
         .lte('created_at', new Date(endMs + 60_000).toISOString())
@@ -132,11 +131,9 @@ export default function SessionDetailPage() {
   useEffect(() => { load() }, [load])
 
   // Derive the private view from the real domain_logs.
-  const { perDomain, topDomain, nudges } = useMemo(() => {
+  const { perDomain, topDomain } = useMemo(() => {
     const map = new Map<string, { focused: number; drift: number }>()
-    let nudgeCount = 0
     for (const l of logs) {
-      if (l.jitai_fired) nudgeCount++
       const entry = map.get(l.domain) || { focused: 0, drift: 0 }
       if (l.category === DRIFT_CATEGORY) entry.drift += l.duration_s
       else entry.focused += l.duration_s
@@ -145,7 +142,7 @@ export default function SessionDetailPage() {
     const rows = [...map.entries()]
       .map(([domain, v]) => ({ domain, seconds: v.focused + v.drift, drift: v.drift > v.focused }))
       .sort((a, b) => b.seconds - a.seconds)
-    return { perDomain: rows, topDomain: rows[0]?.domain ?? null, nudges: nudgeCount }
+    return { perDomain: rows, topDomain: rows[0]?.domain ?? null }
   }, [logs])
 
   if (loading) {
@@ -249,7 +246,6 @@ export default function SessionDetailPage() {
           <div className="rounded-xl border border-line bg-card p-4">
             <div className="mb-1 flex items-center justify-between">
               <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Where the time went</span>
-              {nudges > 0 && <span className="text-[11px] text-faint">{nudges} gentle nudge{nudges > 1 ? 's' : ''}</span>}
             </div>
 
             {perDomain.length === 0 ? (

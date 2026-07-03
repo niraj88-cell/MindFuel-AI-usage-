@@ -1,11 +1,17 @@
 // app/api/focus/stop/route.ts — end a focus session.
-// duration_s, distraction_pct, session_quality, and status are ALL computed server-side:
-// duration from the stored start time, the rest from the user's domain_logs during the
-// session window. A client cannot fabricate focus length or quality — this is the
-// "proof layer" the squad feed depends on.
+// duration_s, distraction_pct, session_quality, status, AND the behavioral signals are ALL
+// computed server-side: duration from the stored start time, the rest from the user's
+// ORDERED domain_logs during the session window (created_at, then seq within a batch).
+// A client cannot fabricate focus length or quality — this is the "proof layer".
+//
+// The analysis itself is the pure lib/behavior.ts: quality is pattern-aware (loops,
+// fragmentation, unbroken stretches), not just a distraction percentage, and the stored
+// `behavior` jsonb contains counts/durations only — never a domain.
 
 import { NextResponse } from 'next/server'
 import { getUserContext } from '@/lib/supabase/route-auth'
+import { analyzeSession, qualityOf, type AttentionEvent } from '@/lib/behavior'
+import type { Json } from '@/lib/supabase/types'
 import { z } from 'zod'
 
 export const runtime = 'nodejs'
@@ -47,30 +53,29 @@ export async function POST(req: Request) {
     const forgotten = durationS > MAX_SESSION_S
     if (forgotten) durationS = MAX_SESSION_S
 
-    // 2. Quality from the user's ambient domain activity during the session window.
+    // 2. The ordered attention timeline during the session window. seq breaks the tie
+    //    inside a batch (all rows of one flush share a created_at); the extension flushes
+    //    before calling stop, so the final chunk is included.
     const { data: logs } = await supabase
       .from('domain_logs')
-      .select('duration_s, category')
+      .select('domain, duration_s, category, seq, created_at')
       .eq('user_id', userId)
       .gte('created_at', session.created_at ?? new Date(startedAt).toISOString())
+      .order('created_at', { ascending: true })
+      .order('seq', { ascending: true })
 
-    let totalS = 0
-    let distractingS = 0
-    for (const l of logs ?? []) {
-      const d = l.duration_s ?? 0
-      totalS += d
-      if (l.category === 'distraction') distractingS += d
-    }
-    const distractionPct = totalS > 0 ? Math.round((distractingS / totalS) * 100) : 0
+    const events: AttentionEvent[] = (logs ?? []).map((l) => ({
+      domain: l.domain,
+      category: (l.category === 'distraction' || l.category === 'productive' ? l.category : 'neutral'),
+      duration_s: l.duration_s ?? 0,
+    }))
 
     // No ambient signal (e.g. the extension wasn't running) means we CANNOT verify focus
-    // quality — report it honestly as 'unverified' rather than claiming deep focus.
-    const hasSignal = totalS > 0
-    const sessionQuality =
-      !hasSignal ? 'unverified' :
-      distractionPct < 15 ? 'deep' :
-      distractionPct < 40 ? 'focused' :
-      distractionPct < 70 ? 'mixed' : 'distracted'
+    // quality — analyzeSession reports it honestly as unverified rather than claiming depth.
+    const signals = analyzeSession(events)
+    const sessionQuality = qualityOf(signals)
+    const distractionPct = signals.distraction_pct
+    const hasSignal = signals.verified
 
     // 3. Lifecycle status (server-authoritative): completed / mixed / abandoned.
     const status =
@@ -84,6 +89,9 @@ export async function POST(req: Request) {
         duration_s: durationS,
         session_quality: sessionQuality,
         distraction_pct: distractionPct,
+        // The session's behavioral shape (counts/durations only — verified in behavior.test.mjs
+        // to contain zero domains). Owner-only via RLS; squads can never read it.
+        behavior: signals as unknown as Json,
         mf_duration_minutes: Math.round(durationS / 60),
         mf_completed: status === 'completed',
       })

@@ -1,8 +1,8 @@
 import type { NextConfig } from 'next'
 
 // ── Content Security Policy ────────────────────────────────────────────────
-// Strict CSP — whitelists only what MindFuel actually uses.
-// Gemini API calls happen server-side so no client-side AI API origins needed.
+// Strict CSP — whitelists only what SatyaShift actually uses. No AI/LLM origins: the product
+// has no AI integration (all "intelligence" is deterministic local code), so none are allowed.
 const CSP = [
   "default-src 'self'",
   // Scripts: self + Next.js inline scripts (hashes preferred over 'unsafe-inline' in prod)
@@ -14,7 +14,7 @@ const CSP = [
   // Images: self + Supabase storage + data URIs for avatars
   "img-src 'self' data: blob: https://*.supabase.co https://avatars.githubusercontent.com https://lh3.googleusercontent.com",
   // API connections: self + Supabase (realtime WebSocket + REST)
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
   // No plugins, no object embeds
   "object-src 'none'",
   // Media: self only
@@ -127,8 +127,6 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  serverExternalPackages: ['@langchain/langgraph', '@langchain/anthropic', '@langchain/core'],
-  
   // ── Performance Optimizations ──
   reactCompiler: true,
   experimental: {

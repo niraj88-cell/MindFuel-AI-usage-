@@ -122,7 +122,13 @@ where something was verified. Trust is shown through restraint, not decoration. 
 - Extension: least privilege, no npm deps, no externally_connectable. The token-bearing
   `SESSION_FROM_PAGE` message is origin-verified (sender.id + origin). Don't loosen either.
 - DB migrations applied via MCP must also be captured as repo files in
-  `web/supabase/migrations/NNN_*.sql` (latest: 019).
+  `web/supabase/migrations/NNN_*.sql` (latest: 023). 022 dropped the legacy MindFuel tables
+  (`mental_logs`/`mood_logs`/`daily_summaries`/`habit_challenges`/`daily_pulses`) — those stay
+  gone. 022 ALSO dropped `domain_logs.jitai_*`, which broke the DEPLOYED `/api/ingest` (it still
+  inserts them) → 023 restored them. LESSON: never apply a destructive schema change before the
+  code that stops depending on it is deployed (code-first, then DDL). Live tracking schema:
+  `domain_logs`(domain, duration_s, category, seq, batch_id, created_at [+ dead jitai_* pending
+  a post-deploy drop]) + `focus_sessions`.
 - Known-accepted advisor WARNs: vector in public, waitlist anon INSERT, definer fns
   executable by authenticated (get_squad_by_invite, is_squad_member/is_squad_admin, and the
   019 squad-read/encourage fns — membership checks live INSIDE them), leaked-password

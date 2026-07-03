@@ -1,5 +1,13 @@
-// app/api/export/route.ts — Premium data export: JSON or CSV
-// Authenticated, rate-limited (5/day), audit-logged
+// app/api/export/route.ts — "Download my data" (JSON or CSV).
+//
+// Privacy contract: SatyaShift stores DOMAINS ONLY. This export returns everything we hold
+// about the user, in its stored, minimized form — bare domains, durations, categories, and the
+// domain-free session signals. It contains NO full URLs, page paths, query parameters, video
+// ids, titles, search terms, page content, or keystrokes, because none of that is ever
+// collected or stored. Named columns only (never select('*')) so a new column can never
+// silently widen the export. Authenticated, RLS-scoped, rate-limited (5/day), audit-logged
+// (counts only). It reads only the two live SatyaShift tables — focus_sessions and domain_logs
+// — and never the deleted MindFuel tables.
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
@@ -11,6 +19,16 @@ export const runtime = 'nodejs'
 
 const EXPORT_LIMIT = 5
 
+// Neutralize spreadsheet formula injection: a CSV cell that begins with one of these could be
+// executed by Excel/Sheets, so we prefix it with an apostrophe. Real hostnames never start with
+// these characters — this is pure defense in depth for the downloaded file. Everything is also
+// quoted with doubled inner quotes.
+function csvCell(value: string | number | boolean | null | undefined): string {
+  let s = value === null || value === undefined ? '' : String(value)
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`
+  return `"${s.replace(/"/g, '""')}"`
+}
+
 export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient()
@@ -20,81 +38,106 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    // Rate limit — 5 exports per day
+    // Rate limit — 5 exports per day.
     const rateCheck = await checkExportRateLimit(user.id)
     const rlHeaders = buildRateLimitHeaders(rateCheck, EXPORT_LIMIT)
-
     if (!rateCheck.success) {
       return NextResponse.json(
         { error: 'Export limit reached (5 per day). Try again tomorrow.' },
-        { status: 429, headers: rlHeaders }
+        { status: 429, headers: rlHeaders },
       )
     }
 
     const { searchParams } = new URL(req.url)
     const fmt = searchParams.get('format') || 'json'
-    const days = Math.min(parseInt(searchParams.get('days') || '30'), 365)
+    const days = Math.min(Math.max(parseInt(searchParams.get('days') || '30', 10) || 30, 1), 365)
+    const sinceIso = new Date(Date.now() - days * 86_400_000).toISOString()
 
-    const since = format(new Date(Date.now() - days * 86400000), 'yyyy-MM-dd')
-
-    // Fetch all user data in parallel
-    const [
-      { data: logs },
-      { data: moods },
-      { data: summaries },
-      { data: challenges },
-      { data: profile },
-    ] = await Promise.all([
-      supabase.from('mental_logs').select('*').eq('user_id', user.id).gte('created_at', since).order('created_at', { ascending: false }),
-      supabase.from('mood_logs').select('*').eq('user_id', user.id).gte('created_at', since).order('created_at', { ascending: false }),
-      supabase.from('daily_summaries').select('*').eq('user_id', user.id).gte('date', since).order('date', { ascending: false }),
-      supabase.from('habit_challenges').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('profiles').select('email, full_name, subscription_tier, created_at').eq('id', user.id).maybeSingle(),
+    // The user's real data. RLS restricts every row to this user; the explicit user_id filter is
+    // defense in depth. Domain-free session signals live in `behavior` (counts/durations only,
+    // proven to hold zero domains); domain_logs carries the BARE domain and nothing path-shaped.
+    const [{ data: sessions }, { data: logs }, { data: profile }] = await Promise.all([
+      supabase
+        .from('focus_sessions')
+        .select('created_at, duration_s, session_quality, distraction_pct, intention, status, behavior')
+        .eq('user_id', user.id)
+        .gte('created_at', sinceIso)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('domain_logs')
+        .select('created_at, domain, category, duration_s')
+        .eq('user_id', user.id)
+        .gte('created_at', sinceIso)
+        .order('created_at', { ascending: false })
+        .order('seq', { ascending: false }),
+      supabase
+        .from('profiles')
+        .select('subscription_plan')
+        .eq('id', user.id)
+        .maybeSingle(),
     ])
 
-    const totalRecords = (logs?.length || 0) + (moods?.length || 0)
-    auditDataExport(user.id, fmt, totalRecords)
+    const focus_sessions = (sessions ?? []).map((s) => ({
+      started_at: s.created_at,
+      duration_s: s.duration_s ?? null,
+      quality: s.session_quality ?? 'unverified',
+      distraction_pct: s.distraction_pct ?? null,
+      intention: s.intention ?? null,       // the user's own words, if they set one
+      status: s.status ?? null,
+      behavior: s.behavior ?? null,          // counts / durations / shares only — zero domains
+    }))
 
-    const exportData = {
-      exported_at: new Date().toISOString(),
-      user: { email: profile?.email, name: profile?.full_name, tier: profile?.subscription_tier, member_since: profile?.created_at },
-      period_days: days,
-      content_logs: logs || [],
-      mood_logs: moods || [],
-      daily_summaries: summaries || [],
-      challenges: challenges || [],
-    }
+    const attention_log = (logs ?? []).map((l) => ({
+      at: l.created_at,
+      domain: l.domain,                      // bare domain only — never a path, query, or full URL
+      category: l.category,                  // distraction | productive | neutral
+      duration_s: l.duration_s,
+    }))
+
+    // Audit trail: counts only — never a domain or any user content.
+    auditDataExport(user.id, fmt, focus_sessions.length + attention_log.length)
 
     if (fmt === 'csv') {
-      // Build a flat CSV from content logs
-      const headers = ['date', 'content', 'category', 'mental_score', 'duration_minutes', 'mood_before', 'mood_after']
-      const rows = (logs || []).map(l => [
-        l.created_at,
-        `"${String(l.content || '').replace(/"/g, '""')}"`,
-        l.category,
-        l.mental_score,
-        l.duration_minutes,
-        l.mood_before ?? '',
-        l.mood_after ?? '',
-      ].join(','))
+      // The attention timeline, one row per domain dwell. Bare domain, no URL, no content.
+      const headers = ['time', 'domain', 'category', 'duration_seconds']
+      const rows = attention_log.map((r) =>
+        [csvCell(r.at), csvCell(r.domain), csvCell(r.category), csvCell(r.duration_s)].join(','),
+      )
       const csv = [headers.join(','), ...rows].join('\n')
 
       return new Response(csv, {
         status: 200,
         headers: {
           'Content-Type': 'text/csv; charset=utf-8',
-          'Content-Disposition': `attachment; filename="mindfuel-export-${format(new Date(), 'yyyy-MM-dd')}.csv"`,
+          'Content-Disposition': `attachment; filename="satyashift-export-${format(new Date(), 'yyyy-MM-dd')}.csv"`,
           ...rlHeaders,
         },
       })
     }
 
-    // Default: JSON
+    // Default: JSON — the complete record we hold, with a plain statement of what it can't contain.
+    const exportData = {
+      exported_at: new Date().toISOString(),
+      privacy_notice:
+        'SatyaShift records domains only. This file contains no full URLs, page paths, query ' +
+        'parameters, video ids, titles, searches, page content, or keystrokes — none of that is ' +
+        'ever collected or stored.',
+      account: {
+        email: user.email ?? null,
+        name: (user.user_metadata?.full_name as string | undefined) ?? null,
+        member_since: user.created_at ?? null,
+        plan: profile?.subscription_plan ?? 'free',
+      },
+      period_days: days,
+      focus_sessions,
+      attention_log,
+    }
+
     return new Response(JSON.stringify(exportData, null, 2), {
       status: 200,
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        'Content-Disposition': `attachment; filename="mindfuel-export-${format(new Date(), 'yyyy-MM-dd')}.json"`,
+        'Content-Disposition': `attachment; filename="satyashift-export-${format(new Date(), 'yyyy-MM-dd')}.json"`,
         ...rlHeaders,
       },
     })

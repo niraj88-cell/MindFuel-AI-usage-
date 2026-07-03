@@ -5,6 +5,187 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-03 — Pre-market optimization + production deploy (dead deps removed, Next.js security patch)
+
+Shipped the privacy pass + a dependency/security cleanup to prod (satyashift.vercel.app).
+
+**Optimization.**
+- Removed 12 unused top-level deps (**116 packages** total): `groq-sdk`, `openai`, `ai`,
+  `@ai-sdk/google`, `@ai-sdk/openai`, `@langchain/core`, `@langchain/google-genai`,
+  `@langchain/langgraph`, `@prisma/client`, `prisma`, `@upstash/ratelimit`, `@upstash/redis`.
+  Proven unused (no source imports, no `schema.prisma`); all were dead weight from the deleted
+  MindFuel AI coach / abandoned ORM+rate-limit choices. **SatyaShift uses NO LLM/AI provider** —
+  all intelligence is deterministic (`lib/behavior.ts`, `extension/core.js`). The Groq
+  deprecation email is irrelevant.
+- `next.config.ts`: dropped the vestigial `serverExternalPackages` (LangChain) and the
+  `generativelanguage.googleapis.com` CSP `connect-src` entry (no AI calls exist). CSP verified
+  live: `connect-src 'self' https://*.supabase.co wss://*.supabase.co`.
+- **Security patch: Next.js 16.2.4 → 16.2.10** — fixes the HIGH-severity advisories incl.
+  Middleware/Proxy bypass + cache poisoning, directly relevant since `proxy.ts` is the
+  default-deny auth boundary. Residual: 3 moderate npm-audit findings, all one nested `postcss`
+  inside `next@16.2.10` (build-time CSS tool on our own authored CSS; unfixable without a
+  breaking downgrade) — ACCEPTED.
+
+**Deploy.** `vercel --prod --yes` → built on 16.2.10, 40/40 pages, aliased to
+satyashift.vercel.app (READY). Live probes: landing/privacy/pricing 200; `/api/export` 401,
+`/api/ingest` 403 (no longer 500). Ingest recovery confirmed: `domain_logs` 140→156, 16 rows
+landed post-hotfix.
+
+**Verified state.** web `tsc` + `next build` green; extension `node --test` 42/42 (v2.7.3).
+Export now returns real domain-only data; ingest no longer writes `jitai_*` (columns retained as
+inert — no further destructive DDL until deliberately sequenced code-first).
+
+**Still needs the user (harness can't drive the extension):** reload the unpacked extension to
+v2.7.3, Resume tracking (it was paused), and watch one distraction domain ~5 min to finally see
+the "A quiet check-in" nudge. Recommended: commit the working tree (deployed state not yet in
+git); remove the unused AI deps is DONE.
+
+---
+
+## 2026-07-03 — INCIDENT + hotfix: migration 022 broke live ingest (schema before code)
+
+**Symptom.** The extension popup showed "satyashift.vercel.app is briefly unavailable"; attention
+stopped persisting to the server (queued locally in the extension, not lost).
+
+**Root cause (proven via Postgres logs).** Migration 022 dropped `domain_logs.jitai_fired` /
+`jitai_outcome`, but the **deployed** `/api/ingest` still INSERTs those columns. Every batch flush
+then failed with `column domain_logs.jitai_fired does not exist` → HTTP 500 → the extension records
+a `server` error → the popup's transient note. Classic ordering bug: a **destructive schema change
+was applied ahead of the code that stops depending on it.** The local code (ingest/types/session
+page) was already fixed to not use jitai, but that code is NOT deployed.
+
+**Hotfix (migration 023, applied via MCP).** Re-added the two columns
+(`jitai_fired boolean not null default false`, `jitai_outcome text`). They are domain-free and
+harmless; restoring them makes the deployed code work again immediately with no site deploy. The
+extension drains its local backlog on the next 5-min flush. The five legacy content/URL tables
+dropped in 022 STAY dropped (only the vestigial jitai columns are restored).
+
+**Correct sequencing going forward.** The jitai columns may be dropped again ONLY in a migration
+applied AFTER the ingest build that no longer writes them is deployed (code-first, then DDL). For a
+single-instance Vercel deploy, prefer: deploy code → verify → then drop. Given the columns are
+dead + domain-free, keeping them permanently is also fine — the marginal privacy gain isn't worth a
+second incident.
+
+**Also confirmed this session:** SatyaShift uses **no LLM/AI provider** — `groq-sdk` / `openai` /
+`@ai-sdk/*` are dead deps from the deleted MindFuel coach (no source imports them; only a stale
+`web/README.md` line mentions `GROQ_API_KEY`). The Groq deprecation notice is irrelevant; all
+"intelligence" is deterministic (`lib/behavior.ts`, `extension/core.js`). Removing the unused AI
+deps is recommended supply-chain hygiene.
+
+---
+
+## 2026-07-03 — Privacy audit: "Download my data" leak fixed + legacy data purged (migration 022)
+
+Full privacy/security pass on the data pipeline, triggered by "Settings → Download My Data
+appears to expose website URLs/links". The report was right in spirit and the root cause was
+worse than a URL: **the export route was a legacy remnant.**
+
+**Root cause (proven).** `web/app/api/export/route.ts` still queried the DELETED MindFuel
+tables — `mental_logs` (has a free-text `content` column), `mood_logs`, `daily_summaries`,
+`habit_challenges` — and the CSV emitted `content` verbatim; the file was branded
+`mindfuel-export`. Worse, it exported NONE of the user's real data (`domain_logs`,
+`focus_sessions`). So the one place that promised "export everything" both leaked deleted-product
+free-text AND omitted the actual domain-only record. Live DB held 108 legacy rows
+(mental_logs=65, mood_logs=12, daily_summaries=13, habit_challenges=12, daily_pulses=6).
+
+**Fixes.**
+- **Export rebuilt** (`api/export/route.ts`): returns ONLY the two live tables — `focus_sessions`
+  (started_at, duration_s, quality, distraction_pct, intention, status, domain-free `behavior`)
+  and `domain_logs` (time, BARE domain, category, duration). Named columns only (never
+  `select('*')`), a plain `privacy_notice`, `satyashift-export-*` filename, and CSV
+  formula-injection guarding. No `content`, no URL, no path — nothing the extension never
+  collected. Rate-limit (5/day), RLS scoping, and counts-only audit log preserved.
+- **Legacy data purged** (migration 022, applied via MCP + captured as repo file): dropped all
+  five legacy tables (their policies/indexes/triggers/publication membership go with them), so
+  the content-bearing storage ceases to EXIST — defense in depth beyond the owner-only RLS.
+- **Dead intervention columns removed**: `domain_logs.jitai_fired` / `jitai_outcome` were
+  vestigial (nudges are fully local; the extension never sent them — 1 stray row of 140).
+  Dropped from the DB, the ingest write path + Zod schema, `lib/supabase/types.ts`, and the
+  session-detail page (its always-0 "gentle nudges" line, now removed). Deleted the dead
+  `dev-scripts/check-db.ts` (it read `mental_logs.content`).
+
+**Audit conclusions (no other leak found).** ingest normalizes to bare hostname (defense in
+depth even if a URL slipped through); focus/stop computes `behavior` server-side with ZERO
+domains (tested) and returns none; presence + squad feed expose only safe columns via the 019
+SECURITY DEFINER fns; admin/stats is counts-only; delete cascades the whole user. The extension
+is already least-privilege: bare hostname only (full URL never persisted), no `<all_urls>`, no
+content script off our own origin, sensitive/incognito/own-app skipped. Supabase security
+advisors: only the known-accepted set (vector-in-public, waitlist anon INSERT, the definer squad
+fns with internal membership checks, leaked-password toggle, service-role-only billing_events) —
+no new findings; this change added no risky DDL.
+
+**Verified.** `cd web && npx tsc --noEmit` clean; `npx next build` green; MCP confirms 0 legacy
+tables remain and `domain_logs` now = (id, user_id, domain, duration_s, category, batch_id,
+created_at, seq). Implementation now matches `/privacy` ("we never collect URLs/titles/content"
+and "export everything") with no contradiction.
+
+**Residual / follow-up (non-blocking).** `lib/supabase/types.ts` still carries hand-written types
+for the dropped tables AND other long-dead ones (weekly_reports, ai_insights, intercept_logs,
+etc.) — harmless (type-only, no runtime data, no app references) but stale; regenerate from the
+live schema (`supabase gen types`) in a dedicated cleanup rather than hand-pruning a subset.
+Squad residual tables from earlier phases remain a separate later drop.
+
+---
+
+## 2026-07-03 — Intervention (nudge) RCA + fix: fragmentation now triggers (ext v2.7.3)
+
+Production-critical: the JITAI nudge "never triggered" for the users who most need it. The
+2026-07-02 pass declared the DECISION logic correct and hardened only delivery/alarms; it
+never challenged the decision model, and the real defect was inside it.
+
+**Root cause (proven, not guessed).** Built a minute-by-minute decision trace
+(`scratchpad/trace.mjs`, imports the real `nextNudge`/`categoryFor`) over the mission's exact
+scenarios. `nextNudge` keyed its streak to a SINGLE domain:
+`minutes = p.domain === ctx.domain ? minutes+1 : 1` (core.js:166). Every switch to a
+*different* distraction domain reset the streak to 1. A genuinely distracted user channel-surfs
+(YouTube→Instagram→Reddit→X→…), so they never accrued 5 minutes on one site and were NEVER
+nudged. Trace, before: "15 min single-domain YouTube" fired; "fragmentation across 8 sites for
+12 min" fired ZERO times. The single-domain and short-detour cases (the ones the old tests
+covered) worked, which is why 38/38 green masked it.
+
+**Fix (core.js `nextNudge`, the only decision change).** The streak is now a category-scoped
+distraction BLOCK: switching between distraction domains CONTINUES it. Recovery grace unified —
+a live block survives a short detour off distraction (blur, idle, OR a brief work/neutral
+glance) for `NUDGE_GRACE_TICKS`, then a sustained return resets (real recovery). State gained
+`domains[]` + `switches`; the policy returns a `decision` tag + `distinctDomains`/`switches`.
+`nudgeCopy` gained a scattered register (≥3 distinct domains → "a few different places", never
+over-claims one site). Firing stays strictly deterministic at the 5-min block — fragmentation
+is recorded/observable but does NOT lower the threshold (high-confidence first; adaptive
+lowering deferred as a deliberate, documented layer). `fireNudge` now uses
+`chrome.runtime.getURL('icon128.png')` (robust OS-notification icon) and passes the scatter
+count to the copy.
+
+**Observability.** `nudge_diag` (per tick, storage.local) extended with
+`category, threshold, distinctDomains, switches, decision` — `chrome.storage.local.get('nudge_diag')`
+now answers *why* a tick did/didn't intervene, deterministically.
+
+**Verification.** `node --test` 41/41 (was 38): replaced the test that encoded the old
+domain-reset with the corrected grace/recovery semantics; added a pure fragmentation test and a
+scattered-copy test; added an end-to-end `background.test.js` case that drives the REAL worker
+through rapid distraction-domain switches (tab switch → gate → 1-min alarm → `nextNudge` →
+`chrome.notifications.create`) and asserts one nudge + `decision:'fire'` + fragmented diag.
+Trace, after: all 6 mission scenarios pass (15-min single, fragmentation, VS Code→Docs→YT(2m)→VS
+Code stays quiet, short detour stays quiet, long distraction, fragmentation-with-work-glances).
+
+**Scope discipline.** Passive tracking, deep sessions, payments, privacy (domain-only), and the
+delivery/alarm hardening from v2.7.1 are untouched. No new permissions, no new data. The nudge
+stays fully local.
+
+**Needs the user (harness cannot click the extension):**
+1. Load-unpacked reload → confirm **v2.7.3**.
+2. Deterministic single-domain check: open youtube.com, attend it ~5 min → expect ONE
+   "A quiet check-in".
+3. Fragmentation check (the fix): bounce youtube → instagram → reddit → x every ~1 min for
+   ~5 min without returning to real work → expect ONE "A quiet check-in" whose copy says a few
+   different places (not one site).
+4. Restraint check: 2 min on youtube then back to work ≥3 min → expect SILENCE.
+5. If silent: SW console → `chrome.storage.local.get('nudge_diag')` — `decision`, `streak` vs
+   `threshold`, `distinctDomains`, `permission:'granted'`, `lastFire.result:'fired'`. A healthy
+   diag with nothing on screen ⇒ OS layer (Windows Settings → Notifications → Chrome, Focus
+   Assist / Do Not Disturb).
+
+---
+
 ## 2026-07-03 — Paddle LIVE integration wired (checkout + portal); activates on env config only
 
 Connected the (already-proven) billing foundation to a now-live Paddle account with the

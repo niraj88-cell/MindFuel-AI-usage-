@@ -17,8 +17,10 @@ const EventSchema = z.object({
   domain: z.string().min(1).max(255),
   duration_s: z.number().int().min(0).max(86_400),
   category: z.string().max(40).optional(),
-  jitai_fired: z.boolean().optional(),
-  jitai_outcome: z.enum(['close', 'dismiss', 'ignore']).optional(),
+  // Note: no intervention fields. Nudges are a FULLY LOCAL extension concern (see
+  // docs/DECISIONS.md "Intervention reliability architecture") — the server stores domain,
+  // duration, and category only. Unknown keys are ignored by Zod, so an older client that
+  // still sent jitai_* would not fail the batch.
 })
 
 const BatchSchema = z.object({
@@ -110,14 +112,15 @@ export async function POST(req: NextRequest) {
   // domain_logs.category CHECK allows only these — clamp anything else to 'neutral'
   // so a single bad value from a client can never fail the whole batch insert.
   const ALLOWED_CATEGORIES = new Set(['distraction', 'productive', 'neutral'])
-  const rows = events.map((e) => ({
+  const rows = events.map((e, i) => ({
     user_id: user.id,
     domain: normalizeDomain(e.domain),
     duration_s: e.duration_s,
     category: e.category && ALLOWED_CATEGORIES.has(e.category) ? e.category : 'neutral',
     batch_id,
-    jitai_fired: e.jitai_fired ?? false,
-    jitai_outcome: e.jitai_outcome ?? null,
+    // seq preserves the dwell ORDER inside this batch (every row shares one created_at).
+    // Attention patterns are made of sequence; without this the timeline is unrecoverable.
+    seq: i,
   }))
 
   const { error: insertError } = await supabase.from('domain_logs').insert(rows)

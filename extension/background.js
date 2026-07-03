@@ -19,7 +19,7 @@ import {
   MIN_DWELL_S, MAX_QUEUE, MAX_BATCH,
   hostnameOf, isSensitive, isOwnApp, categoryFor,
   capDuration, parseSupabaseSession, selectAuthCookie, tokenExpiresSoon,
-  nextNudge, nudgeCopy, gateAllowsCounting, nextWelcome,
+  nextNudge, nudgeCopy, gateAllowsCounting, nextWelcome, NUDGE_AFTER_MIN,
 } from './core.js';
 
 const PRODUCTION_URL = 'https://satyashift.vercel.app';
@@ -40,6 +40,7 @@ const LAST_ERROR_KEY = 'last_error';
 const TOKEN_KEY = 'satyashift_token';      // extension-refreshed session (H3)
 const FORCE_REFRESH_KEY = 'force_refresh'; // set after a 401 so the next cycle refreshes
 const SESSION_KEY = 'focus_session';       // { id, startedAt } — active deep session started here
+const NUDGE_DIAG_KEY = 'nudge_diag';       // liveness proof for the nudge pipeline (see checkNudge)
 
 // chrome.storage.session — cleared when the browser closes.
 const ACTIVE_KEY = 'active';               // { domain, segmentStart, accumulatedMs }
@@ -343,6 +344,25 @@ async function getNudgeState() {
   return s || { domain: null, minutes: 0, lastNudgeAt: 0 };
 }
 
+// Liveness proof. Every stage of the nudge pipeline used to fail silently (a lost alarm, a
+// muted notification, a thrown handler) and was indistinguishable from "working, just quiet".
+// This one small record in storage.local makes the pipeline auditable in the field:
+//   chrome.storage.local.get('nudge_diag')  in the SW console answers "did it tick, was it
+// counting, what's the streak, did the last fire render or get blocked".
+async function noteNudgeDiag(patch) {
+  const { [NUDGE_DIAG_KEY]: d } = await chrome.storage.local.get(NUDGE_DIAG_KEY);
+  await chrome.storage.local.set({ [NUDGE_DIAG_KEY]: { ...(d || {}), ...patch } });
+}
+
+// 'granted' | 'denied' — Chrome lets the user mute one extension's notifications with a
+// single click; after that create() silently renders nothing, forever. We check so the
+// popup can say so instead of the product promise just evaporating.
+async function notificationPermission() {
+  if (!chrome.notifications) return 'denied';
+  if (!chrome.notifications.getPermissionLevel) return 'granted';
+  try { return await chrome.notifications.getPermissionLevel(); } catch { return 'granted'; }
+}
+
 async function checkNudge() {
   const a = await getActive();
   const counting = a.domain != null && a.segmentStart != null;
@@ -352,9 +372,27 @@ async function checkNudge() {
     category: a.domain ? categoryFor(a.domain) : 'neutral',
     now: Date.now(),
   };
-  const { state, fire, domain, minutes } = nextNudge(await getNudgeState(), ctx);
+  const { state, fire, decision, domain, minutes, distinctDomains, switches } = nextNudge(await getNudgeState(), ctx);
   await chrome.storage.session.set({ [NUDGE_STATE_KEY]: state });
-  if (fire) await fireNudge(domain, minutes);
+  // Liveness + decision trace: one record per tick makes the whole pipeline auditable in the
+  // field (chrome.storage.local.get('nudge_diag')). It answers, deterministically, WHY this tick
+  // did or did not intervene — the block minutes vs the threshold, how fragmented it was, and the
+  // decision the pure policy reached — so a silent miss can never again be mistaken for "quiet".
+  await noteNudgeDiag({
+    tickAt: ctx.now,
+    counting: ctx.counting,
+    domain: ctx.domain,
+    category: ctx.category,
+    streak: state.minutes,          // distraction-block minutes carried forward
+    threshold: NUDGE_AFTER_MIN,
+    // Prefer the signal the policy returned (it reflects the block AT decision time; on a fire
+    // tick the carried-forward state has already been zeroed), else fall back to the live state.
+    distinctDomains: distinctDomains ?? (state.domains ? state.domains.length : 0),
+    switches: switches ?? (state.switches ?? 0),
+    decision,                       // building | fire | cooldown | grace | reset | idle
+    permission: await notificationPermission(),
+  });
+  if (fire) await fireNudge(domain, minutes, distinctDomains);
 
   // Welcome-back: if a recent nudge was heeded (attention landed back on non-distraction
   // ground), greet once on the next popup open. Pure policy in core.js (nextWelcome).
@@ -369,22 +407,35 @@ async function checkNudge() {
   if (wr.fire) await chrome.storage.session.set({ [WELCOME_PENDING_KEY]: true });
 }
 
-async function fireNudge(domain, minutes) {
-  if (!chrome.notifications) return; // permission missing (shouldn't happen — declared in manifest)
+async function fireNudge(domain, minutes, distinctDomains = 1) {
+  const level = await notificationPermission();
+  if (level !== 'granted') {
+    // The user (or a missing API) muted us. Don't pretend we nudged — record it so the
+    // popup can surface "check-ins are muted" instead of failing silently forever.
+    await noteNudgeDiag({ lastFire: { at: Date.now(), domain, result: 'blocked', permission: level } });
+    return;
+  }
   const id = `${NUDGE_TARGET_PREFIX}${Date.now()}`;
   await chrome.storage.session.set({ [id]: domain }); // remember where to send them on click
-  const { title, message } = nudgeCopy(domain, minutes, minutes);
+  // Seed the rotation with the block minutes; hand the scatter count so the copy names a
+  // fragmented block ("a few different places") instead of over-claiming one domain.
+  const { title, message } = nudgeCopy(domain, minutes, minutes, { distinctDomains });
   try {
     await chrome.notifications.create(id, {
       type: 'basic',
-      iconUrl: 'icon128.png',
+      // Fully-qualified extension URL so the OS notification always resolves its icon, in any
+      // worker context (a bare relative path can fail to render on some Chrome builds).
+      iconUrl: chrome.runtime.getURL('icon128.png'),
       title,
       message,
       // "Return to focus" opens the intercept flow; "Stay, on purpose" honors their choice and closes.
       buttons: [{ title: 'Return to focus' }, { title: 'Stay, on purpose' }],
       priority: 2,
     });
-  } catch { /* notifications unavailable — skip silently */ }
+    await noteNudgeDiag({ lastFire: { at: Date.now(), domain, minutes, distinctDomains, result: 'fired' } });
+  } catch (e) {
+    await noteNudgeDiag({ lastFire: { at: Date.now(), domain, result: 'error', error: String((e && e.message) || e) } });
+  }
 }
 
 // "Return to focus" opens the app's Today page (the old /intercept flow was retired; its
@@ -545,7 +596,13 @@ chrome.runtime.onInstalled.addListener((details) => {
 chrome.runtime.onStartup.addListener(() => { ensureAlarm(); seedActiveTab(); });
 chrome.alarms.onAlarm.addListener((a) => {
   if (a.name === FLUSH_ALARM) { reconcileSession(); flush(); }
-  else if (a.name === NUDGE_ALARM) checkNudge();
+  // A thrown tick must leave a trace: an unhandled rejection here is invisible in the field,
+  // and "nudges just stopped" would have no evidence trail without it.
+  else if (a.name === NUDGE_ALARM) {
+    checkNudge().catch((e) =>
+      noteNudgeDiag({ lastFire: { at: Date.now(), result: 'error', error: String((e && e.message) || e) } })
+        .catch(() => {}));
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -603,6 +660,11 @@ async function startSession() {
 
 async function stopSession() {
   const current = await getSession();
+  // Flush FIRST: /api/focus/stop computes the session's quality and behavioral signals from
+  // domain_logs at the moment of stopping, and our queue can hold up to five minutes of
+  // dwell (plus the in-progress one). Without this, the session's final stretch was
+  // invisible to its own verdict. flush() is single-flight and safe when signed out/offline.
+  await flush();
   const token = await getAccessToken();
   // The server's verdict (it computed duration + quality from domain_logs) — the popup shows
   // it as a settled seal: "44 min · verified ✓". Null when the stop didn't reach the server.
@@ -658,7 +720,7 @@ async function getPresence() {
 
 async function buildStatus() {
   const store = await chrome.storage.local.get(
-    [QUEUE_KEY, ENV_KEY, LAST_SYNC_KEY, LAST_ERROR_KEY, PAUSED_KEY],
+    [QUEUE_KEY, ENV_KEY, LAST_SYNC_KEY, LAST_ERROR_KEY, PAUSED_KEY, NUDGE_DIAG_KEY],
   );
   const active = await getActive();
   const session = await getSession();
@@ -667,6 +729,9 @@ async function buildStatus() {
   const { [WELCOME_PENDING_KEY]: welcomePending } = await chrome.storage.session.get(WELCOME_PENDING_KEY);
   return {
     welcomePending: !!welcomePending,
+    // The one silent-delivery failure we can detect: the user muted this extension's Chrome
+    // notifications, so nudges would render nothing. The popup says so instead of staying quiet.
+    nudgesMuted: store[NUDGE_DIAG_KEY]?.permission === 'denied',
     session,
     env: store[ENV_KEY] === 'dev' ? 'dev' : 'prod',
     baseUrl: await getBaseUrl(),
@@ -768,5 +833,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 });
 
 // On every worker (re)start: reflect the paused badge and begin timing the tab you're already on.
+// ensureAlarm here is the self-heal for lost alarms: onInstalled/onStartup are NOT guaranteed to
+// cover every path back to life (a crashed profile, an onStartup that never fires), and a missing
+// NUDGE_ALARM/FLUSH_ALARM previously meant the whole intervention + sync loop stayed dead until a
+// full browser restart. ensureAlarm checks existence before creating, so this can never reset a
+// live countdown (the C2 regression this guard was written against).
 isPaused().then(setBadge);
 seedActiveTab();
+ensureAlarm();
