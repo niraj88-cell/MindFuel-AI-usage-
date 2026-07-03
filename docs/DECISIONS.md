@@ -4,6 +4,53 @@ Newest first. Each entry is a decision that should not be silently reversed. For
 change log see `docs/project-status.md`; for the full security reference see
 `docs/security-review-2026-07-02.md`.
 
+## Behavioral Intelligence System — the longitudinal layer (2026-07-03)
+
+The product's durable edge is understanding HOW a person loses focus, recovers, and returns
+— for self-awareness, not surveillance. Phase 1 shipped the deterministic foundation
+(`web/lib/intelligence/`, migration 024). Durable rules:
+
+- **Additive, never a replacement.** The deterministic engines stand untouched:
+  `lib/behavior.ts` decides a session's quality/shape; the extension's `core.js` nudge
+  decides WHETHER/WHEN to intervene. The intelligence layer only decides HOW / what it MEANS
+  over time. Never fold longitudinal logic back into behavior.ts or the nudge engine.
+- **One pure, tested module set is the whole brain.** `lib/intelligence/{types,confidence,
+  traits,patterns,emotion,reflection,insights,messages}.ts` — dependency-free, domain-free,
+  each with a `.test.mjs`. New behavioral logic goes THERE with tests, never inline in routes
+  or pages (same discipline as behavior.ts). Cross-module value imports use `.ts` extensions
+  (`allowImportingTsExtensions`) so `node --test` runs the real source; type-only imports may
+  use `@/`.
+- **The profile is a rebuildable cache, not a source of truth.** `behavioral_profiles`
+  (owner-only RLS, domain-free jsonb) is an EWMA fold — `deriveProfile(history)` IS
+  `history.reduce(updateProfile)`, so it can always be regenerated from the owner's own
+  `focus_sessions`. It is a considered exception to "derive, never store" purely for
+  efficiency; it never becomes a second source of truth, is never squad-visible, never
+  realtime, and the service role never writes it (the user owns their own cache).
+- **Learning is gradual and self-referential.** Traits are EWMAs with a small ALPHA — one
+  session moves a learned trait by at most ALPHA (proven in tests), so behavior "evolves over
+  weeks, never lurches." Comparison is ALWAYS the user vs. their own past; never cross-user,
+  no scores, no leaderboards.
+- **Nothing speaks without confidence + evidence.** Every outward estimate carries a
+  confidence and human-readable evidence; below `CONFIDENCE.speak` the layer stays SILENT.
+  Silence is the default — a quiet week produces no insight, not filler.
+- **Language: templates + a safety validator now; Claude behind a dormant seam.** All copy
+  goes template → `validateMessage` (bans shame/blame, emoji, and any domain-shaped token,
+  caps length) → deliver. `lib/intelligence/llm/` is the seam (like `lib/billing/`): OFF
+  until `ANTHROPIC_API_KEY`, and it may only REPHRASE an already-safe template with the
+  validator re-running after (`applyRefinement`) — so Claude is never load-bearing and can
+  never make the product unkind or leak a domain. Turning it on = a new adapter + env, no
+  caller change.
+- **Traits that need outcome data stay unobserved until that data exists.**
+  `interventionResponsiveness`, `notificationSensitivity`, `squadImpact` are defined but
+  carry n=0 / confidence 0 in Phase 1 (nudge outcomes are LOCAL to the extension per the
+  intervention decision; notification/squad outcomes land in Phase 4). Honest emptiness over
+  a fabricated number.
+- **Phasing:** P1 = deterministic core + profile + focus/stop + session/dashboard surfaces +
+  the 7-persona simulation proof (done). P2 = real Claude adapter (dormant seam). P3 =
+  extension LOCAL nudge register/fatigue (never transmitted, honoring "the nudge is fully
+  local"). P4 = notification/squad personalization from read/encouragement outcomes. Do not
+  add a server dependency to the nudge path, and do not log nudge events server-side.
+
 ## Design language: "a ledger of truth" (2026-07-03)
 
 Full reference + audit: `docs/design-language-2026-07-03.md`. The enforceable summary lives

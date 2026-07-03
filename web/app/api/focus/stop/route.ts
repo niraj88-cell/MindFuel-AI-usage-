@@ -11,6 +11,7 @@
 import { NextResponse } from 'next/server'
 import { getUserContext } from '@/lib/supabase/route-auth'
 import { analyzeSession, qualityOf, type AttentionEvent } from '@/lib/behavior'
+import { updateBehavioralProfile } from '@/lib/intelligence/profile-store'
 import type { Json } from '@/lib/supabase/types'
 import { z } from 'zod'
 
@@ -104,6 +105,20 @@ export async function POST(req: Request) {
     if (error || !updated) {
       console.error('[focus/stop] update error:', error)
       return NextResponse.json({ error: 'Failed to stop session' }, { status: 500 })
+    }
+
+    // Fold this session into the user's longitudinal behavioral profile (domain-free EWMA
+    // cache, owner-only). Best-effort ON PURPOSE: a profile hiccup must never fail a stop,
+    // and the profile is always rebuildable from focus_sessions if it ever drifts.
+    try {
+      await updateBehavioralProfile(supabase, userId, {
+        startedAt: session.created_at ?? new Date(startedAt).toISOString(),
+        durationS,
+        quality: sessionQuality,
+        signals,
+      })
+    } catch (profileErr) {
+      console.error('[focus/stop] behavioral profile update skipped:', profileErr instanceof Error ? profileErr.message : profileErr)
     }
 
     return NextResponse.json({ success: true, session: updated })

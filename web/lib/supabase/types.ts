@@ -650,6 +650,27 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['rate_limits']['Insert']>
         Relationships: []
       }
+      // Behavioral intelligence profile (migration 024). Owner-only RLS. The `profile`
+      // jsonb is a DOMAIN-FREE cache (traits + rhythm histograms), rebuildable from
+      // focus_sessions via lib/intelligence/deriveProfile. Never squad-visible.
+      behavioral_profiles: {
+        Row: {
+          user_id: string
+          profile: Json
+          sessions_seen: number
+          version: number
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          profile?: Json
+          sessions_seen?: number
+          version?: number
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['behavioral_profiles']['Insert']>
+        Relationships: []
+      }
       // Billing foundation (migration 020). Service-role writes only; users may
       // SELECT their own billing_subscriptions row, never billing_events.
       billing_events: {

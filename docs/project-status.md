@@ -5,6 +5,57 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-03 — Behavioral Intelligence System, Phase 1 (the longitudinal layer)
+
+Built the additive intelligence layer the product's edge depends on: a slowly-evolving,
+domain-free understanding of HOW each person loses focus, recovers, and returns. Self-awareness
+first; personalization without surveillance. The deterministic engines are UNTOUCHED — this
+sits on top. Full durable rules in `docs/DECISIONS.md` ("Behavioral Intelligence System").
+
+**What shipped (all `web/lib/intelligence/`, pure + `node --test`, zero domains):**
+- `types.ts` (Trait/BehavioralProfile/Estimate/PatternSignal, all confidence+evidence bearing),
+  `confidence.ts` (Confidence Engine: n + recency + variance → 0..1; below `speak` ⇒ silence),
+  `traits.ts` (Behavioral Memory + Learning Engine: 10 traits, EWMA ALPHA=0.12 so one session
+  moves a learned trait ≤ALPHA; `deriveProfile` ≡ fold of `updateProfile` = rebuildable cache),
+  `patterns.ts` (late-night drift, weekend collapse, Monday resistance, post-lunch dip, morning
+  strength, rapid fragmentation, restart difficulty, steady improvement — from timing, never a
+  site), `emotion.ts` (calm/momentum/resistance/fatigue/flow/overwhelm/recovery-readiness,
+  behavioral-only, non-diagnostic), `reflection.ts` (profile-aware session noticing that upgrades
+  but never regresses `behavior.noticeAgainstBaseline`), `insights.ts` (one weekly realization or
+  null), `messages.ts` (template library + `validateMessage` safety gate: bans shame/emoji/any
+  domain-token, caps length).
+- **Dormant Claude seam** `llm/{types,refine}.ts`: OFF until `ANTHROPIC_API_KEY`; only rephrases
+  an already-safe template, `applyRefinement` re-validates after ⇒ non-load-bearing. No SDK/dep
+  added (SatyaShift still ships zero AI dependency).
+- **Data:** migration 024 `behavioral_profiles` (owner-only RLS, domain-free jsonb, cascades on
+  auth.users delete). Applied via MCP + captured as repo file; added to `lib/supabase/types.ts`.
+  Advisors: no new warning.
+- **Wiring (all fail-safe / silent by default):** `/api/focus/stop` folds each finished session
+  into the profile via `profile-store.ts` (user-scoped client, timezone-aware hour/dow at the
+  edge, wrapped so a profile hiccup never breaks a stop); session page shows the profile-aware
+  noticing (falls back to the numeric baseline for new users); dashboard shows the weekly
+  realization only when confident.
+
+**Validation (the mission's core proof):** `sim.test.mjs` drives 7 personas (doomscroller,
+knowledge worker, student, rapid-switcher, strong performer, weekend-only, night owl) through the
+REAL pipeline (`analyzeSession → updateProfile → patterns`) over 1 day / 1 week / 1 month / 3
+months and asserts: confidence rises with time, traits converge to each persona's true tendency,
+the right patterns are discovered (and false ones — e.g. night-owl ≠ late-night drift — are not),
+no session moves a learned trait past ALPHA, and the finished profile jsonb contains ZERO domain
+strings. Personalization improves with NO new data collection.
+
+**Verified:** `tsc --noEmit` clean; `next build` green (40 routes); `node --test` 67/67
+(intelligence + llm + behavior + entitlement). Migration advisors clean.
+
+**Follow-ups (phased, see DECISIONS):** P2 real Claude adapter behind the dormant seam; P3
+extension LOCAL nudge register/fatigue (never transmitted); P4 notification + squad
+personalization from outcomes (fills the 3 currently-unobserved traits). Harness can't drive the
+auth-gated UI with a populated profile — owner manual check: run a few sessions, confirm a
+`behavioral_profiles` row appears and the session "Satya" noticing + dashboard "This week" line
+show once enough verified sessions exist. Working tree UNCOMMITTED.
+
+---
+
 ## 2026-07-03 — Developer-only checkout path (pre-launch Paddle testing, owner-gated)
 
 Added a hidden developer checkout so the owner can verify the FULL real Paddle flow

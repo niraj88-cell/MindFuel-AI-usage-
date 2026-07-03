@@ -26,9 +26,12 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { VerifiedMark } from '@/components/brand/VerifiedMark'
 import {
-  analyzeSession, reflectionFor, noticeAgainstBaseline,
-  type AttentionEvent, type BehaviorSignals,
+  analyzeSession, reflectionFor,
+  type AttentionEvent, type BehaviorSignals, type SessionQuality,
 } from '@/lib/behavior'
+import { sessionNoticing } from '@/lib/intelligence/reflection'
+import { emptyProfile } from '@/lib/intelligence/traits'
+import type { BehavioralProfile, SessionRecord } from '@/lib/intelligence/types'
 
 interface FocusSession {
   id: string
@@ -78,6 +81,7 @@ export default function SessionDetailPage() {
   const [session, setSession] = useState<FocusSession | null>(null)
   const [logs, setLogs] = useState<DomainLog[]>([])
   const [history, setHistory] = useState<BehaviorSignals[]>([])
+  const [profile, setProfile] = useState<BehavioralProfile | null>(null)
   const [firstName, setFirstName] = useState<string>('You')
 
   const load = useCallback(async () => {
@@ -123,6 +127,15 @@ export default function SessionDetailPage() {
         .order('created_at', { ascending: false })
         .limit(10)
       setHistory(((past ?? []).map((r) => r.behavior) as unknown as BehaviorSignals[]).filter(Boolean))
+
+      // The user's evolving behavioral profile (owner-only, domain-free) for the
+      // profile-aware noticing. Absent for new users — the noticing falls back gracefully.
+      const { data: bp } = await supabase
+        .from('behavioral_profiles')
+        .select('profile')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      setProfile((bp?.profile as unknown as BehavioralProfile) ?? null)
     } finally {
       setLoading(false)
     }
@@ -186,9 +199,18 @@ export default function SessionDetailPage() {
     })),
   )
   const satyaLine = reflectionFor(signals, durationS)
-  // At most ONE quiet comparison against the user's own recent sessions. Silence is the
-  // default; this line exists only when something is genuinely worth noticing.
-  const baselineNote = noticeAgainstBaseline(signals, history)
+  // At most ONE quiet noticing, chosen against the user's evolving behavioral profile (with
+  // a graceful fallback to the numeric baseline for new users). Silence is the default.
+  const startLocal = new Date(session.created_at)
+  const sessionRecord: SessionRecord = {
+    startedAt: session.created_at,
+    durationS,
+    quality: quality as SessionQuality,
+    signals,
+    hour: startLocal.getHours(),
+    dow: startLocal.getDay(),
+  }
+  const baselineNote = sessionNoticing(sessionRecord, profile ?? emptyProfile(), history)?.line ?? null
 
   return (
     <div className="mx-auto max-w-3xl py-2">

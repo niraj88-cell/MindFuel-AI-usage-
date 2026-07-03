@@ -14,6 +14,8 @@ import { Play, ChevronRight, Users, Puzzle, Lock, UserPlus, Loader2 } from 'luci
 import { createClient } from '@/lib/supabase/client'
 import { VerifiedMark } from '@/components/brand/VerifiedMark'
 import { EXTENSION_PUBLISHED, EXTENSION_STORE_URL } from '@/lib/extension'
+import { weeklyInsight } from '@/lib/intelligence/insights'
+import type { BehavioralProfile } from '@/lib/intelligence/types'
 
 // Shown once, the first time an "unverified" chip appears, then never again.
 const VERIFY_NOTE_KEY = 'satya_verified_note_seen'
@@ -62,6 +64,8 @@ function Dashboard() {
   const [howOpen, setHowOpen] = useState(false)
   // null = unknown (don't push the invite on error); true = new or only-me circle.
   const [aloneInCircle, setAloneInCircle] = useState<boolean | null>(null)
+  // The user's evolving behavioral profile — feeds the one weekly realization (or nothing).
+  const [profile, setProfile] = useState<BehavioralProfile | null>(null)
   // Inline session start (the old Focus idle screen, folded into Today).
   const [startOpen, setStartOpen] = useState(false)
   const [intention, setIntention] = useState('')
@@ -88,7 +92,7 @@ function Dashboard() {
       setName(user.user_metadata?.full_name?.split(' ')[0] || 'there')
 
       const since = startOfDay(new Date()).toISOString()
-      const [sessionsRes, ingestRes, squadsData] = await Promise.all([
+      const [sessionsRes, ingestRes, squadsData, profileRes] = await Promise.all([
         supabase
           .from('focus_sessions')
           .select('id, created_at, status, duration_s, session_quality, intention')
@@ -104,7 +108,10 @@ function Dashboard() {
           .eq('user_id', user.id),
         // Is the user still on their own? (no squad, or a squad that's only them)
         fetch('/api/squads').then((r) => r.json()).catch(() => null),
+        // The domain-free behavioral profile (owner-only) for the weekly realization.
+        supabase.from('behavioral_profiles').select('profile').eq('user_id', user.id).maybeSingle(),
       ])
+      setProfile((profileRes.data?.profile as unknown as BehavioralProfile) ?? null)
 
       const rows = (sessionsRes.data as SessionRow[]) || []
       setActiveId(rows.find((r) => r.status === 'active')?.id ?? null)
@@ -153,6 +160,10 @@ function Dashboard() {
   const totalS = today.reduce((sum, s) => sum + (s.duration_s ?? 0), 0)
   const verifiedCount = today.filter((s) => s.session_quality && s.session_quality !== 'unverified').length
 
+  // One weekly realization from the behavioral profile — or nothing. The generator only
+  // speaks when a pattern clears the confidence bar, so most weeks this is simply null.
+  const insight = profile ? weeklyInsight(profile) : null
+
   // One honest, non-punitive reflection derived from the real day.
   const reflection = activeId
     ? 'You’re in a session right now. Stay with it — this page will be here after.'
@@ -195,6 +206,15 @@ function Dashboard() {
           {reflection}
         </p>
       </div>
+
+      {/* One quiet weekly realization from the behavioral profile. Appears only when a
+          pattern is confident enough to be worth a person's attention; silent otherwise. */}
+      {insight && (
+        <div className="mt-6 rounded-xl border border-line bg-card p-5">
+          <p className="mb-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">This week</p>
+          <p className="text-[15px] leading-relaxed text-ink">{insight.text}</p>
+        </div>
+      )}
 
       {/* Active session resume / connect-first / inline start (the old Focus idle screen) */}
       {activeId ? (

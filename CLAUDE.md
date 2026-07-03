@@ -68,6 +68,17 @@ where something was verified. Trust is shown through restraint, not decoration. 
   reflection, baseline noticing) — tested via `node --test lib/behavior.test.mjs`. Signals
   stored in `focus_sessions.behavior` contain ZERO domains. Event order = (created_at, seq);
   the extension flushes before stop. Pattern logic changes go in that module WITH tests.
+- LONGITUDINAL intelligence is the pure `web/lib/intelligence/` layer (Behavioral Intelligence
+  System, 2026-07-03) — a slowly-evolving, domain-free per-user profile of traits/patterns that
+  sits ON TOP of `behavior.ts` and the extension nudge, never replacing them. Cached in
+  owner-only `behavioral_profiles` (migration 024) but ALWAYS rebuildable (`deriveProfile` = fold
+  of `updateProfile`). EWMA (gradual, ≤ALPHA/session), user-vs-own-past only, confidence-gated
+  (silent below `CONFIDENCE.speak`), every output carries evidence. Copy goes template →
+  `validateMessage` → deliver; Claude is a DORMANT seam (`lib/intelligence/llm/`, off until
+  `ANTHROPIC_API_KEY`, rephrase-only, re-validated). New behavioral logic goes in that module set
+  WITH `.test.mjs` (cross-module value imports use `.ts` extensions). Full rules + phasing:
+  `docs/DECISIONS.md` "Behavioral Intelligence System". Wired fail-safe into `/api/focus/stop`
+  (`profile-store.ts`), the session page, and the dashboard "This week" line.
 - `focus_sessions` RLS is OWNER-ONLY (migration 019). Squadmates read sessions exclusively
   through SECURITY DEFINER fns (`get_squad_feed`/`get_squad_live`/`get_squad_focused_today`)
   that expose who/active/verified/duration/intention only — never quality, percentages, or
