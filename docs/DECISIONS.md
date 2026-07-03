@@ -4,6 +4,38 @@ Newest first. Each entry is a decision that should not be silently reversed. For
 change log see `docs/project-status.md`; for the full security reference see
 `docs/security-review-2026-07-02.md`.
 
+## Design language: "a ledger of truth" (2026-07-03)
+
+Full reference + audit: `docs/design-language-2026-07-03.md`. The enforceable summary lives
+in `CLAUDE.md` ("Design language"). The prior interface shipped a 751-line unused
+"Spider-Verse" dark CSS system, never loaded its declared fonts, and hand-copied ~15
+Tailwind/Material default hexes across ~20 files — the exact catalogue of generic
+AI-generated SaaS. Replaced with a first-principles system. Durable rules:
+
+- **The identity is a quiet ledger:** warm paper (`#FAF8F4`), warm ink (`#23201B`), and one
+  moss green (`#2D6A3F`) that appears ONLY where something was verified — verified state,
+  live presence, the single primary action, and Satya's voice. Green is earned, never
+  decoration. This is a permanent stance, not a palette that can drift back to accent-blue.
+- **Color has ONE home:** `web/app/globals.css` `@theme` tokens, consumed as utilities
+  (`bg-paper`, `text-ink`, `border-line`…). Raw hex in markup is a defect. The only exempt
+  files are `global-error.tsx` + `maintenance/page.tsx` (render outside the token layer) and
+  the extension's own CSS-variable palette blocks (no build step).
+- **Typographic system is the brand, not an accent:** Instrument Sans (interface),
+  Instrument Serif (Satya's voice + statement headings only), IBM Plex Mono (measured
+  values + overline labels, tabular). Self-hosted via `next/font` in `layout.tsx`. Before
+  this, the product had no loaded typeface at all.
+- **Verification is marked by the brand's own bindu seal** (`components/brand/VerifiedMark`),
+  never a stock lucide shield. Closed ring + filled center = verified; open hollow ring =
+  unverified. Not color-only (shape + adjacent word + title), so it stays accessible.
+- **Restraint is the aesthetic:** `rounded-xl`/`rounded-lg`/`rounded-full` only; no shadows
+  (except the mobile drawer); depth from borders + surface color; motion only confirms
+  (150ms transitions + one `.satya-breathe` presence dot, reduced-motion-safe).
+- **Banned as generic-AI tells:** emoji, decorative icons, icon-in-tile card headers,
+  three-icon feature grids, gradients, glassmorphism, dark surfaces (except the ink brand
+  tile), sci-fi/marketing filler. Icons earn their place by comprehension only.
+- Verified end-to-end 2026-07-03: `tsc` + `next build` (39/39) green, extension
+  `node --test` green (38/38, popup DOM hooks preserved), live preview screenshots.
+
 ## Behavioral intelligence + squad privacy architecture (2026-07-02)
 
 The product's edge is recognizing ATTENTION PATTERNS while staying domain-only. Durable

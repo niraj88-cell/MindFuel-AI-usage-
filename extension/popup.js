@@ -126,8 +126,13 @@ function render(s) {
   if (s) $('open').href = s.baseUrl;
 
   // Note: a transient sync problem, or (right after a click) why a start/end didn't take.
+  // Lowest priority: nudges muted at the Chrome level (notifications off for this extension) —
+  // otherwise the gentle check-ins silently never appear and nothing anywhere says why.
   let note = transientNote(s);
   if (s && s.actionError) note = actionErrorNote(s.actionError, s);
+  if (!note && s && s.nudgesMuted && !s.paused) {
+    note = 'Gentle check-ins are muted: Chrome has notifications turned off for SatyaShift.';
+  }
   $('note').style.display = note ? 'block' : 'none';
   $('note').textContent = note || '';
 
@@ -187,10 +192,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const type = current && current.session ? 'STOP_SESSION' : 'START_SESSION';
     try {
       const s = await chrome.runtime.sendMessage({ type });
-      // Session just ended: settle the verdict in the button's place — "44 min · verified ✓"
-      // (or "saved" when the extension had no signal to verify with).
+      // Session just ended: settle the verdict in the button's place — "44 min · verified"
+      // (or "saved" when the extension had no signal to verify with). Words only, no glyphs.
       if (type === 'STOP_SESSION' && s && s.ended) {
-        sealText = `${humanMinutes(s.ended.durationS)} · ${s.ended.verified ? 'verified ✓' : 'saved'}`;
+        sealText = `${humanMinutes(s.ended.durationS)} · ${s.ended.verified ? 'verified' : 'saved'}`;
       }
       render(s);
     } catch {

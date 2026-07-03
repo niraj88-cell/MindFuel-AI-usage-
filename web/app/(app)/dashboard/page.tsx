@@ -10,8 +10,9 @@ import { Suspense, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format, startOfDay } from 'date-fns'
-import { Play, ShieldCheck, Shield, ChevronRight, Users, Puzzle, Lock, UserPlus, Loader2 } from 'lucide-react'
+import { Play, ChevronRight, Users, Puzzle, Lock, UserPlus, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { VerifiedMark } from '@/components/brand/VerifiedMark'
 import { EXTENSION_PUBLISHED, EXTENSION_STORE_URL } from '@/lib/extension'
 
 // Shown once, the first time an "unverified" chip appears, then never again.
@@ -164,9 +165,9 @@ function Dashboard() {
   if (loading) {
     return (
       <div className="mx-auto max-w-2xl animate-pulse space-y-6 py-4">
-        <div className="h-10 w-64 rounded-2xl bg-black/[0.05]" />
-        <div className="h-24 rounded-3xl bg-black/[0.05]" />
-        <div className="h-40 rounded-3xl bg-black/[0.04]" />
+        <div className="h-10 w-64 rounded-lg bg-hairline" />
+        <div className="h-24 rounded-xl bg-hairline" />
+        <div className="h-40 rounded-xl bg-hairline" />
       </div>
     )
   }
@@ -176,21 +177,21 @@ function Dashboard() {
       {/* Greeting + today's focus */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#111827]">{greeting()}, {name}.</h1>
-          <p className="mt-1.5 font-mono text-xs text-[#6B7280]">{format(new Date(), 'EEEE, d MMMM')}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">{greeting()}, {name}.</h1>
+          <p className="mt-1.5 font-mono text-xs text-faint">{format(new Date(), 'EEEE, d MMMM')}</p>
         </div>
         {today.length > 0 && (
           <div className="text-right leading-none">
-            <div className="font-mono text-[1.9rem] font-bold text-[#1B5E20]">{humanDuration(totalS)}</div>
-            <div className="mt-1 text-xs text-[#2E7D32]">of focus today</div>
+            <div className="font-mono text-[1.9rem] font-medium text-green-deep">{humanDuration(totalS)}</div>
+            <div className="mt-1 text-xs text-green">of focus today</div>
           </div>
         )}
       </div>
 
-      {/* Satya reflection */}
-      <div className="mt-6 rounded-3xl bg-[#E8F5E9] p-5">
-        <div className="mb-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-[#2E7D32]">Satya</div>
-        <p className="text-[15px] leading-relaxed text-[#1B5E20]" style={{ fontFamily: 'var(--font-serif)' }}>
+      {/* Satya reflection — the serif voice, on paper not a colored card */}
+      <div className="mt-7 border-l-2 border-green pl-5">
+        <div className="mb-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-green">Satya</div>
+        <p className="font-serif text-[1.35rem] leading-snug text-ink">
           {reflection}
         </p>
       </div>
@@ -199,36 +200,32 @@ function Dashboard() {
       {activeId ? (
         <Link
           href="/focus"
-          className="mt-4 flex items-center justify-between rounded-2xl border border-[#A5D6A7] bg-white px-5 py-4 transition-colors hover:bg-[#F5FBF5]"
+          className="mt-6 flex items-center justify-between rounded-xl border border-green-line bg-green-wash px-5 py-4 transition-colors hover:bg-green-tint"
         >
-          <span className="flex items-center gap-2.5 text-sm font-semibold text-[#2E7D32]">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[#4CAF50] motion-reduce:animate-none" /> You&rsquo;re focusing now
+          <span className="flex items-center gap-2.5 text-sm font-semibold text-green">
+            <span className="h-2 w-2 rounded-full bg-green-bright satya-breathe" /> You&rsquo;re focusing now
           </span>
-          <span className="flex items-center gap-1 text-sm font-medium text-[#2E7D32]">Resume <ChevronRight className="h-4 w-4" /></span>
+          <span className="flex items-center gap-1 text-sm font-medium text-green">Resume <ChevronRight className="h-4 w-4" /></span>
         </Link>
       ) : (
         <>
           {/* Not connected — verification is impossible until the extension runs, so lead with it. */}
           {connected === false && (
-          <div className="mt-4 rounded-3xl border border-[#A5D6A7] bg-white p-5">
-            <div className="flex items-start gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#E8F5E9] text-[#2E7D32]">
-                <Puzzle className="h-5 w-5" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-[#111827]">Connect SatyaShift to verify your focus</p>
-                <p className="mt-1 text-[13px] leading-relaxed text-[#6B7280]">
-                  Your focus is verified by the browser extension — it reads only the domain you&rsquo;re on, never the page, content, or what you type. Until it&rsquo;s connected, sessions you start are saved as &ldquo;not verified.&rdquo;
-                </p>
-              </div>
+          <div className="mt-6 rounded-xl border border-line bg-card p-5">
+            <div className="flex items-center gap-2 text-green">
+              <Puzzle className="h-4 w-4" />
+              <p className="text-sm font-semibold text-ink">Connect SatyaShift to verify your focus</p>
             </div>
+            <p className="mt-2 text-[13px] leading-relaxed text-soft">
+              Your focus is verified by the browser extension — it reads only the domain you&rsquo;re on, never the page, content, or what you type. Until it&rsquo;s connected, sessions you start are saved as &ldquo;not verified.&rdquo;
+            </p>
 
             {EXTENSION_PUBLISHED ? (
               <a
                 href={EXTENSION_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#2E7D32] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#256628]"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white transition-colors hover:bg-green-deep"
               >
                 <Puzzle className="h-4 w-4" /> Add to Chrome
               </a>
@@ -236,22 +233,22 @@ function Dashboard() {
               <>
                 <button
                   onClick={() => setHowOpen((v) => !v)}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#2E7D32] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#256628]"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white transition-colors hover:bg-green-deep"
                 >
                   <Puzzle className="h-4 w-4" /> {howOpen ? 'Hide steps' : 'How to connect'}
                 </button>
                 {howOpen && (
-                  <ol className="mt-3 space-y-2 rounded-2xl bg-[#FAF8F4] p-4 text-[13px] leading-relaxed text-[#4B5563]">
-                    <li><span className="font-semibold text-[#111827]">1.</span> Open <span className="font-mono text-[12px]">chrome://extensions</span> and turn on <span className="font-semibold">Developer mode</span> (top-right).</li>
-                    <li><span className="font-semibold text-[#111827]">2.</span> Click <span className="font-semibold">Load unpacked</span> and choose the SatyaShift <span className="font-mono text-[12px]">extension</span> folder.</li>
-                    <li><span className="font-semibold text-[#111827]">3.</span> Make sure you&rsquo;re signed in here, then reload this page.</li>
-                    <li className="text-[#6B7280]">It connects on its own — this card disappears once it sends its first activity.</li>
+                  <ol className="mt-3 space-y-2 rounded-lg bg-paper p-4 text-[13px] leading-relaxed text-soft">
+                    <li><span className="font-mono font-medium text-ink">1.</span> Open <span className="font-mono text-[12px]">chrome://extensions</span> and turn on <span className="font-semibold">Developer mode</span> (top-right).</li>
+                    <li><span className="font-mono font-medium text-ink">2.</span> Click <span className="font-semibold">Load unpacked</span> and choose the SatyaShift <span className="font-mono text-[12px]">extension</span> folder.</li>
+                    <li><span className="font-mono font-medium text-ink">3.</span> Make sure you&rsquo;re signed in here, then reload this page.</li>
+                    <li className="text-faint">It connects on its own — this card disappears once it sends its first activity.</li>
                   </ol>
                 )}
               </>
             )}
 
-            <div className="mt-3 flex items-center gap-1.5 text-[11px] text-[#6B7280]">
+            <div className="mt-3 flex items-center gap-1.5 text-[11px] text-faint">
               <Lock className="h-3 w-3" /> Domain only. Never the page, content, or keystrokes.
             </div>
           </div>
@@ -259,9 +256,9 @@ function Dashboard() {
 
           {/* Inline starter — press once, add an optional intention, begin. */}
           {startOpen ? (
-            <div className="mt-4 rounded-3xl border border-black/[0.07] bg-white p-5">
-              <label htmlFor="intention" className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-[#6B7280]">
-                What are you working on? <span className="font-normal normal-case tracking-normal text-[#6B7280]">(optional)</span>
+            <div className="mt-6 rounded-xl border border-line bg-card p-5">
+              <label htmlFor="intention" className="mb-2 block font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
+                What are you working on? <span className="normal-case tracking-normal text-ghost">(optional)</span>
               </label>
               <input
                 id="intention"
@@ -270,34 +267,34 @@ function Dashboard() {
                 maxLength={280}
                 autoFocus
                 placeholder="Deep work on the redesign"
-                className="w-full rounded-2xl border border-black/[0.08] bg-[#FAF8F4] px-4 py-3 text-sm text-[#111827] outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#4CAF50]"
+                className="w-full rounded-lg border border-line bg-paper px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-ghost focus:border-green"
               />
-              <p className="mt-2 text-xs text-[#6B7280]">
+              <p className="mt-2 text-xs text-faint">
                 Only your circle sees this — in your words. Your sites stay private either way.
               </p>
-              {startError && <p className="mt-3 text-sm text-[#B45309]">{startError}</p>}
+              {startError && <p className="mt-3 text-sm text-rust">{startError}</p>}
               <button
                 onClick={startSession}
                 disabled={startBusy}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#2E7D32] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#256628] disabled:opacity-60"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3.5 text-sm font-semibold text-white transition-colors hover:bg-green-deep disabled:opacity-60"
               >
-                {startBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                {startBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" fill="currentColor" strokeWidth={0} />}
                 Begin focus
               </button>
             </div>
           ) : connected === false ? (
             <button
               onClick={() => setStartOpen(true)}
-              className="mt-3 flex w-full items-center justify-center gap-1.5 text-[13px] font-medium text-[#6B7280] transition-colors hover:text-[#111827]"
+              className="mt-3 flex w-full items-center justify-center gap-1.5 text-[13px] font-medium text-faint transition-colors hover:text-ink"
             >
               Start a session without verifying <ChevronRight className="h-3.5 w-3.5" />
             </button>
           ) : (
             <button
               onClick={() => setStartOpen(true)}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#2E7D32] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#256628]"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3.5 text-sm font-semibold text-white transition-colors hover:bg-green-deep"
             >
-              <Play className="h-4 w-4" /> Start a focus session
+              <Play className="h-4 w-4" fill="currentColor" strokeWidth={0} /> Start a focus session
             </button>
           )}
         </>
@@ -305,34 +302,31 @@ function Dashboard() {
 
       {/* Today's sessions */}
       {today.length > 0 && (
-        <div className="mt-8">
-          <p className="mb-2 px-1 font-mono text-[11px] uppercase tracking-[0.12em] text-[#6B7280]">Today&rsquo;s sessions</p>
-          <div className="rounded-2xl border border-black/[0.07] bg-white">
+        <div className="mt-9">
+          <p className="mb-2 px-1 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Today&rsquo;s sessions</p>
+          <div className="overflow-hidden rounded-xl border border-line bg-card">
             {today.map((s) => {
               const verified = !!s.session_quality && s.session_quality !== 'unverified'
               return (
                 <Link
                   key={s.id}
                   href={`/session/${s.id}`}
-                  className="flex items-center gap-3 border-b border-black/[0.05] px-4 py-3 transition-colors last:border-0 hover:bg-black/[0.02]"
+                  className="flex items-center gap-3 border-b border-hairline px-4 py-3 transition-colors last:border-0 hover:bg-green-wash"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-[#111827]">
+                    <p className="truncate text-sm font-medium text-ink">
                       {s.intention || (s.status === 'abandoned' ? 'Short session' : 'Focus session')}
                     </p>
-                    <p className="text-xs text-[#6B7280]">{format(new Date(s.created_at), 'h:mm a')}</p>
+                    <p className="font-mono text-xs text-faint">{format(new Date(s.created_at), 'h:mm a')}</p>
                   </div>
-                  {verified ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#E8F5E9] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#2E7D32]">
-                      <ShieldCheck className="h-3 w-3" /> verified
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-black/[0.05] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#6B7280]">
-                      <Shield className="h-3 w-3" /> unverified
-                    </span>
-                  )}
-                  <span className="font-mono text-sm font-semibold text-[#2E7D32]">{humanDuration(s.duration_s ?? 0)}</span>
-                  <ChevronRight className="h-4 w-4 text-[#9CA3AF]" />
+                  <span
+                    className={`inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wide ${verified ? 'text-green' : 'text-ghost'}`}
+                    title={verified ? 'Extension verified' : 'Not verified'}
+                  >
+                    <VerifiedMark verified={verified} size={13} /> {verified ? 'verified' : 'unverified'}
+                  </span>
+                  <span className="font-mono text-sm font-medium text-green-deep">{humanDuration(s.duration_s ?? 0)}</span>
+                  <ChevronRight className="h-4 w-4 text-ghost" />
                 </Link>
               )
             })}
@@ -340,12 +334,12 @@ function Dashboard() {
           {/* Teach the vocabulary once: shown until dismissed, only when an unverified chip is on screen. */}
           {showVerifyNote && today.some((s) => !s.session_quality || s.session_quality === 'unverified') && (
             <div className="mt-2 flex items-start gap-3 px-1">
-              <p className="flex-1 text-xs leading-relaxed text-[#6B7280]">
+              <p className="flex-1 text-xs leading-relaxed text-faint">
                 Verified means the extension confirmed this time. Unverified sessions still count, they are just on trust.
               </p>
               <button
                 onClick={dismissVerifyNote}
-                className="shrink-0 text-xs font-semibold text-[#2E7D32] transition-colors hover:text-[#1B5E20]"
+                className="shrink-0 text-xs font-semibold text-green transition-colors hover:text-green-deep"
               >
                 Got it
               </button>
@@ -357,22 +351,18 @@ function Dashboard() {
       {/* Squad entry point. Still on your own? Echo the landing promise with a real
           invitation. Already have a circle? A quiet link is enough. */}
       {aloneInCircle ? (
-        <div className="mt-6 rounded-3xl border border-black/[0.07] bg-white p-5">
-          <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#E8F5E9] text-[#2E7D32]">
-              <UserPlus className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-[#111827]">Focus sticks when someone&rsquo;s in it with you</p>
-              <p className="mt-1 text-[13px] leading-relaxed text-[#6B7280]">
-                Bring one friend into your circle. They see when you&rsquo;re focusing and quietly show up too. They
-                only ever see your verified time, never your sites.
-              </p>
-            </div>
+        <div className="mt-6 rounded-xl border border-line bg-card p-5">
+          <div className="flex items-center gap-2 text-green">
+            <UserPlus className="h-4 w-4" />
+            <p className="text-sm font-semibold text-ink">Focus sticks when someone&rsquo;s in it with you</p>
           </div>
+          <p className="mt-2 text-[13px] leading-relaxed text-soft">
+            Bring one friend into your circle. They see when you&rsquo;re focusing and quietly show up too. They
+            only ever see your verified time, never your sites.
+          </p>
           <Link
             href="/squads"
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-[#A5D6A7] bg-[#F5FBF5] py-3 text-sm font-semibold text-[#2E7D32] transition-colors hover:bg-[#E8F5E9]"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-green-line bg-green-wash py-3 text-sm font-semibold text-green transition-colors hover:bg-green-tint"
           >
             <UserPlus className="h-4 w-4" /> Bring a friend in
           </Link>
@@ -380,15 +370,15 @@ function Dashboard() {
       ) : (
         <Link
           href="/squads"
-          className="mt-6 flex items-center gap-3 rounded-2xl border border-black/[0.07] bg-white px-5 py-4 transition-colors hover:bg-black/[0.02]"
+          className="mt-6 flex items-center gap-3 rounded-xl border border-line bg-card px-5 py-4 transition-colors hover:bg-green-wash"
         >
-          <Users className="h-4 w-4 text-[#2E7D32]" />
-          <span className="flex-1 text-sm font-medium text-[#111827]">Your circle</span>
-          <ChevronRight className="h-4 w-4 text-[#9CA3AF]" />
+          <Users className="h-4 w-4 text-green" />
+          <span className="flex-1 text-sm font-medium text-ink">Your circle</span>
+          <ChevronRight className="h-4 w-4 text-ghost" />
         </Link>
       )}
 
-      <p className="mt-8 text-center text-xs text-[#6B7280]">
+      <p className="mt-9 text-center text-xs text-faint">
         Just keep working — everything here updates on its own.
       </p>
     </div>

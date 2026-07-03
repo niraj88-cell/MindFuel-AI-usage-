@@ -17,8 +17,6 @@ import { useParams } from 'next/navigation'
 import { format } from 'date-fns'
 import {
   Check,
-  ShieldCheck,
-  Shield,
   Lock,
   EyeOff,
   Users,
@@ -26,6 +24,11 @@ import {
   X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { VerifiedMark } from '@/components/brand/VerifiedMark'
+import {
+  analyzeSession, reflectionFor, noticeAgainstBaseline,
+  type AttentionEvent, type BehaviorSignals,
+} from '@/lib/behavior'
 
 interface FocusSession {
   id: string
@@ -36,6 +39,7 @@ interface FocusSession {
   distraction_pct: number | null
   intention: string | null
   squad_id: string | null
+  behavior: BehaviorSignals | null
 }
 
 interface DomainLog {
@@ -64,8 +68,7 @@ function humanDuration(totalSeconds: number) {
 }
 
 // The DB constraint allows category IN ('distraction','productive','neutral').
-// 'distraction' is the drift bucket. (Note: the /api/focus/stop route checks for
-// 'doomscroll' here, which the constraint forbids — a backend bug worth fixing.)
+// 'distraction' is the drift bucket.
 const DRIFT_CATEGORY = 'distraction'
 
 export default function SessionDetailPage() {
@@ -75,6 +78,7 @@ export default function SessionDetailPage() {
   const [loading, setLoading] = useState(true)
   const [session, setSession] = useState<FocusSession | null>(null)
   const [logs, setLogs] = useState<DomainLog[]>([])
+  const [history, setHistory] = useState<BehaviorSignals[]>([])
   const [firstName, setFirstName] = useState<string>('You')
 
   const load = useCallback(async () => {
@@ -88,14 +92,15 @@ export default function SessionDetailPage() {
       // RLS scopes this to the owner; an id you don't own simply returns nothing.
       const { data: s } = await supabase
         .from('focus_sessions')
-        .select('id, created_at, status, duration_s, session_quality, distraction_pct, intention, squad_id')
+        .select('id, created_at, status, duration_s, session_quality, distraction_pct, intention, squad_id, behavior')
         .eq('id', sessionId)
         .maybeSingle()
 
       if (!s) { setSession(null); return }
-      setSession(s as FocusSession)
+      setSession(s as unknown as FocusSession)
 
-      // The ambient activity that happened during this session's window.
+      // The ambient activity that happened during this session's window, in true dwell
+      // order (seq breaks the tie inside a flush batch — every row shares one created_at).
       const start = s.created_at
       const endMs = new Date(s.created_at).getTime() + (s.duration_s ?? 0) * 1000
       const { data: d } = await supabase
@@ -105,7 +110,20 @@ export default function SessionDetailPage() {
         .gte('created_at', start)
         .lte('created_at', new Date(endMs + 60_000).toISOString())
         .order('created_at', { ascending: true })
+        .order('seq', { ascending: true })
       setLogs((d as DomainLog[]) || [])
+
+      // The user's recent behavioral history (their own rows only), for the one quiet
+      // "compared to your recent sessions" line. Derived on the fly, never stored.
+      const { data: past } = await supabase
+        .from('focus_sessions')
+        .select('behavior')
+        .eq('user_id', user.id)
+        .neq('id', sessionId)
+        .not('behavior', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      setHistory(((past ?? []).map((r) => r.behavior) as unknown as BehaviorSignals[]).filter(Boolean))
     } finally {
       setLoading(false)
     }
@@ -133,9 +151,9 @@ export default function SessionDetailPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl animate-pulse py-10">
-        <div className="mb-6 h-4 w-24 rounded bg-black/[0.06]" />
-        <div className="mb-6 h-40 rounded-3xl bg-black/[0.05]" />
-        <div className="h-64 rounded-3xl bg-black/[0.04]" />
+        <div className="mb-6 h-4 w-24 rounded bg-hairline" />
+        <div className="mb-6 h-40 rounded-xl bg-hairline" />
+        <div className="h-64 rounded-xl bg-hairline" />
       </div>
     )
   }
@@ -143,9 +161,9 @@ export default function SessionDetailPage() {
   if (!session) {
     return (
       <div className="mx-auto max-w-3xl py-20 text-center">
-        <p className="text-lg font-semibold text-[#111827]">This session isn&apos;t here.</p>
-        <p className="mt-2 text-sm text-[#6B7280]">It may have been removed, or it isn&apos;t yours to view.</p>
-        <Link href="/dashboard" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#2E7D32] hover:underline">
+        <p className="font-serif text-xl text-ink">This session isn&apos;t here.</p>
+        <p className="mt-2 text-sm text-soft">It may have been removed, or it isn&apos;t yours to view.</p>
+        <Link href="/dashboard" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-green hover:underline">
           <ChevronLeft className="h-4 w-4" /> Back to today
         </Link>
       </div>
@@ -157,144 +175,152 @@ export default function SessionDetailPage() {
   const start = new Date(session.created_at)
   const end = new Date(start.getTime() + durationS * 1000)
   const quality = session.session_quality ?? 'unverified'
-  const distraction = session.distraction_pct ?? 0
   // Human, non-punitive status. Never surface the raw "abandoned" system word to a person.
   const statusLabel = session.status === 'abandoned' ? 'Short session' : 'Session complete'
 
-  // Honest, non-punitive reflection derived from the real result.
-  const satyaLine = !verified
-    ? `The extension wasn't connected, so this one is yours on trust. It still counts as time you set aside.`
-    : distraction < 15
-      ? `${humanDuration(durationS)} of focus, barely a detour. A clean session.`
-      : distraction < 50
-        ? `${humanDuration(durationS)} in, a couple of detours you caught. Steady work.`
-        : `Some drift in there — but you showed up and put in the time. That counts.`
+  // Honest reflection from the session's behavioral SHAPE (lib/behavior.ts), not just a
+  // percentage — a distraction loop is named as one, a recovery is acknowledged as one.
+  // Sessions from before the behavior column get the same analysis from their own logs.
+  const signals = session.behavior ?? analyzeSession(
+    logs.map((l): AttentionEvent => ({
+      domain: l.domain,
+      category: l.category === 'distraction' || l.category === 'productive' ? l.category : 'neutral',
+      duration_s: l.duration_s,
+    })),
+  )
+  const satyaLine = reflectionFor(signals, durationS)
+  // At most ONE quiet comparison against the user's own recent sessions. Silence is the
+  // default; this line exists only when something is genuinely worth noticing.
+  const baselineNote = noticeAgainstBaseline(signals, history)
 
   return (
     <div className="mx-auto max-w-3xl py-2">
-      <Link href="/dashboard" className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-[#6B7280] transition-colors hover:text-[#111827]">
+      <Link href="/dashboard" className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-faint transition-colors hover:text-ink">
         <ChevronLeft className="h-4 w-4" /> Today
       </Link>
 
       {/* Verified hero */}
-      <div className="rounded-3xl bg-[#E8F5E9] p-6 sm:p-7">
+      <div className="rounded-xl border border-green-line bg-green-tint p-6 sm:p-7">
         <div className="mb-5 flex flex-wrap gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#2E7D32]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-xs font-semibold text-green">
             <Check className="h-3.5 w-3.5" /> {statusLabel}
           </span>
           {verified ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#2E7D32] px-3 py-1 text-xs font-semibold text-white">
-              <ShieldCheck className="h-3.5 w-3.5" /> Extension verified
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-green px-3 py-1 text-xs font-semibold text-white">
+              <VerifiedMark verified size={13} className="text-white" /> Extension verified
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-black/[0.05] px-3 py-1 text-xs font-semibold text-[#6B7280]">
-              <Shield className="h-3.5 w-3.5" /> Not verified
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-xs font-semibold text-faint">
+              <VerifiedMark verified={false} size={13} /> Not verified
             </span>
           )}
         </div>
 
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[#111827]">
+            <h1 className="font-serif text-[1.9rem] leading-tight tracking-[-0.01em] text-ink">
               {session.intention || 'Focus session'}
             </h1>
-            <p className="mt-1.5 font-mono text-xs text-[#2E7D32]">
+            <p className="mt-1.5 font-mono text-xs text-green">
               {format(start, 'h:mmaaa')} &ndash; {format(end, 'h:mmaaa')} &middot; {format(start, 'd MMM')}
             </p>
           </div>
           <div className="text-right leading-none">
-            <div className="font-mono text-[2.75rem] font-bold text-[#1B5E20]">{humanDuration(durationS)}</div>
-            <div className="mt-1 text-xs text-[#2E7D32]">{verified ? 'of verified focus' : 'of focus time'}</div>
+            <div className="font-mono text-[2.75rem] font-medium text-green-deep">{humanDuration(durationS)}</div>
+            <div className="mt-1 text-xs text-green">{verified ? 'of verified focus' : 'of focus time'}</div>
           </div>
         </div>
 
-        <div className="mt-5 flex items-center gap-2 border-t border-[#2E7D32]/15 pt-4">
-          <Lock className="h-4 w-4 shrink-0 text-[#2E7D32]" />
-          <span className="text-xs text-[#2E7D32]">Domain only. Never the page, the content, or what you typed.</span>
+        <div className="mt-5 flex items-center gap-2 border-t border-green-line pt-4">
+          <Lock className="h-4 w-4 shrink-0 text-green" />
+          <span className="text-xs text-green">Domain only. Never the page, the content, or what you typed.</span>
         </div>
       </div>
 
       {/* Private | Shared seam */}
-      <div className="mt-6 grid gap-0 sm:grid-cols-2">
+      <div className="mt-8 grid gap-0 sm:grid-cols-2">
         {/* Your view — private */}
         <div className="sm:pr-7">
           <div className="mb-3 flex items-center gap-1.5">
-            <Lock className="h-3.5 w-3.5 text-[#9CA3AF]" />
-            <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#6B7280]">Private &middot; only you</span>
+            <Lock className="h-3.5 w-3.5 text-ghost" />
+            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Private &middot; only you</span>
           </div>
 
-          <div className="rounded-2xl border border-black/[0.07] bg-white p-4">
+          <div className="rounded-xl border border-line bg-card p-4">
             <div className="mb-1 flex items-center justify-between">
-              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#6B7280]">Where the time went</span>
-              {nudges > 0 && <span className="text-[11px] text-[#6B7280]">{nudges} gentle nudge{nudges > 1 ? 's' : ''}</span>}
+              <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Where the time went</span>
+              {nudges > 0 && <span className="text-[11px] text-faint">{nudges} gentle nudge{nudges > 1 ? 's' : ''}</span>}
             </div>
 
             {perDomain.length === 0 ? (
-              <p className="py-2 text-xs text-[#6B7280]">No ambient activity was recorded for this session.</p>
+              <p className="py-2 text-xs text-faint">No ambient activity was recorded for this session.</p>
             ) : (
               perDomain.map((row) => (
-                <div key={row.domain} className="flex items-center justify-between border-b border-black/[0.05] py-2 last:border-0">
-                  <span className="font-mono text-[13px] text-[#111827]">{row.domain}</span>
+                <div key={row.domain} className="flex items-center justify-between border-b border-hairline py-2 last:border-0">
+                  <span className="font-mono text-[13px] text-ink">{row.domain}</span>
                   <span className="flex items-center gap-2.5">
-                    <span className="font-mono text-[13px] text-[#6B7280]">{clock(row.seconds)}</span>
+                    <span className="font-mono text-[13px] text-faint">{clock(row.seconds)}</span>
                     {row.drift ? (
-                      <span className="rounded-full bg-[#FEF3C7] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#B45309]">drift</span>
+                      <span className="rounded-full bg-clay-tint px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-clay">drift</span>
                     ) : (
-                      <span className="rounded-full bg-[#E8F5E9] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#2E7D32]">focused</span>
+                      <span className="rounded-full bg-green-tint px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-green">focused</span>
                     )}
                   </span>
                 </div>
               ))
             )}
 
-            <div className="mt-3 flex items-center justify-between border-t border-black/[0.06] pt-3">
-              <span className="text-xs text-[#6B7280]">Quality &middot; your eyes only</span>
-              <span className="font-mono text-[13px] capitalize text-[#6B7280]">{quality}</span>
+            <div className="mt-3 flex items-center justify-between border-t border-hairline pt-3">
+              <span className="text-xs text-faint">Quality &middot; your eyes only</span>
+              <span className="font-mono text-[13px] capitalize text-soft">{quality}</span>
             </div>
           </div>
 
-          <div className="mt-4 border-l-2 border-[#4CAF50] pl-4">
-            <div className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-[#6B7280]">Satya</div>
-            <p className="text-[15px] italic leading-relaxed text-[#111827]" style={{ fontFamily: 'var(--font-serif)' }}>
+          <div className="mt-5 border-l-2 border-green pl-4">
+            <div className="mb-1 font-mono text-[11px] uppercase tracking-[0.14em] text-green">Satya</div>
+            <p className="font-serif text-[1.2rem] italic leading-snug text-ink">
               {satyaLine}
             </p>
+            {baselineNote && (
+              <p className="mt-2 text-[13px] leading-relaxed text-faint">{baselineNote}</p>
+            )}
           </div>
         </div>
 
         {/* Shared with your circle */}
-        <div className="mt-6 border-l-2 border-[#A5D6A7] pl-7 sm:mt-0">
+        <div className="mt-6 border-l border-line pl-7 sm:mt-0">
           <div className="mb-3 flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5 text-[#2E7D32]" />
-            <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#2E7D32]">Shared with your circle</span>
+            <Users className="h-3.5 w-3.5 text-green" />
+            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-green">Shared with your circle</span>
           </div>
 
-          <div className="rounded-2xl border border-[#A5D6A7] bg-white p-4">
+          <div className="rounded-xl border border-green-line bg-card p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2E7D32] text-[13px] font-semibold text-white">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green text-[13px] font-semibold text-white">
                 {firstName[0]?.toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold text-[#111827]">{firstName}</div>
-                <div className="truncate text-xs text-[#6B7280]">
+                <div className="text-sm font-semibold text-ink">{firstName}</div>
+                <div className="truncate text-xs text-faint">
                   {session.intention ? <span className="italic">&ldquo;{session.intention}&rdquo;</span> : 'Focused this session'}
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-mono text-[15px] font-semibold text-[#2E7D32]">{humanDuration(durationS)}</div>
+                <div className="font-mono text-[15px] font-medium text-green">{humanDuration(durationS)}</div>
                 {verified && (
-                  <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-[#E8F5E9] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#2E7D32]">
-                    <ShieldCheck className="h-3 w-3" /> verified
+                  <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-green-tint px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-green">
+                    <VerifiedMark verified size={11} /> verified
                   </span>
                 )}
               </div>
             </div>
-            <p className="mt-3 text-xs leading-relaxed text-[#6B7280]">
+            <p className="mt-3 text-xs leading-relaxed text-faint">
               That&apos;s all they get — verified time, no site, no score.
             </p>
           </div>
 
           <div className="mt-4">
-            <div className="mb-2 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-[#6B7280]">
+            <div className="mb-2 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
               <EyeOff className="h-3 w-3" /> Stays private
             </div>
             {[
@@ -302,8 +328,8 @@ export default function SessionDetailPage() {
               'The nudge, and how long you drifted',
               'Your quality reading',
             ].map((t) => (
-              <div key={t} className="flex items-center gap-2 py-0.5 text-[13px] text-[#6B7280]">
-                <X className="h-3.5 w-3.5 shrink-0 text-[#9CA3AF]" /> {t}
+              <div key={t} className="flex items-center gap-2 py-0.5 text-[13px] text-faint">
+                <X className="h-3.5 w-3.5 shrink-0 text-ghost" /> {t}
               </div>
             ))}
           </div>

@@ -1,12 +1,11 @@
 'use client'
 
-import { Inter } from 'next/font/google'
-import { AlertTriangle } from 'lucide-react'
+import { Instrument_Sans } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const sans = Instrument_Sans({ subsets: ['latin'], display: 'swap' })
 
-// global-error must have its own html/body tags
+// global-error replaces the root layout, so it carries its own html/body.
 export default function GlobalError({
   error,
   reset,
@@ -15,23 +14,26 @@ export default function GlobalError({
   reset: () => void
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} bg-[#0b0f1a] text-white min-h-screen flex flex-col items-center justify-center p-4`}>
-        <div className="text-center max-w-md animate-fade-in-up">
-          <div className="w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6">
-            <AlertTriangle className="w-10 h-10 text-red-400" />
-          </div>
-          <h1 className="text-4xl font-black mb-4">Critical Error</h1>
-          <p className="text-slate-400 mb-8">
-            A fatal application error occurred. We apologize for the disruption.
-          </p>
-          <button
-            onClick={() => reset()}
-            className="h-12 px-8 rounded-full bg-indigo-600 hover:bg-indigo-500 font-semibold transition-all inline-flex items-center justify-center"
-          >
-            Reload Application
-          </button>
-        </div>
+    <html lang="en">
+      <body
+        className={`${sans.className} flex min-h-screen flex-col items-center justify-center bg-[#FAF8F4] p-6 text-center text-[#23201B]`}
+      >
+        <p style={{ fontFamily: 'monospace' }} className="text-xs uppercase tracking-[0.2em] text-[#6F6A61]">
+          Something interrupted
+        </p>
+        <h1 className="mt-4 max-w-md text-2xl font-semibold tracking-tight">
+          SatyaShift couldn&rsquo;t start.
+        </h1>
+        <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-[#575148]">
+          A rare error stopped the app from loading. Your data is safe and untouched.
+          Reloading usually resolves it.
+        </p>
+        <button
+          onClick={() => reset()}
+          className="mt-8 inline-flex h-11 items-center rounded-lg bg-[#23201B] px-6 text-sm font-semibold text-[#FAF8F4] transition-colors hover:bg-[#34302A]"
+        >
+          Reload
+        </button>
       </body>
     </html>
   )

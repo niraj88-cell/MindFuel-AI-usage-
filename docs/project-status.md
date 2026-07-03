@@ -5,6 +5,61 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-03 — Design identity rebuilt: "a ledger of truth" (web + extension, verified)
+
+The interface still read as generic AI-generated SaaS. Root cause (audit in
+`docs/design-language-2026-07-03.md`): the shipped design system belonged to a deleted
+product. `web/app/globals.css` was 751 lines of unused "MindFuel × Spider-Verse"
+(glassmorphism, gradient text, floating orbs, neon glows) — the exact catalogue of AI-slop
+tells — set a dark `body` background every page painted over, and declared `Outfit`/
+`Instrument Serif` fonts **that were never loaded** (Satya's serif silently fell back to
+Georgia). ~15 Tailwind/Material default hexes were hand-copied across ~20 files; the deleted
+dark product still bled through `error.tsx`/`not-found.tsx`/`global-error.tsx`/admin
+("System Glitch", "Decrypting Secure Neural Link").
+
+**New system (durable rules: DECISIONS.md + CLAUDE.md "Design language"):** a quiet ledger —
+warm paper `#FAF8F4`, warm ink `#23201B`, one moss green `#2D6A3F` that appears ONLY where
+something was verified. Built from first principles, not trends.
+
+- **Foundation:** rewrote `globals.css` to a lean `@theme` token set (paper/card/ink/soft/
+  faint/ghost/line/hairline/green+5 shades/rust/clay) consumed as Tailwind utilities — color
+  now has one home; raw hex in markup is a defect. Three self-hosted typefaces via `next/font`
+  in `layout.tsx`: Instrument Sans (UI), Instrument Serif (Satya + statement headings), IBM
+  Plex Mono (measured values + overline labels, tabular). Deleted every Spider-Verse
+  animation/utility.
+- **New brand glyph:** `components/brand/VerifiedMark.tsx` — the bindu seal (closed ring +
+  filled center = verified; open hollow ring = unverified). Replaced every lucide
+  `Shield`/`ShieldCheck` verification chip across dashboard, session, squads, onboarding.
+- **Migrated every surface to tokens + the new language:** landing (now a statement of
+  belief with one honest "what your circle sees" artifact), login/signup (dropped the
+  three-icon trust grid, a flagged AI tell), forgot/reset-password, dashboard (Today),
+  focus (calm breath replaces the `animate-ping`), session detail, squads, notifications,
+  profile, onboarding, admin (killed the sci-fi copy), 404/error/global-error/maintenance,
+  app shell, trust pages + shell + footer, WaitlistForm, PushNotificationManager,
+  button/input/label primitives.
+- **Extension (the product):** rewrote `popup.html` + `welcome.html` to the same palette as
+  CSS variables (kept the system font stack — a popup must open instantly); replaced the
+  ✓/✗ dingbats with on-brand bindu/open-ring CSS markers; dropped the seal's ✓ glyph
+  (`popup.js`, words only). All popup.js logic untouched; all 13 DOM ids + toggled classes
+  preserved (verified by grep).
+- **Removed dead weight:** 8 unused UI components (WebPattern/WebCorner/AccentButton/badge/
+  card/progress/slider/tabs), the 6 orphaned `lib/fuel/*` engines from the deleted coach,
+  and 7 orphaned public images (Next.js starter SVGs, hero-calm, aspiration-nature,
+  og-premium).
+
+**Verification:** `npx tsc --noEmit` clean; `npx next build` green (39/39 pages; clean
+`.next` rebuild confirmed production CSS carries the new tokens and zero `Outfit`/old-green
+— an earlier stale-dev-cache reading was a false alarm); extension `node --test` green
+(38/38); live-preview screenshots of landing, login, and a trust page confirm the identity
+renders (serif display, warm paper, bindu seal, mono measures). Adversarial self-critique
+(Reddit power user / designer / engineer / first-time visitor / subscriber) run; no generic
+tells survived. **Not visually verifiable by the agent:** the extension popup/welcome in a
+real Chrome (harness can't load-unpack) — hand the user a load-unpacked glance as the last
+check. Working tree only; not committed or deployed (awaiting the user's commit, per the
+standing extension-work convention).
+
+---
+
 ## 2026-07-03 — Payment FOUNDATION built + proven end-to-end (dormant; go-live = env config only)
 
 Roadmap step 3 of `docs/payments-architecture-2026-07-02.md`, built BEFORE Paddle

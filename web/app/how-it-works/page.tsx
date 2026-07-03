@@ -83,9 +83,9 @@ export default function HowItWorksPage() {
       intro="SatyaShift keeps an honest, verified record of your focus without watching you. This page walks through exactly what happens after you install it — and exactly where the line is."
     >
       <TrustSections sections={SECTIONS} />
-      <p className="mt-8 text-[15px] leading-relaxed text-[#4B5563]">
-        The full privacy promise, in writing: <Link href="/privacy" className="font-medium text-[#111827] underline underline-offset-2">Privacy</Link>.
-        What it costs: <Link href="/pricing" className="font-medium text-[#111827] underline underline-offset-2">Pricing</Link>.
+      <p className="mt-8 text-[15px] leading-relaxed text-soft">
+        The full privacy promise, in writing: <Link href="/privacy" className="font-medium text-ink underline underline-offset-2">Privacy</Link>.
+        What it costs: <Link href="/pricing" className="font-medium text-ink underline underline-offset-2">Pricing</Link>.
       </p>
     </TrustPage>
   )

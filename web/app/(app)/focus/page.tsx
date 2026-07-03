@@ -23,6 +23,9 @@ function humanElapsed(totalSeconds: number) {
   return h === 0 ? `${m} min` : `${h}h ${String(m % 60).padStart(2, '0')}m`
 }
 
+// A cheer someone in the circle sent for THIS session (their name + a fixed phrase).
+type Cheer = { id: string; from: string; phrase: string }
+
 export default function FocusPage() {
   const router = useRouter()
   const [ready, setReady] = useState(false)
@@ -32,6 +35,7 @@ export default function FocusPage() {
   const [elapsed, setElapsed] = useState(0)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [cheers, setCheers] = useState<Cheer[]>([])
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const loadState = useCallback(async () => {
@@ -63,6 +67,36 @@ export default function FocusPage() {
   }, [router])
 
   useEffect(() => { loadState() }, [loadState])
+
+  // Encouragements from the circle, for THIS session only. Own notifications rows under
+  // RLS — polled gently (45s), because a cheer arriving a moment late is still a cheer,
+  // and this screen must never become something to watch.
+  useEffect(() => {
+    if (!activeId) return
+    let cancelled = false
+    const supabase = createClient()
+    async function poll() {
+      // Newest 20 encouragement rows, then keep the ones for this session in arrival order.
+      const { data } = await supabase
+        .from('notifications')
+        .select('id, metadata')
+        .eq('type', 'squad_encouragement')
+        .order('created_at', { ascending: false })
+        .limit(20)
+      if (cancelled || !data) return
+      const mine = data
+        .filter((n) => (n.metadata as Record<string, unknown> | null)?.session_id === activeId)
+        .map((n) => {
+          const m = n.metadata as Record<string, string>
+          return { id: n.id, from: m.from_name || 'A friend', phrase: m.phrase || 'With you' }
+        })
+        .reverse()
+      setCheers(mine)
+    }
+    poll()
+    const t = setInterval(poll, 45_000)
+    return () => { cancelled = true; clearInterval(t) }
+  }, [activeId])
 
   // Tick the live count-up while a session is active.
   useEffect(() => {
@@ -97,7 +131,7 @@ export default function FocusPage() {
   if (!ready || activeId == null || startedAt == null) {
     return (
       <div className="mx-auto max-w-lg animate-pulse py-16">
-        <div className="mx-auto h-48 w-full rounded-3xl bg-black/[0.05]" />
+        <div className="mx-auto h-48 w-full rounded-xl bg-hairline" />
       </div>
     )
   }
@@ -106,32 +140,40 @@ export default function FocusPage() {
   // invites work instead of clock-watching (the whole point of "just work in the background").
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center py-8 text-center">
-      <span className="relative flex h-16 w-16 items-center justify-center">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#4CAF50] opacity-20 motion-reduce:animate-none" />
-        <span className="relative inline-flex h-4 w-4 rounded-full bg-[#4CAF50]" />
-      </span>
+      <span className="flex h-3 w-3 rounded-full bg-green-bright satya-breathe" />
 
-      <p className="mt-8 text-xl font-bold tracking-tight text-[#111827]">You&rsquo;re focusing.</p>
+      <p className="mt-8 font-serif text-[2rem] leading-tight text-ink">You&rsquo;re focusing.</p>
       {intention && (
-        <p className="mt-2 text-sm italic text-[#6B7280]">&ldquo;{intention}&rdquo;</p>
+        <p className="mt-2 font-serif text-lg italic text-soft">&ldquo;{intention}&rdquo;</p>
       )}
 
-      <p className="mt-6 max-w-xs text-sm leading-relaxed text-[#6B7280]">
+      <p className="mt-6 max-w-xs text-sm leading-relaxed text-soft">
         Just work like you normally would. SatyaShift is verifying this in the background. There&rsquo;s nothing to watch here.
       </p>
 
-      <p className="mt-6 font-mono text-xs text-[#6B7280]">
+      <p className="mt-6 font-mono text-xs text-faint">
         Started {format(new Date(startedAt), 'h:mm a')} &middot; {humanElapsed(elapsed)} so far
       </p>
 
+      {/* Cheers from the circle — quiet, unanimated, nothing to respond to. */}
+      {cheers.length > 0 && (
+        <div className="mt-5 flex max-w-sm flex-wrap items-center justify-center gap-1.5">
+          {cheers.map((c) => (
+            <span key={c.id} className="rounded-full bg-green-tint px-3 py-1 text-[12px] text-green-deep">
+              {c.from}: {c.phrase}
+            </span>
+          ))}
+        </div>
+      )}
+
       <FocusAudio />
 
-      {error && <p className="mt-4 text-sm text-[#B45309]">{error}</p>}
+      {error && <p className="mt-4 text-sm text-rust">{error}</p>}
 
       <button
         onClick={stopSession}
         disabled={busy}
-        className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-[#111827] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#1f2937] disabled:opacity-60"
+        className="mt-8 inline-flex items-center gap-2 rounded-lg bg-ink px-7 py-3.5 text-sm font-semibold text-paper transition-colors hover:bg-ink-hover disabled:opacity-60"
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
         End session

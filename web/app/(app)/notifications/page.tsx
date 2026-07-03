@@ -6,7 +6,7 @@
 // optional, off-by-default nudge to show up. No fake schedules, no "log now", no shame.
 
 import { useEffect, useState } from 'react'
-import { Bell, Shield, Trash2 } from 'lucide-react'
+import { Bell, Lock, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
 import { PushNotificationManager } from '@/components/PushNotificationManager'
@@ -66,21 +66,21 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 py-2">
+    <div className="mx-auto max-w-2xl space-y-7 py-2">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-[#111827]">Activity</h1>
-        <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-[#6B7280]">
+        <h1 className="font-serif text-[2rem] leading-tight tracking-[-0.01em] text-ink">Activity</h1>
+        <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-soft">
           What happened while you were away — pings from your circle, and anything SatyaShift
           sent you. If a single gentle nudge helps you show up, turn one on. It&rsquo;s off by default.
         </p>
       </div>
 
       {/* The one real control */}
-      <section className="rounded-3xl border border-black/[0.07] bg-white p-5">
+      <section className="rounded-xl border border-line bg-card p-5">
         <PushNotificationManager />
-        <div className="mt-4 flex items-start gap-2.5 rounded-2xl bg-[#FAF8F4] p-3">
-          <Shield className="mt-0.5 h-4 w-4 shrink-0 text-[#2E7D32]" />
-          <p className="text-[13px] leading-relaxed text-[#4B5563]">
+        <div className="mt-4 flex items-start gap-2.5 rounded-lg bg-paper p-3">
+          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-green" />
+          <p className="text-[13px] leading-relaxed text-soft">
             A reminder should help you show up. It should never shame you or become another feed to check.
           </p>
         </div>
@@ -88,28 +88,28 @@ export default function NotificationsPage() {
 
       {/* Quiet history of anything the app has sent */}
       <section>
-        <p className="mb-2 px-1 font-mono text-[11px] uppercase tracking-[0.12em] text-[#6B7280]">History</p>
+        <p className="mb-2 px-1 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">History</p>
         {loading ? (
           <div className="space-y-2">
-            {[1, 2].map((item) => <div key={item} className="h-16 animate-pulse rounded-2xl bg-black/[0.04]" />)}
+            {[1, 2].map((item) => <div key={item} className="h-16 animate-pulse rounded-lg bg-hairline" />)}
           </div>
         ) : notifications.length > 0 ? (
-          <div className="rounded-2xl border border-black/[0.07] bg-white">
+          <div className="overflow-hidden rounded-xl border border-line bg-card">
             {notifications.map((item) => (
-              <div key={item.id} className="flex gap-3 border-b border-black/[0.05] p-4 last:border-0">
+              <div key={item.id} className="flex gap-3 border-b border-hairline p-4 last:border-0">
                 <div className="min-w-0 flex-1">
                   <div className="mb-0.5 flex items-start justify-between gap-3">
-                    <p className="text-sm font-semibold text-[#111827]">{item.title}</p>
-                    <p className="shrink-0 text-xs text-[#6B7280]">
+                    <p className="text-sm font-semibold text-ink">{item.title}</p>
+                    <p className="shrink-0 font-mono text-xs text-faint">
                       {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
                     </p>
                   </div>
-                  <p className="text-[13px] leading-relaxed text-[#6B7280]">{item.body}</p>
+                  <p className="text-[13px] leading-relaxed text-soft">{item.body}</p>
                 </div>
                 <button
                   onClick={() => deleteNotification(item.id)}
                   aria-label="Delete"
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[#6B7280] transition-colors hover:bg-black/[0.03] hover:text-[#B42318]"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-faint transition-colors hover:bg-rust-tint hover:text-rust"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -117,10 +117,10 @@ export default function NotificationsPage() {
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl border border-black/[0.07] bg-white p-8 text-center">
-            <Bell className="mx-auto mb-3 h-7 w-7 text-[#A5D6A7]" />
-            <p className="text-sm font-medium text-[#111827]">Nothing here yet.</p>
-            <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-[#6B7280]">
+          <div className="rounded-xl border border-line bg-card p-8 text-center">
+            <Bell className="mx-auto mb-3 h-6 w-6 text-green-line" />
+            <p className="text-sm font-medium text-ink">Nothing here yet.</p>
+            <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-faint">
               Anything SatyaShift sends you will rest here quietly. That&rsquo;s all this page is for.
             </p>
           </div>

@@ -13,11 +13,11 @@ import {
   Plus,
   KeyRound,
   ArrowRight,
-  ShieldCheck,
-  Shield,
   UserPlus,
   Check,
 } from 'lucide-react'
+import { VerifiedMark } from '@/components/brand/VerifiedMark'
+import { ENCOURAGEMENT_PHRASES } from '@/lib/squad/encouragement'
 
 interface Member {
   id: string
@@ -31,12 +31,14 @@ interface Squad {
   invite_code: string
   members: Member[]
 }
+// The feed is privacy-shaped at the DB (get_squad_feed): who, active/verified, duration,
+// their own intention words. Quality labels and percentages never reach this client.
 interface FeedItem {
   id: string
-  status: string | null
+  active: boolean
+  verified: boolean
   duration_s: number | null
   intention: string | null
-  session_quality: string | null
   created_at: string
   member: { id: string; name: string; avatar: string | null }
 }
@@ -52,7 +54,7 @@ function minutesSince(iso: string) {
 function initials(name: string) {
   return name.trim()[0]?.toUpperCase() || '?'
 }
-const AVATAR_COLORS = ['#2E7D32', '#534AB7', '#185FA5', '#993C1D', '#72243E']
+const AVATAR_COLORS = ['#2D6A3F', '#4A4636', '#3B5C6B', '#8A5A18', '#7A3B2E']
 function avatarColor(id: string) {
   let h = 0
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0
@@ -95,8 +97,23 @@ export default function SquadsPage() {
     return () => { cancelled = true }
   }, [loadSquads])
 
-  const focusingNow = useMemo(() => feed.filter((f) => f.status === 'active'), [feed])
-  const recent = useMemo(() => feed.filter((f) => f.status !== 'active'), [feed])
+  const focusingNow = useMemo(() => feed.filter((f) => f.active), [feed])
+  const recent = useMemo(() => feed.filter((f) => !f.active), [feed])
+
+  // session id → 'sending' | 'sent'. One cheer per member per session; the server dedupes,
+  // this just keeps the UI honest about it.
+  const [cheered, setCheered] = useState<Record<string, 'sending' | 'sent'>>({})
+
+  async function encourage(sessionId: string, phrase: number) {
+    setCheered((c) => ({ ...c, [sessionId]: 'sending' }))
+    try {
+      await fetch('/api/squads/encourage', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, phrase }),
+      })
+    } catch { /* a lost cheer is not an error worth surfacing */ }
+    setCheered((c) => ({ ...c, [sessionId]: 'sent' }))
+  }
 
   async function createSquad(e: React.FormEvent) {
     e.preventDefault()
@@ -152,15 +169,13 @@ export default function SquadsPage() {
     )
   }
 
-  function VerifiedBadge({ quality }: { quality: string | null }) {
-    const verified = !!quality && quality !== 'unverified'
-    return verified ? (
-      <span className="inline-flex items-center gap-1 rounded-full bg-[#E8F5E9] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#2E7D32]">
-        <ShieldCheck className="h-3 w-3" /> verified
-      </span>
-    ) : (
-      <span className="inline-flex items-center gap-1 rounded-full bg-black/[0.05] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#6B7280]">
-        <Shield className="h-3 w-3" /> unverified
+  function VerifiedBadge({ verified }: { verified: boolean }) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wide ${verified ? 'text-green' : 'text-ghost'}`}
+        title={verified ? 'Extension verified' : 'Not verified'}
+      >
+        <VerifiedMark verified={verified} size={12} /> {verified ? 'verified' : 'unverified'}
       </span>
     )
   }
@@ -168,7 +183,7 @@ export default function SquadsPage() {
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-7 w-7 animate-spin text-[#2E7D32]" />
+        <Loader2 className="h-7 w-7 animate-spin text-green" />
       </div>
     )
   }
@@ -177,54 +192,54 @@ export default function SquadsPage() {
   if (!squad) {
     return (
       <div className="mx-auto max-w-2xl py-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-[#111827]">Focus is easier with someone in it.</h1>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[#6B7280]">
+        <div>
+          <h1 className="font-serif text-[2rem] leading-tight tracking-[-0.01em] text-ink">Focus is easier with someone in it.</h1>
+          <p className="mt-3 max-w-md text-[15px] leading-relaxed text-soft">
             A circle is a few people who see when you&rsquo;re focusing and quietly show up too. No feed to scroll, no rankings.
           </p>
         </div>
 
         {message && (
-          <div className="mt-6 rounded-2xl bg-[#FEF3F2] p-3 text-sm font-medium text-[#B42318]">{message.text}</div>
+          <div className="mt-6 rounded-lg bg-rust-tint p-3 text-sm font-medium text-rust">{message.text}</div>
         )}
 
-        <form onSubmit={createSquad} className="mt-7 rounded-3xl border border-black/[0.07] bg-white p-5">
-          <div className="mb-2 flex items-center gap-2 text-[#2E7D32]">
+        <form onSubmit={createSquad} className="mt-7 rounded-xl border border-line bg-card p-5">
+          <div className="mb-2 flex items-center gap-2 text-green">
             <Plus className="h-4 w-4" />
-            <span className="text-sm font-semibold text-[#111827]">Create a circle</span>
+            <span className="text-sm font-semibold text-ink">Create a circle</span>
           </div>
           <input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Evening reset"
-            className="w-full rounded-2xl border border-black/[0.08] bg-[#FAF8F4] px-4 py-3 text-sm outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#4CAF50]"
+            className="w-full rounded-lg border border-line bg-paper px-4 py-3 text-sm outline-none transition-colors placeholder:text-ghost focus:border-green"
           />
           <button
             type="submit"
             disabled={newName.trim().length < 3 || busy === 'create'}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#2E7D32] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#256628] disabled:opacity-50"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white transition-colors hover:bg-green-deep disabled:opacity-50"
           >
             {busy === 'create' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
             Create circle
           </button>
         </form>
 
-        <form onSubmit={joinSquad} className="mt-4 rounded-3xl border border-black/[0.07] bg-white p-5">
-          <div className="mb-2 flex items-center gap-2 text-[#2E7D32]">
+        <form onSubmit={joinSquad} className="mt-4 rounded-xl border border-line bg-card p-5">
+          <div className="mb-2 flex items-center gap-2 text-green">
             <KeyRound className="h-4 w-4" />
-            <span className="text-sm font-semibold text-[#111827]">Join with an invite code</span>
+            <span className="text-sm font-semibold text-ink">Join with an invite code</span>
           </div>
           <input
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             maxLength={6}
             placeholder="6-CHAR CODE"
-            className="w-full rounded-2xl border border-black/[0.08] bg-[#FAF8F4] px-4 py-3 text-center font-mono text-sm uppercase tracking-[0.3em] outline-none transition-colors placeholder:tracking-normal placeholder:text-[#9CA3AF] focus:border-[#4CAF50]"
+            className="w-full rounded-lg border border-line bg-paper px-4 py-3 text-center font-mono text-sm uppercase tracking-[0.3em] outline-none transition-colors placeholder:tracking-normal placeholder:text-ghost focus:border-green"
           />
           <button
             type="submit"
             disabled={!code.trim() || busy === 'join'}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-black/[0.08] bg-white py-3 text-sm font-semibold text-[#111827] transition-colors hover:bg-black/[0.02] disabled:opacity-50"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-line bg-card py-3 text-sm font-semibold text-ink transition-colors hover:bg-green-wash disabled:opacity-50"
           >
             {busy === 'join' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
             Join circle
@@ -240,34 +255,33 @@ export default function SquadsPage() {
   return (
     <div className="mx-auto max-w-2xl py-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight text-[#111827]">{squad.name}</h1>
+        <h1 className="font-serif text-[1.9rem] leading-tight tracking-[-0.01em] text-ink">{squad.name}</h1>
         <button
           onClick={copyInvite}
-          className="inline-flex items-center gap-2 rounded-2xl border border-black/[0.08] bg-white px-3.5 py-2 font-mono text-xs font-semibold tracking-wider text-[#111827] transition-colors hover:bg-black/[0.02]"
+          className="inline-flex items-center gap-2 rounded-lg border border-line bg-card px-3.5 py-2 font-mono text-xs font-medium tracking-wider text-ink transition-colors hover:bg-green-wash"
         >
-          {copied ? <><Check className="h-3.5 w-3.5 text-[#2E7D32]" /> copied</> : <>{squad.invite_code} <Copy className="h-3.5 w-3.5" /></>}
+          {copied ? <><Check className="h-3.5 w-3.5 text-green" /> copied</> : <>{squad.invite_code} <Copy className="h-3.5 w-3.5" /></>}
         </button>
       </div>
 
       {/* Members row */}
       <div className="mt-4 flex flex-wrap gap-2">
         {squad.members.map((m) => (
-          <div key={m.id} className="inline-flex items-center gap-2 rounded-full border border-black/[0.06] bg-white py-1 pl-1 pr-3">
+          <div key={m.id} className="inline-flex items-center gap-2 rounded-full border border-line bg-card py-1 pl-1 pr-3">
             <Avatar id={m.id} name={m.name} size={24} />
-            <span className="text-xs font-medium text-[#111827]">{m.name}</span>
-            {m.status === 'checked_in' && <span className="h-1.5 w-1.5 rounded-full bg-[#4CAF50]" title="focused today" />}
+            <span className="text-xs font-medium text-ink">{m.name}</span>
+            {m.status === 'checked_in' && <span className="h-1.5 w-1.5 rounded-full bg-green-bright" title="focused today" />}
           </div>
         ))}
       </div>
 
       {soloSquad && (
-        <div className="mt-6 rounded-3xl bg-[#E8F5E9] p-5 text-center">
-          <UserPlus className="mx-auto h-6 w-6 text-[#2E7D32]" />
-          <p className="mt-2 text-sm font-semibold text-[#1B5E20]">It&rsquo;s just you so far.</p>
-          <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-[#2E7D32]">
+        <div className="mt-6 rounded-xl border border-green-line bg-green-tint p-5 text-center">
+          <p className="font-serif text-lg text-green-deep">It&rsquo;s just you so far.</p>
+          <p className="mx-auto mt-1.5 max-w-sm text-xs leading-relaxed text-green">
             Share your code with someone who&rsquo;ll keep you company. They&rsquo;ll only ever see your verified time — never your sites.
           </p>
-          <button onClick={copyInvite} className="mt-3 inline-flex items-center gap-2 rounded-full bg-[#2E7D32] px-4 py-2 font-mono text-xs font-semibold tracking-wider text-white">
+          <button onClick={copyInvite} className="mt-3 inline-flex items-center gap-2 rounded-full bg-green px-4 py-2 font-mono text-xs font-medium tracking-wider text-white transition-colors hover:bg-green-deep">
             {copied ? 'copied' : squad.invite_code} <Copy className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -275,18 +289,39 @@ export default function SquadsPage() {
 
       {/* In it right now */}
       {focusingNow.length > 0 && (
-        <div className="mt-7">
+        <div className="mt-8">
           <div className="mb-2 flex items-center gap-2">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[#4CAF50] motion-reduce:animate-none" />
-            <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#2E7D32]">In it right now</span>
+            <span className="h-2 w-2 rounded-full bg-green-bright satya-breathe" />
+            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-green">In it right now</span>
           </div>
           <div className="space-y-2">
             {focusingNow.map((f) => (
-              <div key={f.id} className="flex items-center gap-3 rounded-2xl border border-[#A5D6A7] bg-white px-4 py-3">
-                <Avatar id={f.member.id} name={f.member.name} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-[#111827]">{f.member.name} is focusing</p>
-                  <p className="text-xs text-[#6B7280]">{minutesSince(f.created_at)} min in{f.intention ? ` · “${f.intention}”` : ''}</p>
+              <div key={f.id} className="rounded-xl border border-green-line bg-card px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <Avatar id={f.member.id} name={f.member.name} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-ink">{f.member.name} is focusing</p>
+                    <p className="text-xs text-faint">{minutesSince(f.created_at)} min in{f.intention ? ` · “${f.intention}”` : ''}</p>
+                  </div>
+                </div>
+                {/* One quiet cheer — fixed phrases, once per session, no chat, no reply. */}
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5 pl-[46px]">
+                  {cheered[f.id] === 'sent' ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-green-tint px-2.5 py-1 text-[11px] font-medium text-green">
+                      <Check className="h-3 w-3" /> Sent. They&rsquo;ll see it quietly.
+                    </span>
+                  ) : (
+                    ENCOURAGEMENT_PHRASES.map((phrase, i) => (
+                      <button
+                        key={phrase}
+                        onClick={() => encourage(f.id, i)}
+                        disabled={cheered[f.id] === 'sending'}
+                        className="rounded-full border border-line bg-card px-2.5 py-1 text-[11px] font-medium text-soft transition-colors hover:border-green-line hover:bg-green-wash hover:text-green disabled:opacity-50"
+                      >
+                        {phrase}
+                      </button>
+                    ))
+                  )}
                 </div>
               </div>
             ))}
@@ -295,35 +330,35 @@ export default function SquadsPage() {
       )}
 
       {/* Recent verified sessions */}
-      <div className="mt-7">
-        <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-[#6B7280]">Recent</div>
+      <div className="mt-8">
+        <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Recent</div>
         {recent.length > 0 ? (
-          <div className="rounded-2xl border border-black/[0.07] bg-white">
+          <div className="overflow-hidden rounded-xl border border-line bg-card">
             {recent.map((f) => (
-              <div key={f.id} className="flex items-center gap-3 border-b border-black/[0.05] px-4 py-3 last:border-0">
+              <div key={f.id} className="flex items-center gap-3 border-b border-hairline px-4 py-3 last:border-0">
                 <Avatar id={f.member.id} name={f.member.name} />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-[#111827]">{f.member.name}</p>
-                  <p className="truncate text-xs text-[#6B7280]">
+                  <p className="text-sm font-medium text-ink">{f.member.name}</p>
+                  <p className="truncate text-xs text-faint">
                     {f.intention ? <span className="italic">&ldquo;{f.intention}&rdquo;</span> : 'Focused'}
                   </p>
                 </div>
-                <VerifiedBadge quality={f.session_quality} />
-                <span className="font-mono text-sm font-semibold text-[#2E7D32]">{humanDuration(f.duration_s ?? 0)}</span>
+                <VerifiedBadge verified={f.verified} />
+                <span className="font-mono text-sm font-medium text-green-deep">{humanDuration(f.duration_s ?? 0)}</span>
               </div>
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl border border-black/[0.07] bg-white p-8 text-center">
-            <p className="text-sm font-medium text-[#111827]">No sessions yet.</p>
-            <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-[#6B7280]">
+          <div className="rounded-xl border border-line bg-card p-8 text-center">
+            <p className="text-sm font-medium text-ink">No sessions yet.</p>
+            <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-faint">
               When anyone in your circle focuses, their verified time shows up here.
             </p>
           </div>
         )}
       </div>
 
-      <p className="mt-8 text-center text-xs text-[#6B7280]">
+      <p className="mt-9 text-center text-xs text-faint">
         No streaks, no rankings, no totals — just your people, showing up.
       </p>
     </div>

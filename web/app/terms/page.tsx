@@ -109,10 +109,10 @@ export default function TermsPage() {
       intro="The agreement between you and SatyaShift, in plain words. The short version: pay only after a free trial convinces you, cancel in one click, your data is yours, and we behave like the product promises."
     >
       <TrustSections sections={SECTIONS} />
-      <p className="mt-8 text-[15px] leading-relaxed text-[#4B5563]">
-        Related: <Link href="/privacy" className="font-medium text-[#111827] underline underline-offset-2">Privacy</Link> ·{' '}
-        <Link href="/refund" className="font-medium text-[#111827] underline underline-offset-2">Refund Policy</Link> ·{' '}
-        <Link href="/pricing" className="font-medium text-[#111827] underline underline-offset-2">Pricing</Link>
+      <p className="mt-8 text-[15px] leading-relaxed text-soft">
+        Related: <Link href="/privacy" className="font-medium text-ink underline underline-offset-2">Privacy</Link> ·{' '}
+        <Link href="/refund" className="font-medium text-ink underline underline-offset-2">Refund Policy</Link> ·{' '}
+        <Link href="/pricing" className="font-medium text-ink underline underline-offset-2">Pricing</Link>
       </p>
     </TrustPage>
   )

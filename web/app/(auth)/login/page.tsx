@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Eye, EyeOff, ArrowRight, Loader2, Shield, ShieldCheck, Activity } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,10 +10,11 @@ import { SatyaMark } from '@/components/brand/SatyaMark'
 import { createClient } from '@/lib/supabase/client'
 import { identifyUser, trackEvent } from '@/lib/mixpanel'
 
+// Three quiet truths, stated plainly — no icon-tile trust grid (a generic tell).
 const TRUST_ITEMS = [
-  { icon: Shield, title: 'Private by default', desc: 'Your domains stay on your account — never shown to your circle.' },
-  { icon: ShieldCheck, title: 'Verified, not self-reported', desc: 'Focus sessions are confirmed in the background, so they can’t be faked.' },
-  { icon: Activity, title: 'Ambient by design', desc: 'Nothing to start or log — your sessions appear on their own.' },
+  { title: 'Private by default.', desc: 'Your domains stay on your account, never shown to your circle.' },
+  { title: 'Verified, not self-reported.', desc: 'Sessions are confirmed in the background, so they can’t be faked.' },
+  { title: 'Ambient by design.', desc: 'Nothing to start or log — your sessions appear on their own.' },
 ]
 
 export default function LoginPage() {
@@ -63,55 +64,51 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FAF8F4] text-[#111827]">
+    <main className="min-h-screen bg-paper text-ink">
       <div className="grid min-h-screen lg:grid-cols-2">
-        <section className="hidden lg:flex flex-col justify-between border-r border-black/[0.06] px-16 py-12">
-          <Link href="/" className="flex items-center gap-3 w-fit">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#111827] text-white">
+        <section className="hidden flex-col justify-between border-r border-line px-16 py-12 lg:flex">
+          <Link href="/" className="flex w-fit items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-ink text-white">
               <SatyaMark size={20} />
             </span>
-            <span className="text-2xl font-bold tracking-tight">SatyaShift</span>
+            <span className="text-xl font-semibold tracking-tight">SatyaShift</span>
           </Link>
 
           <div className="max-w-xl">
-            <p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-[#4CAF50]">Welcome back</p>
-            <h1 className="mb-6 text-5xl font-semibold leading-[1.05] tracking-tight">
+            <h1 className="mb-6 font-serif text-[3.25rem] leading-[1.05] tracking-[-0.01em]">
               Welcome back to your focus.
             </h1>
-            <p className="max-w-md text-lg leading-relaxed text-[#4B5563]">
+            <p className="max-w-md text-lg leading-relaxed text-soft">
               Sign in to see your verified focus sessions and check in with your circle.
             </p>
           </div>
 
-          <div className="grid gap-4">
+          <div className="space-y-4 border-t border-line pt-8">
             {TRUST_ITEMS.map((item) => (
-              <div key={item.title} className="flex gap-4 rounded-2xl border border-black/[0.06] bg-white/70 p-5">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#ECFDF5] text-[#4CAF50]">
-                  <item.icon className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="font-semibold">{item.title}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-[#6B7280]">{item.desc}</p>
-                </div>
+              <div key={item.title} className="flex gap-3">
+                <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-green" aria-hidden="true" />
+                <p className="text-[15px] leading-relaxed text-soft">
+                  <span className="font-medium text-ink">{item.title}</span> {item.desc}
+                </p>
               </div>
             ))}
           </div>
         </section>
 
         <section className="flex items-center justify-center px-5 py-10 sm:px-8">
-          <div className="w-full max-w-[430px]">
+          <div className="w-full max-w-[420px]">
             <div className="mb-10 lg:hidden">
-              <Link href="/" className="flex items-center gap-3 w-fit">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#111827] text-white">
+              <Link href="/" className="flex w-fit items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-ink text-white">
                   <SatyaMark size={20} />
                 </span>
-                <span className="text-2xl font-bold tracking-tight">SatyaShift</span>
+                <span className="text-xl font-semibold tracking-tight">SatyaShift</span>
               </Link>
             </div>
 
             <div className="mb-8">
-              <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Sign in</h2>
-              <p className="mt-3 text-base text-[#6B7280]">Continue to your verified focus sessions and your circle.</p>
+              <h2 className="font-serif text-4xl tracking-[-0.01em]">Sign in</h2>
+              <p className="mt-3 text-[15px] text-soft">Continue to your verified focus sessions and your circle.</p>
             </div>
 
             <button
@@ -119,7 +116,7 @@ export default function LoginPage() {
               type="button"
               onClick={handleGoogleLogin}
               disabled={googleLoading}
-              className="flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-black/[0.08] bg-white text-sm font-semibold text-[#111827] shadow-sm transition-colors hover:bg-[#F5F7F6] disabled:opacity-60"
+              className="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-line bg-card text-sm font-semibold text-ink transition-colors hover:bg-green-wash disabled:opacity-60"
             >
               {googleLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -137,15 +134,15 @@ export default function LoginPage() {
             </button>
 
             <div className="my-8 flex items-center gap-4">
-              <div className="h-px flex-1 bg-black/[0.08]" />
-              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#6B7280]">or</span>
-              <div className="h-px flex-1 bg-black/[0.08]" />
+              <div className="h-px flex-1 bg-line" />
+              <span className="font-mono text-xs uppercase tracking-[0.16em] text-faint">or</span>
+              <div className="h-px flex-1 bg-line" />
             </div>
 
-            <form onSubmit={handleLogin} className="rounded-3xl border border-black/[0.07] bg-white p-6 shadow-sm sm:p-8">
+            <form onSubmit={handleLogin} className="rounded-xl border border-line bg-card p-6 sm:p-8">
               <div className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6B7280]">Email</Label>
+                  <Label htmlFor="email" className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -154,14 +151,14 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     autoComplete="email"
-                    className="h-12 rounded-2xl border-black/[0.08] bg-[#F9FAF8] text-[#111827] placeholder:text-[#9CA3AF]"
+                    className="h-12 rounded-lg"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6B7280]">Password</Label>
-                    <Link href="/forgot-password" className="text-xs font-semibold text-[#4B5563] hover:text-[#111827]">Forgot?</Link>
+                    <Label htmlFor="password" className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Password</Label>
+                    <Link href="/forgot-password" className="text-xs font-semibold text-soft hover:text-ink">Forgot?</Link>
                   </div>
                   <div className="relative">
                     <Input
@@ -172,12 +169,12 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       autoComplete="current-password"
-                      className="h-12 rounded-2xl border-black/[0.08] bg-[#F9FAF8] pr-12 text-[#111827] placeholder:text-[#9CA3AF]"
+                      className="h-12 rounded-lg pr-12"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-[#6B7280] transition-colors hover:bg-black/[0.04] hover:text-[#111827]"
+                      className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-faint transition-colors hover:bg-hairline hover:text-ink"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -186,7 +183,7 @@ export default function LoginPage() {
                 </div>
 
                 {error && (
-                  <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+                  <div className="rounded-lg border border-rust/25 bg-rust-tint p-3 text-sm font-medium text-rust">
                     {error}
                   </div>
                 )}
@@ -194,7 +191,7 @@ export default function LoginPage() {
                 <Button
                   id="login-button"
                   type="submit"
-                  className="h-12 w-full rounded-2xl bg-[#111827] text-sm font-semibold text-white hover:bg-[#1F2937]"
+                  className="h-12 w-full rounded-lg"
                   disabled={loading}
                 >
                   {loading ? (
@@ -208,9 +205,9 @@ export default function LoginPage() {
               </div>
             </form>
 
-            <p className="mt-8 text-center text-sm text-[#6B7280]">
+            <p className="mt-8 text-center text-sm text-faint">
               New to SatyaShift?{' '}
-              <Link href="/signup" className="font-semibold text-[#111827] hover:underline">
+              <Link href="/signup" className="font-semibold text-ink hover:underline">
                 Create an account
               </Link>
             </p>

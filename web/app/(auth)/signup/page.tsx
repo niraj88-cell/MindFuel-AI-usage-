@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, Check, Eye, EyeOff, Loader2, Lock, Shield, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Check, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -86,20 +86,20 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#FAF8F4] px-5 text-[#111827]">
-        <div className="w-full max-w-md rounded-3xl border border-black/[0.07] bg-white p-8 text-center shadow-sm">
-          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ECFDF5] text-[#4CAF50]">
-            <Check className="h-7 w-7" />
+      <main className="flex min-h-screen items-center justify-center bg-paper px-5 text-ink">
+        <div className="w-full max-w-md rounded-xl border border-line bg-card p-8 text-center">
+          <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-green-tint text-green">
+            <Check className="h-6 w-6" />
           </div>
-          <h1 className="mb-3 text-2xl font-semibold tracking-tight">Check your email</h1>
-          <p className="text-sm leading-relaxed text-[#6B7280]">
-            We sent a confirmation link to <span className="font-semibold text-[#111827]">{email}</span>. Open it to activate your account.
+          <h1 className="mb-3 font-serif text-3xl tracking-[-0.01em]">Check your email</h1>
+          <p className="text-sm leading-relaxed text-soft">
+            We sent a confirmation link to <span className="font-semibold text-ink">{email}</span>. Open it to activate your account.
           </p>
           <div className="mt-8 space-y-3">
-            <Button onClick={() => router.push('/login')} className="h-11 w-full rounded-2xl bg-[#111827] text-white hover:bg-[#1F2937]">
+            <Button onClick={() => router.push('/login')} className="h-11 w-full rounded-lg">
               Back to login
             </Button>
-            <p className="text-xs text-[#6B7280]">If it is not in your inbox, check spam or promotions.</p>
+            <p className="text-xs text-faint">If it is not in your inbox, check spam or promotions.</p>
           </div>
         </div>
       </main>
@@ -107,66 +107,54 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FAF8F4] text-[#111827]">
+    <main className="min-h-screen bg-paper text-ink">
       <div className="grid min-h-screen lg:grid-cols-2">
-        <section className="hidden lg:flex flex-col justify-between border-r border-black/[0.06] px-16 py-12">
-          <Link href="/" className="flex items-center gap-3 w-fit">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#111827] text-white">
+        <section className="hidden flex-col justify-between border-r border-line px-16 py-12 lg:flex">
+          <Link href="/" className="flex w-fit items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-ink text-white">
               <SatyaMark size={20} />
             </span>
-            <span className="text-2xl font-bold tracking-tight">SatyaShift</span>
+            <span className="text-xl font-semibold tracking-tight">SatyaShift</span>
           </Link>
 
           <div className="max-w-xl">
-            <p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-[#4CAF50]">Start in seconds</p>
-            <h1 className="mb-6 text-5xl font-semibold leading-[1.05] tracking-tight">
+            <h1 className="mb-6 font-serif text-[3.25rem] leading-[1.05] tracking-[-0.01em]">
               Focus you can actually prove.
             </h1>
-            <p className="max-w-md text-lg leading-relaxed text-[#4B5563]">
+            <p className="max-w-md text-lg leading-relaxed text-soft">
               Create your account, add the extension, and your first verified focus session appears on its own.
             </p>
           </div>
 
-          <div className="rounded-3xl border border-black/[0.06] bg-white/75 p-6">
-            <div className="mb-5 flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ECFDF5] text-[#4CAF50]">
-                <Shield className="h-5 w-5" />
-              </span>
-              <div>
-                <p className="font-semibold">Private by default</p>
-                <p className="text-sm text-[#6B7280]">No ads. Export anytime. Delete your data anytime.</p>
-              </div>
-            </div>
-            <div className="space-y-4">
-              {STEPS.map((step, index) => (
-                <div key={step.label} className="flex gap-3">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#F5F7F6] text-xs font-semibold text-[#4CAF50]">
-                    {index + 1}
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold">{step.label}</p>
-                    <p className="text-sm text-[#6B7280]">{step.detail}</p>
-                  </div>
+          <ol className="space-y-4 border-t border-line pt-8">
+            {STEPS.map((step, index) => (
+              <li key={step.label} className="flex gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-green-line font-mono text-xs font-medium text-green">
+                  {index + 1}
+                </span>
+                <div>
+                  <p className="text-sm font-medium text-ink">{step.label}</p>
+                  <p className="text-sm text-faint">{step.detail}</p>
                 </div>
-              ))}
-            </div>
-          </div>
+              </li>
+            ))}
+          </ol>
         </section>
 
         <section className="flex items-center justify-center px-5 py-10 sm:px-8">
-          <div className="w-full max-w-[430px]">
+          <div className="w-full max-w-[420px]">
             <div className="mb-10 lg:hidden">
-              <Link href="/" className="flex items-center gap-3 w-fit">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#111827] text-white">
+              <Link href="/" className="flex w-fit items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-ink text-white">
                   <SatyaMark size={20} />
                 </span>
-                <span className="text-2xl font-bold tracking-tight">SatyaShift</span>
+                <span className="text-xl font-semibold tracking-tight">SatyaShift</span>
               </Link>
             </div>
 
             <div className="mb-8">
-              <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Create your account</h2>
-              <p className="mt-3 text-base text-[#6B7280]">Start free. No credit card required.</p>
+              <h2 className="font-serif text-4xl tracking-[-0.01em]">Create your account</h2>
+              <p className="mt-3 text-[15px] text-soft">Start free. No credit card required.</p>
             </div>
 
             <button
@@ -188,7 +176,7 @@ export default function SignupPage() {
                 }
               }}
               disabled={googleLoading}
-              className="flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-black/[0.08] bg-white text-sm font-semibold text-[#111827] shadow-sm transition-colors hover:bg-[#F5F7F6] disabled:opacity-60"
+              className="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-line bg-card text-sm font-semibold text-ink transition-colors hover:bg-green-wash disabled:opacity-60"
             >
               {googleLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -206,15 +194,15 @@ export default function SignupPage() {
             </button>
 
             <div className="my-8 flex items-center gap-4">
-              <div className="h-px flex-1 bg-black/[0.08]" />
-              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#6B7280]">or</span>
-              <div className="h-px flex-1 bg-black/[0.08]" />
+              <div className="h-px flex-1 bg-line" />
+              <span className="font-mono text-xs uppercase tracking-[0.16em] text-faint">or</span>
+              <div className="h-px flex-1 bg-line" />
             </div>
 
-            <form onSubmit={handleSignup} className="rounded-3xl border border-black/[0.07] bg-white p-6 shadow-sm sm:p-8">
+            <form onSubmit={handleSignup} className="rounded-xl border border-line bg-card p-6 sm:p-8">
               <div className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email" className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6B7280]">Email</Label>
+                  <Label htmlFor="signup-email" className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Email</Label>
                   <Input
                     id="signup-email"
                     type="email"
@@ -223,12 +211,12 @@ export default function SignupPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     autoComplete="email"
-                    className="h-12 rounded-2xl border-black/[0.08] bg-[#F9FAF8] text-[#111827] placeholder:text-[#9CA3AF]"
+                    className="h-12 rounded-lg"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password" className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6B7280]">Password</Label>
+                  <Label htmlFor="signup-password" className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Password</Label>
                   <div className="relative">
                     <Input
                       id="signup-password"
@@ -239,12 +227,12 @@ export default function SignupPage() {
                       required
                       autoComplete="new-password"
                       minLength={8}
-                      className="h-12 rounded-2xl border-black/[0.08] bg-[#F9FAF8] pr-12 text-[#111827] placeholder:text-[#9CA3AF]"
+                      className="h-12 rounded-lg pr-12"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-[#6B7280] transition-colors hover:bg-black/[0.04] hover:text-[#111827]"
+                      className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-faint transition-colors hover:bg-hairline hover:text-ink"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -253,19 +241,19 @@ export default function SignupPage() {
 
                   {password.length > 0 && (
                     <div className="flex items-center gap-3 pt-2">
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#EEF0EC]">
+                      <div className="h-1 flex-1 overflow-hidden rounded-full bg-hairline">
                         <div
-                          className="h-full rounded-full bg-[#4CAF50] transition-all"
+                          className="h-full rounded-full bg-green transition-all"
                           style={{ width: `${Math.min(100, Math.max(20, strength * 20))}%` }}
                         />
                       </div>
-                      <span className="text-xs font-semibold text-[#6B7280]">{strengthLabel}</span>
+                      <span className="font-mono text-[11px] uppercase tracking-wide text-faint">{strengthLabel}</span>
                     </div>
                   )}
                 </div>
 
                 {error && (
-                  <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+                  <div className="rounded-lg border border-rust/25 bg-rust-tint p-3 text-sm font-medium text-rust">
                     {error}
                   </div>
                 )}
@@ -273,7 +261,7 @@ export default function SignupPage() {
                 <Button
                   id="signup-button"
                   type="submit"
-                  className="h-12 w-full rounded-2xl bg-[#111827] text-sm font-semibold text-white hover:bg-[#1F2937]"
+                  className="h-12 w-full rounded-lg"
                   disabled={loading}
                 >
                   {loading ? (
@@ -285,25 +273,23 @@ export default function SignupPage() {
                   )}
                 </Button>
 
-                <p className="text-center text-xs leading-relaxed text-[#6B7280]">
+                <p className="text-center text-xs leading-relaxed text-faint">
                   By signing up, you agree to our{' '}
-                  <Link href="/privacy" className="font-semibold text-[#111827] hover:underline">Privacy Policy</Link>.
+                  <Link href="/privacy" className="font-semibold text-ink hover:underline">Privacy Policy</Link>.
                 </p>
               </div>
             </form>
 
-            <p className="mt-8 text-center text-sm text-[#6B7280]">
+            <p className="mt-8 text-center text-sm text-faint">
               Already have an account?{' '}
-              <Link href="/login" className="font-semibold text-[#111827] hover:underline">
+              <Link href="/login" className="font-semibold text-ink hover:underline">
                 Sign in
               </Link>
             </p>
 
-            <div className="mt-8 flex items-center justify-center gap-4 text-xs font-medium text-[#6B7280]">
-              <span className="inline-flex items-center gap-1.5"><Lock className="h-3.5 w-3.5" /> No ads</span>
-              <span className="h-1 w-1 rounded-full bg-[#D1D5DB]" />
-              <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> Export anytime</span>
-            </div>
+            <p className="mt-8 text-center font-mono text-[11px] uppercase tracking-[0.14em] text-ghost">
+              No ads · Export anytime · Delete anytime
+            </p>
           </div>
         </section>
       </div>

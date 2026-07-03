@@ -94,9 +94,9 @@ export default function PrivacyPage() {
       intro="SatyaShift exists to prove focus without surveilling you. This page says exactly what we see, what we never see, and the control you keep. It is the same promise the product makes on every screen."
     >
       <TrustSections sections={SECTIONS} />
-      <p className="mt-8 text-[15px] leading-relaxed text-[#4B5563]">
+      <p className="mt-8 text-[15px] leading-relaxed text-soft">
         For the plain-English walkthrough of the product itself, see{' '}
-        <Link href="/how-it-works" className="font-medium text-[#111827] underline underline-offset-2">How it works</Link>.
+        <Link href="/how-it-works" className="font-medium text-ink underline underline-offset-2">How it works</Link>.
       </p>
     </TrustPage>
   )

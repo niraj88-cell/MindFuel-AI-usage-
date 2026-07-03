@@ -52,9 +52,9 @@ export default function RefundPage() {
       footnote="Effective July 3, 2026 · Questions: niraj2055adk@gmail.com"
     >
       <TrustSections sections={SECTIONS} />
-      <p className="mt-8 text-[15px] leading-relaxed text-[#4B5563]">
-        See also <Link href="/pricing" className="font-medium text-[#111827] underline underline-offset-2">Pricing</Link> and{' '}
-        <Link href="/terms" className="font-medium text-[#111827] underline underline-offset-2">Terms of Service</Link>.
+      <p className="mt-8 text-[15px] leading-relaxed text-soft">
+        See also <Link href="/pricing" className="font-medium text-ink underline underline-offset-2">Pricing</Link> and{' '}
+        <Link href="/terms" className="font-medium text-ink underline underline-offset-2">Terms of Service</Link>.
       </p>
     </TrustPage>
   )

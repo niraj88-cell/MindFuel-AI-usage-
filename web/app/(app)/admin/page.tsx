@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Activity, Users, Clock, Lock, ArrowUp, ShieldAlert } from 'lucide-react'
+import { Lock, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface AdminStats {
@@ -49,87 +49,57 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
-        <Lock className="w-8 h-8 text-indigo-500 animate-pulse mb-4" />
-        <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Decrypting Secure Neural Link</p>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center">
+        <Loader2 className="mb-4 h-6 w-6 animate-spin text-green" />
+        <p className="font-mono text-xs uppercase tracking-[0.16em] text-faint">Loading</p>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="flex-1 flex items-center justify-center min-h-[60vh] px-4">
-        <div className="bg-rose-500/10 border border-rose-500/20 p-8 rounded-3xl text-center max-w-md">
-          <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto mb-4" />
-          <h1 className="text-xl font-black text-rose-500 mb-2">ACCESS DENIED</h1>
-          <p className="text-sm text-rose-400/80 mb-6">{error}</p>
-          <button onClick={() => router.push('/dashboard')} className="px-6 py-2 bg-rose-500/20 text-rose-300 text-sm font-bold rounded-xl hover:bg-rose-500/30 transition-colors">
-            Return to Safety
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
+        <div className="max-w-md rounded-xl border border-line bg-card p-8 text-center">
+          <h1 className="font-serif text-2xl text-ink">Not available</h1>
+          <p className="mt-2 text-sm text-soft">{error}</p>
+          <button onClick={() => router.push('/dashboard')} className="mt-6 inline-flex h-10 items-center rounded-lg bg-ink px-5 text-sm font-semibold text-paper transition-colors hover:bg-ink-hover">
+            Back to today
           </button>
         </div>
       </div>
     )
   }
 
+  const cards = [
+    { label: 'Members', value: stats?.totalUsers ?? 0 },
+    { label: 'Focus sessions', value: stats?.totalSessions ?? 0 },
+    { label: 'Focus hours', value: stats?.totalFocusHours ?? 0 },
+  ]
+
   return (
-    <div className="flex flex-col max-w-6xl mx-auto px-4 sm:px-6 py-8">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-12">
-        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-          <Lock className="w-5 h-5 text-indigo-400" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-black text-white">CEO Control Center</h1>
-          <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Clearance Level: Maximum</p>
-        </div>
+    <div className="mx-auto max-w-3xl py-2">
+      <div className="mb-8">
+        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Owner</p>
+        <h1 className="mt-2 font-serif text-[2rem] leading-tight tracking-[-0.01em] text-ink">Aggregate counts</h1>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <div className="bg-zinc-900/50 border border-white/10 rounded-3xl p-6 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Users className="w-24 h-24 text-white" />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {cards.map((c) => (
+          <div key={c.label} className="rounded-xl border border-line bg-card p-5">
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">{c.label}</p>
+            <div className="mt-2 font-mono text-4xl font-medium text-ink">{c.value}</div>
           </div>
-          <p className="text-sm font-bold text-zinc-400 mb-2">Total Active Users</p>
-          <div className="text-5xl font-black text-white mb-2">{stats?.totalUsers || 0}</div>
-          <div className="flex items-center gap-1 text-xs font-bold text-emerald-400">
-            <ArrowUp className="w-3 h-3" /> <span>Real-time global sync</span>
-          </div>
-        </div>
-
-        <div className="bg-zinc-900/50 border border-white/10 rounded-3xl p-6 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Activity className="w-24 h-24 text-emerald-500" />
-          </div>
-          <p className="text-sm font-bold text-zinc-400 mb-2">Focus Sessions</p>
-          <div className="text-5xl font-black text-white mb-2">{stats?.totalSessions || 0}</div>
-          <div className="flex items-center gap-1 text-xs font-bold text-zinc-500">
-            <span>Verified across all circles</span>
-          </div>
-        </div>
-
-        <div className="bg-zinc-900/50 border border-white/10 rounded-3xl p-6 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Clock className="w-24 h-24 text-indigo-500" />
-          </div>
-          <p className="text-sm font-bold text-zinc-400 mb-2">Total Focus Hours</p>
-          <div className="text-5xl font-black text-white mb-2">{stats?.totalFocusHours || 0}</div>
-          <div className="flex items-center gap-1 text-xs font-bold text-zinc-500">
-            <span>Doomscrolling prevented globally</span>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Privacy stance — the owner panel deliberately shows no user content. */}
-      <div>
-        <h2 className="text-lg font-black text-white mb-6 flex items-center gap-2">
-          <ShieldAlert className="w-5 h-5 text-emerald-500" /> Privacy by design
-        </h2>
-        <div className="bg-zinc-900/30 border border-white/5 rounded-3xl p-8 text-sm leading-relaxed text-zinc-400">
-          This panel shows aggregate counts only. It does not read domains, session
-          content, or any per-user activity — the same domain-only boundary the product
-          promises everyone applies to the owner too.
-        </div>
+      <div className="mt-8 flex items-start gap-3 rounded-xl border border-line bg-card p-5">
+        <Lock className="mt-0.5 h-4 w-4 shrink-0 text-green" />
+        <p className="text-sm leading-relaxed text-soft">
+          This panel shows aggregate counts only. It never reads domains, session content, or
+          any per-user activity — the same domain-only boundary the product promises everyone
+          applies to the owner too.
+        </p>
       </div>
     </div>
   )

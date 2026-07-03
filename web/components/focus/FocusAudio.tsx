@@ -142,8 +142,8 @@ export function FocusAudio() {
 
   return (
     <div className="mt-8 w-full max-w-xs">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
-        Backdrop <span className="font-normal normal-case tracking-normal">· generated on this device</span>
+      <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.14em] text-ghost">
+        Backdrop <span className="normal-case tracking-normal">· generated on this device</span>
       </p>
       <div className="flex items-center justify-center gap-2">
         {options.map((o) => (
@@ -153,8 +153,8 @@ export function FocusAudio() {
             className={
               'rounded-full px-4 py-1.5 text-xs font-medium transition-colors ' +
               (kind === o.id
-                ? 'bg-[#2E7D32] text-white'
-                : 'bg-black/[0.05] text-[#6B7280] hover:bg-black/[0.08]')
+                ? 'bg-green text-white'
+                : 'bg-hairline text-soft hover:bg-line')
             }
           >
             {o.label}
@@ -170,7 +170,7 @@ export function FocusAudio() {
           value={volume}
           onChange={(e) => changeVolume(Number(e.target.value))}
           aria-label="Backdrop volume"
-          className="mt-3 w-full accent-[#2E7D32]"
+          className="mt-3 w-full"
         />
       )}
     </div>

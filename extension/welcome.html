@@ -5,40 +5,61 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SatyaShift — what this extension can and can't see</title>
   <style>
-    :root { color-scheme: light; }
+    /* First impression at install. Warm paper, warm ink, one green thread.
+       Palette mirrors the web tokens (docs/design-language-2026-07-03.md). */
+    :root {
+      color-scheme: light;
+      --paper: #FAF8F4;
+      --card: #FFFFFF;
+      --ink: #23201B;
+      --soft: #575148;
+      --faint: #6F6A61;
+      --ghost: #A6A095;
+      --line: rgba(35, 32, 27, 0.11);
+      --hairline: rgba(35, 32, 27, 0.06);
+      --green: #2D6A3F;
+      --green-deep: #1E4A2D;
+      --green-tint: #EAF2E8;
+      --green-line: #B7CFB6;
+    }
     * { box-sizing: border-box; }
-    body { margin: 0; background: #FAF8F4; color: #111827;
+    body { margin: 0; background: var(--paper); color: var(--ink);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      line-height: 1.5; }
+      line-height: 1.5; -webkit-font-smoothing: antialiased; }
     .wrap { max-width: 560px; margin: 0 auto; padding: 56px 24px 72px; }
-    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
-    .tile { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px;
-      border-radius: 13px; background: #111827; color: #fff; flex: 0 0 auto; }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 36px; }
+    .tile { display: flex; align-items: center; justify-content: center; width: 42px; height: 42px;
+      border-radius: 11px; background: var(--ink); color: #fff; flex: 0 0 auto; }
     .name { font-weight: 700; font-size: 18px; line-height: 1.1; }
-    .sub { font-size: 11px; color: #9CA3AF; margin-top: 3px; letter-spacing: 0.03em; }
-    h1 { font-size: 26px; line-height: 1.25; margin: 0 0 12px; letter-spacing: -0.01em; }
-    .lede { font-size: 15px; color: #4B5563; margin: 0 0 28px; }
-    .card { background: #fff; border: 1px solid rgba(0,0,0,0.07); border-radius: 16px; padding: 4px 20px; margin-bottom: 16px; }
-    .card h2 { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: #9CA3AF; margin: 18px 0 4px; }
-    ul { list-style: none; margin: 0 0 16px; padding: 0; }
-    li { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; font-size: 14.5px; }
-    .ic { flex: 0 0 auto; margin-top: 2px; }
-    .sees .ic { color: #2E7D32; }
-    .never .ic { color: #9CA3AF; }
-    .why { font-size: 14px; color: #4B5563; background: #E8F5E9; border: 1px solid #A5D6A7;
-      border-radius: 14px; padding: 16px 18px; margin-bottom: 28px; }
-    .why b { color: #1B5E20; }
-    .cta { display: inline-block; text-decoration: none; background: #2E7D32; color: #fff; font-weight: 600;
-      font-size: 15px; padding: 13px 22px; border-radius: 12px; }
-    .foot { margin-top: 22px; font-size: 12.5px; color: #9CA3AF; }
-    code { background: rgba(0,0,0,0.05); padding: 1px 6px; border-radius: 6px; font-size: 13px; }
+    .sub { font-size: 10px; color: var(--faint); margin-top: 4px; letter-spacing: 0.09em; text-transform: uppercase; }
+    h1 { font-size: 27px; line-height: 1.22; margin: 0 0 14px; letter-spacing: -0.01em; font-weight: 600; }
+    .lede { font-size: 15px; color: var(--soft); margin: 0 0 30px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 6px 20px 16px; margin-bottom: 16px; }
+    .card h2 { font-size: 11px; letter-spacing: 0.11em; text-transform: uppercase; color: var(--faint); margin: 18px 0 6px; }
+    ul { list-style: none; margin: 0 0 8px; padding: 0; }
+    li { display: flex; align-items: flex-start; gap: 11px; padding: 7px 0; font-size: 14.5px; color: var(--soft); }
+    /* On-brand markers, not dingbats: a filled bindu = what it reads,
+       a hollow ring = what it never touches. Mirrors the verification seal. */
+    .mk { flex: 0 0 auto; margin-top: 6px; width: 9px; height: 9px; border-radius: 50%; }
+    .sees .mk { background: var(--green); }
+    .never .mk { border: 1.5px solid var(--ghost); }
+    li b { color: var(--ink); font-weight: 600; }
+    .why { font-size: 14px; color: var(--soft); background: var(--green-tint); border: 1px solid var(--green-line);
+      border-radius: 14px; padding: 16px 18px; margin-bottom: 30px; }
+    .why b { color: var(--green-deep); }
+    .cta { display: inline-block; text-decoration: none; background: var(--green); color: #fff; font-weight: 600;
+      font-size: 15px; padding: 13px 24px; border-radius: 11px; transition: background-color 0.15s ease; }
+    .cta:hover { background: var(--green-deep); }
+    .foot { margin-top: 22px; font-size: 12.5px; color: var(--faint); }
+    code { background: var(--hairline); padding: 1px 6px; border-radius: 5px; font-size: 13px;
+      font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; color: var(--ink); }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="brand">
       <span class="tile">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 10 L12 21" /><path d="M8.5 10 L15.5 10" /><path d="M12 10 L12 3.4" />
           <path d="M8.5 10 C 8.5 6.5 9 5 10 4.3" /><path d="M15.5 10 C 15.5 6.5 15 5 14 4.3" />
           <circle cx="12" cy="14.6" r="1.5" fill="currentColor" stroke="none" />
@@ -59,22 +80,22 @@
     <div class="card">
       <h2>What it reads</h2>
       <ul class="sees">
-        <li><span class="ic">&#10003;</span> The bare <b>domain</b> of your active tab — for example <code>github.com</code>, never the full address.</li>
-        <li><span class="ic">&#10003;</span> How long that domain stays focused, so your focus time can be verified.</li>
+        <li><span class="mk"></span><span>The bare <b>domain</b> of your active tab — for example <code>github.com</code>, never the full address.</span></li>
+        <li><span class="mk"></span><span>How long that domain stays focused, so your focus time can be verified.</span></li>
       </ul>
       <h2>What it never sees or does</h2>
       <ul class="never">
-        <li><span class="ic">&#10007;</span> The page path, the URL after the domain, or anything you type.</li>
-        <li><span class="ic">&#10007;</span> Page content, forms, passwords, or your history of other tabs.</li>
-        <li><span class="ic">&#10007;</span> Banking, health, email, and password-manager sites — those are skipped entirely.</li>
-        <li><span class="ic">&#10007;</span> It never blocks, redirects, or slows down any page.</li>
+        <li><span class="mk"></span><span>The page path, the URL after the domain, or anything you type.</span></li>
+        <li><span class="mk"></span><span>Page content, forms, passwords, or your history of other tabs.</span></li>
+        <li><span class="mk"></span><span>Banking, health, email, and password-manager sites — those are skipped entirely.</span></li>
+        <li><span class="mk"></span><span>It never blocks, redirects, or slows down any page.</span></li>
       </ul>
     </div>
 
     <div class="why">
       <b>Why it needs tab access:</b> to know which site currently has your attention, the browser
       has to tell the extension the active tab. SatyaShift immediately reduces that to the domain and
-      throws the rest away. The domain stays private to your account — your squad never sees it,
+      throws the rest away. The domain stays private to your account — your circle never sees it,
       not even the one you focused on.
     </div>
 

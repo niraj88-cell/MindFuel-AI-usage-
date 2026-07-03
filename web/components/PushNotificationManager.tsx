@@ -105,11 +105,11 @@ export function PushNotificationManager() {
 
   if (!isSupported) {
     return (
-      <div className="flex items-start gap-3 rounded-2xl bg-white p-4 text-sm leading-relaxed text-[#4B5563]">
-        <Info className="mt-0.5 h-5 w-5 shrink-0 text-[#4CAF50]" />
+      <div className="flex items-start gap-3 text-sm leading-relaxed text-soft">
+        <Info className="mt-0.5 h-5 w-5 shrink-0 text-green" />
         <div>
-          <p className="font-semibold text-[#111827]">{needsInstall ? 'Install SatyaShift to enable reminders.' : 'Push reminders are not available in this browser.'}</p>
-          <p className="mt-1 text-[#6B7280]">
+          <p className="font-semibold text-ink">{needsInstall ? 'Install SatyaShift to enable reminders.' : 'Push reminders are not available in this browser.'}</p>
+          <p className="mt-1 text-faint">
             You can still use this screen as your reminder center.
           </p>
         </div>
@@ -118,25 +118,25 @@ export function PushNotificationManager() {
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-3">
-        <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${isSubscribed ? 'bg-[#ECFDF5] text-[#4CAF50]' : 'bg-[#FAF8F4] text-[#6B7280]'}`}>
+        <div className={`flex h-11 w-11 items-center justify-center rounded-lg ${isSubscribed ? 'bg-green-tint text-green' : 'bg-card text-faint'}`}>
           <Bell className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-[#111827]">Browser reminders</p>
-          <p className="text-sm text-[#6B7280]">{isSubscribed ? 'Enabled for this device.' : 'Ask this browser to remind you.'}</p>
+          <p className="text-sm font-semibold text-ink">Browser reminders</p>
+          <p className="text-sm text-faint">{isSubscribed ? 'Enabled for this device.' : 'Ask this browser to remind you.'}</p>
         </div>
       </div>
 
       <div className="flex flex-col items-start gap-2 sm:items-end">
         {loading ? (
-          <Loader2 className="h-5 w-5 animate-spin text-[#6B7280]" />
+          <Loader2 className="h-5 w-5 animate-spin text-faint" />
         ) : (
           <button
             onClick={handleToggle}
             className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
-              isSubscribed ? 'bg-[#111827]' : 'bg-black/10'
+              isSubscribed ? 'bg-green' : 'bg-line'
             }`}
             aria-pressed={isSubscribed}
           >
@@ -147,7 +147,7 @@ export function PushNotificationManager() {
             />
           </button>
         )}
-        {error && <p className="max-w-xs text-sm text-[#B42318]">{error}</p>}
+        {error && <p className="max-w-xs text-sm text-rust">{error}</p>}
       </div>
     </div>
   )

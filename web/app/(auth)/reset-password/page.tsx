@@ -56,46 +56,46 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#FAF8F4] px-5 py-10 text-[#111827]">
-      <div className="w-full max-w-[430px]">
+    <main className="flex min-h-screen items-center justify-center bg-paper px-5 py-10 text-ink">
+      <div className="w-full max-w-[420px]">
         <div className="mb-10 text-center">
           <Link href="/" className="inline-flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#111827] text-white">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-ink text-white">
               <SatyaMark size={20} />
             </span>
-            <span className="text-2xl font-bold tracking-tight">SatyaShift</span>
+            <span className="text-xl font-semibold tracking-tight">SatyaShift</span>
           </Link>
         </div>
 
         {checking ? (
           <div className="flex justify-center py-10">
-            <Loader2 className="h-5 w-5 animate-spin text-[#6B7280]" />
+            <Loader2 className="h-5 w-5 animate-spin text-faint" />
           </div>
         ) : done ? (
-          <div className="rounded-3xl border border-black/[0.07] bg-white p-6 text-center shadow-sm sm:p-8">
-            <span className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ECFDF5] text-[#4CAF50]">
-              <CheckCircle2 className="h-7 w-7" />
+          <div className="rounded-xl border border-line bg-card p-6 text-center sm:p-8">
+            <span className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-green-tint text-green">
+              <CheckCircle2 className="h-6 w-6" />
             </span>
-            <h1 className="text-2xl font-semibold tracking-tight">Password updated</h1>
-            <p className="mt-3 text-sm leading-relaxed text-[#6B7280]">
+            <h1 className="font-serif text-3xl tracking-[-0.01em]">Password updated</h1>
+            <p className="mt-3 text-sm leading-relaxed text-soft">
               You&apos;re signed in with your new password.
             </p>
             <Link
               href="/dashboard"
-              className="mt-8 flex h-12 w-full items-center justify-center rounded-2xl bg-[#111827] text-sm font-semibold text-white transition-colors hover:bg-[#1F2937]"
+              className="mt-8 flex h-12 w-full items-center justify-center rounded-lg bg-ink text-sm font-semibold text-paper transition-colors hover:bg-ink-hover"
             >
               Continue to Today
             </Link>
           </div>
         ) : !hasSession ? (
-          <div className="rounded-3xl border border-black/[0.07] bg-white p-6 text-center shadow-sm sm:p-8">
-            <h1 className="text-2xl font-semibold tracking-tight">This link has expired</h1>
-            <p className="mt-3 text-sm leading-relaxed text-[#6B7280]">
+          <div className="rounded-xl border border-line bg-card p-6 text-center sm:p-8">
+            <h1 className="font-serif text-3xl tracking-[-0.01em]">This link has expired</h1>
+            <p className="mt-3 text-sm leading-relaxed text-soft">
               Reset links work once and expire after an hour. Request a new one and try again.
             </p>
             <Link
               href="/forgot-password"
-              className="mt-8 flex h-12 w-full items-center justify-center rounded-2xl bg-[#111827] text-sm font-semibold text-white transition-colors hover:bg-[#1F2937]"
+              className="mt-8 flex h-12 w-full items-center justify-center rounded-lg bg-ink text-sm font-semibold text-paper transition-colors hover:bg-ink-hover"
             >
               Request a new link
             </Link>
@@ -103,14 +103,14 @@ export default function ResetPasswordPage() {
         ) : (
           <>
             <div className="mb-8 text-center">
-              <h1 className="text-3xl font-semibold tracking-tight">Choose a new password</h1>
-              <p className="mt-3 text-base text-[#6B7280]">At least 8 characters.</p>
+              <h1 className="font-serif text-4xl tracking-[-0.01em]">Choose a new password</h1>
+              <p className="mt-3 text-[15px] text-soft">At least 8 characters.</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="rounded-3xl border border-black/[0.07] bg-white p-6 shadow-sm sm:p-8">
+            <form onSubmit={handleSubmit} className="rounded-xl border border-line bg-card p-6 sm:p-8">
               <div className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="new-password" className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6B7280]">New password</Label>
+                  <Label htmlFor="new-password" className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">New password</Label>
                   <div className="relative">
                     <Input
                       id="new-password"
@@ -119,12 +119,12 @@ export default function ResetPasswordPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       autoComplete="new-password"
-                      className="h-12 rounded-2xl border-black/[0.08] bg-[#F9FAF8] pr-12 text-[#111827]"
+                      className="h-12 rounded-lg pr-12"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-[#6B7280] transition-colors hover:bg-black/[0.04] hover:text-[#111827]"
+                      className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-faint transition-colors hover:bg-hairline hover:text-ink"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -133,7 +133,7 @@ export default function ResetPasswordPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password" className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6B7280]">Confirm password</Label>
+                  <Label htmlFor="confirm-password" className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Confirm password</Label>
                   <Input
                     id="confirm-password"
                     type={showPassword ? 'text' : 'password'}
@@ -141,19 +141,19 @@ export default function ResetPasswordPage() {
                     onChange={(e) => setConfirm(e.target.value)}
                     required
                     autoComplete="new-password"
-                    className="h-12 rounded-2xl border-black/[0.08] bg-[#F9FAF8] text-[#111827]"
+                    className="h-12 rounded-lg"
                   />
                 </div>
 
                 {error && (
-                  <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+                  <div className="rounded-lg border border-rust/25 bg-rust-tint p-3 text-sm font-medium text-rust">
                     {error}
                   </div>
                 )}
 
                 <Button
                   type="submit"
-                  className="h-12 w-full rounded-2xl bg-[#111827] text-sm font-semibold text-white hover:bg-[#1F2937]"
+                  className="h-12 w-full rounded-lg"
                   disabled={saving}
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Set new password'}

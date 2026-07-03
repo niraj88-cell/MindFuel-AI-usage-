@@ -1,25 +1,21 @@
 import Link from 'next/link'
-import { SearchX, ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 
 export default function NotFound() {
   return (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center animate-fade-in-up">
-      <div className="w-24 h-24 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-8">
-        <SearchX className="w-12 h-12 text-indigo-400" />
-      </div>
-      <h1 className="text-5xl font-black tracking-tight mb-4">404</h1>
-      <h2 className="text-2xl font-bold text-slate-200 mb-3">Lost in the digital void</h2>
-      <p className="text-slate-400 max-w-md mb-10 leading-relaxed">
-        The content or page you're looking for doesn't exist. It may have been moved or deleted.
+    <main className="flex min-h-screen flex-col items-center justify-center bg-paper px-6 text-center text-ink">
+      <p className="font-mono text-xs uppercase tracking-[0.2em] text-faint">Not found</p>
+      <h1 className="mt-4 max-w-md text-2xl font-semibold tracking-tight">
+        There&rsquo;s nothing at this address.
+      </h1>
+      <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-soft">
+        The page may have moved, or the link was mistyped. Nothing is broken.
       </p>
-      
-      <Link href="/dashboard">
-        <Button className="h-12 px-8 rounded-full bg-white text-black hover:bg-slate-200 font-bold transition-all shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Return to Dashboard
-        </Button>
+      <Link
+        href="/dashboard"
+        className="mt-8 inline-flex h-11 items-center rounded-lg bg-ink px-6 text-sm font-semibold text-paper transition-colors hover:bg-ink-hover"
+      >
+        Back to today
       </Link>
-    </div>
+    </main>
   )
 }

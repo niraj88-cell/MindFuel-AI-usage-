@@ -3,56 +3,84 @@
 <head>
   <meta charset="utf-8" />
   <style>
-    :root { color-scheme: light; }
-    body { margin: 0; width: 300px; background: #FAF8F4; color: #111827;
+    /* SatyaShift popup — the ledger, in the toolbar. Warm paper, warm ink, one
+       earned green thread. System font stack on purpose: a popup should feel
+       native and open instantly. Palette mirrors the web tokens (see
+       docs/design-language-2026-07-03.md). No inline JS (MV3 CSP). */
+    :root {
+      color-scheme: light;
+      --paper: #FAF8F4;
+      --card: #FFFFFF;
+      --ink: #23201B;
+      --soft: #575148;
+      --faint: #6F6A61;
+      --ghost: #A6A095;
+      --line: rgba(35, 32, 27, 0.11);
+      --hairline: rgba(35, 32, 27, 0.06);
+      --green: #2D6A3F;
+      --green-deep: #1E4A2D;
+      --green-bright: #4C9A5C;
+      --green-tint: #EAF2E8;
+      --clay: #8A5A18;
+      --clay-tint: #F6EEDC;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; width: 300px; background: var(--paper); color: var(--ink);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
     .wrap { padding: 16px; }
     .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-    .tile { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px;
-      border-radius: 10px; background: #111827; color: #fff; flex: 0 0 auto; }
+    .tile { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+      border-radius: 8px; background: var(--ink); color: #fff; flex: 0 0 auto; }
     .name { font-weight: 600; font-size: 15px; line-height: 1.1; }
-    .sub { font-size: 10px; color: #6B7280; margin-top: 2px; letter-spacing: 0.03em; }
-    .status { display: flex; align-items: flex-start; gap: 10px; padding: 12px;
-      border: 1px solid rgba(0,0,0,0.07); border-radius: 12px; background: #fff; }
-    .dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 4px; flex: 0 0 auto; background: #9CA3AF; }
-    .dot.ok { background: #4CAF50; }
-    .dot.warn { background: #D97706; }
-    .dot.off { background: #9CA3AF; }
+    .sub { font-size: 10px; color: var(--faint); margin-top: 3px; letter-spacing: 0.08em;
+      text-transform: uppercase; font-variant-numeric: tabular-nums; }
+    .status { display: flex; align-items: flex-start; gap: 10px; padding: 12px 13px;
+      border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex: 0 0 auto; background: var(--ghost); }
+    .dot.ok { background: var(--green-bright); }
+    .dot.warn { background: var(--clay); }
+    .dot.off { background: var(--ghost); }
     .state { font-size: 13px; font-weight: 600; }
-    .detail { font-size: 12px; color: #6B7280; margin-top: 2px; line-height: 1.45; }
-    .presence { display: none; align-items: center; gap: 7px; margin-top: 10px; padding: 0 3px;
-      font-size: 12px; color: #6B7280; }
-    .pdot { width: 7px; height: 7px; border-radius: 50%; background: #C4C7CC; flex: 0 0 auto; }
-    .pdot.live { background: #4CAF50; animation: breathe 2.6s ease-in-out infinite; }
-    @keyframes breathe { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.8); } }
-    .welcome { display: none; margin-top: 10px; padding: 9px 11px; border-radius: 10px;
-      background: #E8F5E9; color: #1B5E20; font-size: 12.5px; font-weight: 600; }
-    .seal { display: none; margin-top: 12px; padding: 10px; border-radius: 10px; text-align: center;
-      font-size: 13px; font-weight: 600; color: #1B5E20; background: #E8F5E9;
-      animation: settle 0.45s ease-out; }
-    @keyframes settle { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
+    .detail { font-size: 12px; color: var(--faint); margin-top: 3px; line-height: 1.5; }
+    .presence { display: none; align-items: center; gap: 8px; margin-top: 11px; padding: 0 3px;
+      font-size: 12px; color: var(--faint); }
+    .pdot { width: 6px; height: 6px; border-radius: 50%; background: var(--ghost); flex: 0 0 auto; }
+    .pdot.live { background: var(--green-bright); animation: breathe 2.8s ease-in-out infinite; }
+    @keyframes breathe { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.82); } }
+    .welcome { display: none; margin-top: 10px; padding: 9px 12px; border-radius: 10px;
+      background: var(--green-tint); color: var(--green-deep); font-size: 12.5px; font-weight: 600; }
+    .seal { display: none; margin-top: 12px; padding: 11px; border-radius: 10px; text-align: center;
+      font-size: 13px; font-weight: 600; color: var(--green-deep); background: var(--green-tint);
+      font-variant-numeric: tabular-nums; animation: settle 0.4s ease-out; }
+    @keyframes settle { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
     @media (prefers-reduced-motion: reduce) {
       .pdot.live, .seal { animation: none; }
     }
-    .synced { margin-top: 10px; min-height: 14px; font-size: 11px; color: #6B7280; text-align: center; }
-    .note { margin-top: 10px; font-size: 11.5px; line-height: 1.45; padding: 9px 11px; border-radius: 10px;
-      background: #FEF3C7; color: #92400E; display: none; }
+    .synced { margin-top: 11px; min-height: 14px; font-size: 11px; color: var(--faint); text-align: center;
+      font-variant-numeric: tabular-nums; }
+    .note { margin-top: 10px; font-size: 11.5px; line-height: 1.5; padding: 10px 12px; border-radius: 10px;
+      background: var(--clay-tint); color: var(--clay); display: none; }
     .btn { display: block; box-sizing: border-box; width: 100%; text-align: center; text-decoration: none;
-      font: inherit; font-size: 13px; font-weight: 600; padding: 10px; border-radius: 10px; cursor: pointer;
-      border: 1px solid transparent; margin-top: 12px; }
-    .primary { background: #2E7D32; color: #fff; }
-    .ghost { background: #fff; color: #374151; border: 1px solid rgba(0,0,0,0.12); }
+      font: inherit; font-size: 13px; font-weight: 600; padding: 11px; border-radius: 10px; cursor: pointer;
+      border: 1px solid transparent; margin-top: 12px; transition: background-color 0.15s ease, color 0.15s ease; }
+    .primary { background: var(--green); color: #fff; }
+    .primary:hover { background: var(--green-deep); }
+    .ghost { background: var(--card); color: var(--soft); border: 1px solid var(--line); }
+    .ghost:hover { background: var(--green-tint); color: var(--green-deep); }
     .btn:disabled { opacity: 0.55; cursor: default; }
-    .toggle { width: 100%; margin-top: 8px; background: #fff; color: #6B7280; border: 1px solid rgba(0,0,0,0.1);
-      font: inherit; font-size: 12.5px; font-weight: 600; padding: 9px 10px; border-radius: 10px; cursor: pointer; }
-    .priv { margin-top: 12px; font-size: 11px; color: #6B7280; display: flex; align-items: center; gap: 5px; }
+    .toggle { width: 100%; margin-top: 8px; background: transparent; color: var(--faint); border: none;
+      font: inherit; font-size: 12px; font-weight: 600; padding: 8px; border-radius: 8px; cursor: pointer;
+      transition: color 0.15s ease; }
+    .toggle:hover { color: var(--ink); }
+    .priv { margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--hairline);
+      font-size: 11px; color: var(--faint); display: flex; align-items: center; gap: 6px; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="brand">
       <span class="tile">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 10 L12 21" /><path d="M8.5 10 L15.5 10" /><path d="M12 10 L12 3.4" />
           <path d="M8.5 10 C 8.5 6.5 9 5 10 4.3" /><path d="M15.5 10 C 15.5 6.5 15 5 14 4.3" />
           <circle cx="12" cy="14.6" r="1.5" fill="currentColor" stroke="none" />

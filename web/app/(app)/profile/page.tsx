@@ -16,7 +16,6 @@ import {
   LogOut,
   Mail,
   Trash2,
-  Sparkles,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { PushNotificationManager } from '@/components/PushNotificationManager'
@@ -110,7 +109,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-7 w-7 animate-spin text-[#2E7D32]" />
+        <Loader2 className="h-7 w-7 animate-spin text-green" />
       </div>
     )
   }
@@ -122,24 +121,22 @@ export default function SettingsPage() {
     <div className="mx-auto max-w-2xl space-y-6 py-2">
       {/* Identity */}
       <div className="flex items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#111827] text-lg font-semibold text-white">{initials}</div>
+        <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-ink text-lg font-semibold text-white">{initials}</div>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-xl font-bold tracking-tight text-[#111827]">{data?.fullName}</h1>
-          <p className="flex items-center gap-1.5 text-sm text-[#6B7280]"><Mail className="h-3.5 w-3.5" /> {data?.email}</p>
+          <h1 className="truncate text-xl font-semibold tracking-tight text-ink">{data?.fullName}</h1>
+          <p className="flex items-center gap-1.5 text-sm text-faint"><Mail className="h-3.5 w-3.5" /> {data?.email}</p>
         </div>
       </div>
 
       {/* Plan — honest: billing is not live, nothing can be charged. */}
-      <section className="rounded-3xl border border-black/[0.07] bg-white p-5">
+      <section className="rounded-xl border border-line bg-card p-5">
         <div className="mb-1 flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-[#111827]">
-            <Sparkles className="h-4 w-4 text-[#2E7D32]" /> Plan
-          </h2>
-          <span className="rounded-full bg-[#E8F5E9] px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-wide text-[#2E7D32]">
+          <h2 className="text-sm font-semibold text-ink">Plan</h2>
+          <span className="rounded-full bg-green-tint px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-wide text-green">
             {sub?.status === 'active' ? 'active' : sub?.status === 'trialing' ? 'free trial' : 'free'}
           </span>
         </div>
-        <p className="mb-4 text-xs leading-relaxed text-[#6B7280]">
+        <p className="mb-4 text-xs leading-relaxed text-faint">
           {sub?.status === 'trialing'
             ? <>Everything is included in your trial — {sub.trialDaysLeft} day{sub.trialDaysLeft === 1 ? '' : 's'} left.</>
             : sub?.status === 'active'
@@ -149,19 +146,19 @@ export default function SettingsPage() {
 
         <div className="grid gap-2 sm:grid-cols-2">
           {(Object.values(PLANS)).map((p) => (
-            <div key={p.id} className={`rounded-2xl border p-4 ${sub?.plan === p.id ? 'border-[#2E7D32] bg-[#E8F5E9]' : 'border-black/[0.08] bg-[#FAF8F4]'}`}>
+            <div key={p.id} className={`rounded-lg border p-4 ${sub?.plan === p.id ? 'border-green-line bg-green-tint' : 'border-line bg-paper'}`}>
               <div className="flex items-baseline justify-between">
-                <span className="text-sm font-semibold text-[#111827]">{p.label}</span>
-                <span className="font-mono text-sm font-semibold text-[#111827]">${p.priceUsd}<span className="text-xs font-normal text-[#6B7280]">/{p.period}</span></span>
+                <span className="text-sm font-semibold text-ink">{p.label}</span>
+                <span className="font-mono text-sm font-medium text-ink">${p.priceUsd}<span className="text-xs font-normal text-faint">/{p.period}</span></span>
               </div>
-              <p className="mt-1 text-xs leading-snug text-[#6B7280]">
+              <p className="mt-1 text-xs leading-snug text-faint">
                 {p.note ?? 'Verified sessions, your circle, gentle nudges — all of it.'}
               </p>
             </div>
           ))}
         </div>
 
-        <p className="mt-3 text-xs leading-relaxed text-[#6B7280]">
+        <p className="mt-3 text-xs leading-relaxed text-faint">
           Billing isn&rsquo;t switched on yet, so you can&rsquo;t be charged and nothing happens
           automatically. Every new account starts with a 14-day trial; when billing opens,
           choosing a plan will always be an explicit step you take.
@@ -169,48 +166,48 @@ export default function SettingsPage() {
       </section>
 
       {/* Your data */}
-      <section className="rounded-3xl border border-black/[0.07] bg-white p-5">
+      <section className="rounded-xl border border-line bg-card p-5">
         <div className="mb-3 flex items-center gap-2">
-          <Lock className="h-4 w-4 text-[#2E7D32]" />
-          <h2 className="text-sm font-semibold text-[#111827]">Your data</h2>
+          <Lock className="h-4 w-4 text-green" />
+          <h2 className="text-sm font-semibold text-ink">Your data</h2>
         </div>
-        <div className="space-y-2 text-sm text-[#4B5563]">
+        <div className="space-y-2 text-sm text-soft">
           {[
             'We only ever see the domains you visit — never the page, your typing, or your history.',
             'Your sites are never shown to your circle.',
             'Stored only on your account. Yours to export or delete, anytime.',
           ].map((t) => (
-            <div key={t} className="rounded-2xl bg-[#FAF8F4] p-3 leading-snug">{t}</div>
+            <div key={t} className="rounded-lg bg-paper p-3 leading-snug">{t}</div>
           ))}
         </div>
 
-        {exportError && <div className="mt-3 rounded-2xl bg-[#FEF3F2] p-3 text-sm font-medium text-[#B42318]">{exportError}</div>}
+        {exportError && <div className="mt-3 rounded-lg bg-rust-tint p-3 text-sm font-medium text-rust">{exportError}</div>}
 
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          <button onClick={() => handleExport('json')} disabled={exporting !== null} className="flex h-11 items-center justify-center gap-2 rounded-2xl border border-black/[0.08] bg-[#FAF8F4] text-sm font-semibold text-[#111827] transition-colors hover:bg-black/[0.02] disabled:opacity-60">
+          <button onClick={() => handleExport('json')} disabled={exporting !== null} className="flex h-11 items-center justify-center gap-2 rounded-lg border border-line bg-paper text-sm font-semibold text-ink transition-colors hover:bg-green-wash disabled:opacity-60">
             {exporting === 'json' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileJson className="h-4 w-4" />} Export JSON
           </button>
-          <button onClick={() => handleExport('csv')} disabled={exporting !== null} className="flex h-11 items-center justify-center gap-2 rounded-2xl border border-black/[0.08] bg-[#FAF8F4] text-sm font-semibold text-[#111827] transition-colors hover:bg-black/[0.02] disabled:opacity-60">
+          <button onClick={() => handleExport('csv')} disabled={exporting !== null} className="flex h-11 items-center justify-center gap-2 rounded-lg border border-line bg-paper text-sm font-semibold text-ink transition-colors hover:bg-green-wash disabled:opacity-60">
             {exporting === 'csv' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />} Export CSV
           </button>
         </div>
       </section>
 
       {/* Account */}
-      <section className="rounded-3xl border border-black/[0.07] bg-white p-5">
-        <h2 className="mb-3 text-sm font-semibold text-[#111827]">Account</h2>
-        <div className="mb-3 rounded-2xl bg-[#FAF8F4] p-3">
+      <section className="rounded-xl border border-line bg-card p-5">
+        <h2 className="mb-3 text-sm font-semibold text-ink">Account</h2>
+        <div className="mb-3 rounded-lg bg-paper p-3">
           <PushNotificationManager />
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
-          <Link href="/forgot-password" className="flex h-11 items-center justify-center gap-2 rounded-2xl border border-black/[0.08] bg-[#FAF8F4] text-sm font-semibold text-[#111827] transition-colors hover:bg-black/[0.02]">
+          <Link href="/forgot-password" className="flex h-11 items-center justify-center gap-2 rounded-lg border border-line bg-paper text-sm font-semibold text-ink transition-colors hover:bg-green-wash">
             <Lock className="h-4 w-4" /> Change password
           </Link>
-          <button onClick={handleSignOut} disabled={signingOut} className="flex h-11 items-center justify-center gap-2 rounded-2xl border border-black/[0.08] bg-[#FAF8F4] text-sm font-semibold text-[#111827] transition-colors hover:bg-black/[0.02] disabled:opacity-60">
+          <button onClick={handleSignOut} disabled={signingOut} className="flex h-11 items-center justify-center gap-2 rounded-lg border border-line bg-paper text-sm font-semibold text-ink transition-colors hover:bg-green-wash disabled:opacity-60">
             {signingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />} Sign out
           </button>
         </div>
-        <button onClick={handleDelete} disabled={deleting} className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#FEF3F2] text-sm font-semibold text-[#B42318] transition-colors hover:bg-[#FDE8E6] disabled:opacity-60">
+        <button onClick={handleDelete} disabled={deleting} className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-rust-tint text-sm font-semibold text-rust transition-colors hover:bg-rust hover:text-white disabled:opacity-60">
           {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Delete account
         </button>
       </section>

@@ -38,12 +38,12 @@ export function WaitlistForm() {
 
   if (status === 'done') {
     return (
-      <div className="mt-8 rounded-2xl border border-[#A5D6A7] bg-[#E8F5E9] p-5">
-        <div className="flex items-center gap-2 text-[#1B5E20]">
+      <div className="mt-8 rounded-xl border border-green-line bg-green-tint p-5">
+        <div className="flex items-center gap-2 text-green-deep">
           <Check className="h-4 w-4" />
           <span className="text-sm font-semibold">You&rsquo;re on the list.</span>
         </div>
-        <p className="mt-1 text-[13px] text-[#2E7D32]">We&rsquo;ll email you once, when it&rsquo;s ready. Nothing else.</p>
+        <p className="mt-1 text-[13px] text-green">We&rsquo;ll email you once, when it&rsquo;s ready. Nothing else.</p>
       </div>
     )
   }
@@ -58,7 +58,7 @@ export function WaitlistForm() {
         onChange={(e) => setEmail(e.target.value)}
         placeholder="you@example.com"
         autoComplete="email"
-        className="w-full rounded-2xl border border-black/[0.1] bg-white px-4 py-3 text-sm outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#2E7D32]"
+        className="w-full rounded-lg border border-line bg-card px-4 py-3 text-sm outline-none transition-colors placeholder:text-ghost focus:border-green"
       />
       <label htmlFor="note" className="sr-only">What makes focus hard for you (optional)</label>
       <input
@@ -67,18 +67,18 @@ export function WaitlistForm() {
         onChange={(e) => setNote(e.target.value)}
         maxLength={500}
         placeholder="What makes focus hard for you? (optional)"
-        className="mt-2 w-full rounded-2xl border border-black/[0.1] bg-white px-4 py-3 text-sm outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#2E7D32]"
+        className="mt-2 w-full rounded-lg border border-line bg-card px-4 py-3 text-sm outline-none transition-colors placeholder:text-ghost focus:border-green"
       />
-      {status === 'error' && <p className="mt-2 text-[13px] text-[#B42318]">{err}</p>}
+      {status === 'error' && <p className="mt-2 text-[13px] text-rust">{err}</p>}
       <button
         type="submit"
         disabled={status === 'submitting'}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#2E7D32] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#256628] disabled:opacity-60"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-ink py-3.5 text-sm font-semibold text-paper transition-colors hover:bg-ink-hover disabled:opacity-60"
       >
         {status === 'submitting' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
         Notify me
       </button>
-      <p className="mt-3 text-center text-xs text-[#9CA3AF]">We&rsquo;ll email you once, when it&rsquo;s ready. Nothing else.</p>
+      <p className="mt-3 text-center text-xs text-ghost">We&rsquo;ll email you once, when it&rsquo;s ready. Nothing else.</p>
     </form>
   )
 }

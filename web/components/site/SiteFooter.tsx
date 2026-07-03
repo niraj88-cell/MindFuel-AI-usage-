@@ -14,22 +14,22 @@ const LINKS = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-black/[0.06]">
+    <footer className="border-t border-line">
       <div className="mx-auto max-w-2xl px-6 py-8">
         <nav aria-label="Site" className="flex flex-wrap gap-x-5 gap-y-2">
           {LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              className="text-[13px] font-medium text-[#6B7280] transition-colors hover:text-[#111827]"
+              className="text-[13px] font-medium text-faint transition-colors hover:text-ink"
             >
               {l.label}
             </Link>
           ))}
         </nav>
-        <p className="mt-4 text-xs leading-relaxed text-[#6B7280]">
+        <p className="mt-4 text-xs leading-relaxed text-faint">
           SatyaShift · सत्य · truth — focus you can prove.{' '}
-          Questions: <a href="mailto:niraj2055adk@gmail.com" className="underline underline-offset-2 hover:text-[#111827]">niraj2055adk@gmail.com</a>
+          Questions: <a href="mailto:niraj2055adk@gmail.com" className="underline underline-offset-2 hover:text-ink">niraj2055adk@gmail.com</a>
         </p>
       </div>
     </footer>
