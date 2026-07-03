@@ -91,9 +91,14 @@ const nextConfig: NextConfig = {
           },
 
           // ── Cross-Origin Policies (Spectre/Meltdown mitigations) ──
+          // NOTE: no Cross-Origin-Embedder-Policy. COEP blocks ANY cross-origin iframe whose
+          // document doesn't also send COEP — which breaks Paddle's checkout overlay
+          // (buy.paddle.com can't send it). We use no cross-origin-isolated APIs
+          // (SharedArrayBuffer etc.), so COEP was inert hardening; dropping it is the
+          // documented requirement for embedding Paddle/Stripe checkout. COOP/CORP stay
+          // (they govern popups/our-own resources, not the checkout iframe).
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
           { key: 'Cross-Origin-Resource-Policy', value: 'same-origin' },
-          { key: 'Cross-Origin-Embedder-Policy', value: 'credentialless' },
 
           // ── DNS Prefetch Control ──
           { key: 'X-DNS-Prefetch-Control', value: 'off' },
