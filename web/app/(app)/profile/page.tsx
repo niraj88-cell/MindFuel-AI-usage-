@@ -21,6 +21,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { PushNotificationManager } from '@/components/PushNotificationManager'
 import { CheckoutButtons } from '@/components/billing/CheckoutButtons'
+import { DevCheckout } from '@/components/billing/DevCheckout'
 import { readPaddlePublicEnv } from '@/lib/billing/public-config'
 import { PLANS, getSubscriptionState, type SubscriptionState } from '@/lib/subscription'
 
@@ -214,7 +215,10 @@ export default function SettingsPage() {
           </>
         ) : (
           // Billing not configured yet: the honest, inert state.
+          // DevCheckout renders only for the owner (backend-gated); everyone else sees
+          // exactly the inert cards below, unchanged.
           <>
+            {data && <DevCheckout userId={data.id} email={data.email} onSuccess={pollForActivation} />}
             <div className="grid gap-2 sm:grid-cols-2">
               {(Object.values(PLANS)).map((p) => (
                 <div key={p.id} className={`rounded-lg border p-4 ${sub?.plan === p.id ? 'border-green-line bg-green-tint' : 'border-line bg-paper'}`}>

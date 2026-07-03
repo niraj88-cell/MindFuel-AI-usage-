@@ -12,7 +12,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { initializePaddle, type Paddle } from '@paddle/paddle-js'
 import { Loader2, Check } from 'lucide-react'
-import { readPaddlePublicEnv } from '@/lib/billing/public-config'
+import { readPaddlePublicEnv, type PaddlePublicConfig } from '@/lib/billing/public-config'
 import { PLANS } from '@/lib/subscription'
 
 type Status = 'loading' | 'ready' | 'error' | 'success'
@@ -21,12 +21,17 @@ export function CheckoutButtons({
   userId,
   email,
   onSuccess,
+  config,
 }: {
   userId: string
   email: string
   onSuccess?: () => void
+  /** Optional injected config. Defaults to the public env (production checkout). The
+   *  developer path passes a server-delivered config so this exact component drives the
+   *  real overlay without relying on NEXT_PUBLIC_* being set (see DevCheckout). */
+  config?: PaddlePublicConfig
 }) {
-  const cfg = readPaddlePublicEnv()
+  const cfg = config ?? readPaddlePublicEnv()
   const [status, setStatus] = useState<Status>('loading')
   const [busyPlan, setBusyPlan] = useState<'monthly' | 'annual' | null>(null)
   const paddleRef = useRef<Paddle | null>(null)

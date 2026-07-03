@@ -5,6 +5,57 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-03 — Developer-only checkout path (pre-launch Paddle testing, owner-gated)
+
+Added a hidden developer checkout so the owner can verify the FULL real Paddle flow
+(overlay → signed webhook → entitlement → profile cache → portal/cancel) before public
+launch, without exposing checkout to any other user. **No production flow changed; the
+webhook, entitlement, subscription-state, and RLS pipelines are byte-for-byte untouched.**
+
+**The real problem it solves.** There was never a "wait until trial expires" gate — the
+profile page already shows checkout to trialing users when `checkoutEnabled`. The actual
+pre-launch hazard: setting `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` (+ price ids) to test flips
+`checkoutEnabled` true for EVERY trialing/free user. The dev path lets the owner drive the
+real pipeline while the public UI stays inert.
+
+**Architecture (server decides; nothing mocked).**
+- New `GET /api/billing/dev-checkout`: returns the Paddle checkout config ONLY when the
+  authenticated caller is the owner email (same `OWNER_EMAILS` gate as `admin/stats`) AND
+  the server-only `PADDLE_CLIENT_TOKEN` is set. Everyone else / unconfigured → 404. GET, so
+  CSRF-exempt; covered by the edge WAF.
+- The client token is delivered **server-only** (env `PADDLE_CLIENT_TOKEN`, NOT
+  `NEXT_PUBLIC_*`), so it never enters the public bundle and `checkoutEnabled` stays false
+  for everyone. Price ids stay `NEXT_PUBLIC_PADDLE_PRICE_*` because the webhook's
+  `priceToPlan` map reads them (price ids are non-secret and useless without the token).
+- `components/billing/DevCheckout.tsx`: fetches the route; renders nothing on non-200 (so
+  every normal user sees the unchanged inert Plan state). For the owner it wraps the SAME
+  `CheckoutButtons` used by production, injected with the server-delivered config.
+- `CheckoutButtons` gained one optional, backward-compatible prop (`config?`) — defaults to
+  the public env, so production behavior is identical. The dev path reuses the identical,
+  tested overlay/trust-boundary code.
+
+**Dev-test env (owner sets in Vercel, sandbox first):** `PADDLE_WEBHOOK_SECRET`,
+`PADDLE_API_KEY`, `NEXT_PUBLIC_PADDLE_ENV`, `NEXT_PUBLIC_PADDLE_PRICE_MONTHLY/YEARLY`, and
+the NEW server-only `PADDLE_CLIENT_TOKEN`. Deliberately NOT `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`
+(that is the launch switch that opens checkout to all).
+
+**Security.** No entitlement is ever granted here — the route only hands the owner config it
+is allowed to see. Webhook HMAC/replay/idempotency, entitlement derivation, and
+service-role-only writes are unchanged. Backend is the sole gate: no client flag, cookie,
+query param, or public token can enable it.
+
+**Verified.** `tsc --noEmit` clean; `next build` green (route registered as
+`ƒ /api/billing/dev-checkout`); `node --test lib/entitlement.test.mjs lib/billing/paddle.test.mjs`
+= 16/16 pass. Harness can't drive the Paddle overlay — owner runs the live checkout probe once
+env is set (checklist in the session summary).
+
+**Remove at launch (one commit):** delete `app/api/billing/dev-checkout/`,
+`components/billing/DevCheckout.tsx`, and the `<DevCheckout .../>` line + import in
+`profile/page.tsx`; revert the `config?` prop on `CheckoutButtons`; unset `PADDLE_CLIENT_TOKEN`
+and set `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` to open checkout for everyone.
+
+---
+
 ## 2026-07-03 — Pre-market optimization + production deploy (dead deps removed, Next.js security patch)
 
 Shipped the privacy pass + a dependency/security cleanup to prod (satyashift.vercel.app).
