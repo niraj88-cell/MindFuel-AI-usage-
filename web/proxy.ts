@@ -85,12 +85,12 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Basic route protection (default-deny: anything not explicitly public requires a session).
-  // PRIVATE DEV PHASE: '/signup' is intentionally NOT public — the app is invite-only while
-  // we iterate, so the signup surface is closed at the edge (belt-and-suspenders with
-  // Supabase "allow new sign-ups" being off). Re-add '/signup' here to reopen public signup.
+  // LAUNCH: public signup is open. '/signup' is a public route at the edge; this must stay in
+  // step with Supabase Auth "Allow new users to sign up" being ON (belt-and-suspenders). To
+  // return to invite-only, remove '/signup' here AND turn that Supabase toggle off.
   const { pathname } = request.nextUrl
   const isPublicRoute = [
-    '/', '/login', '/forgot-password',
+    '/', '/login', '/signup', '/forgot-password',
     '/privacy', '/terms', '/refund', '/pricing', '/how-it-works',
     '/sitemap.xml', '/robots.txt',
   ].includes(pathname)
