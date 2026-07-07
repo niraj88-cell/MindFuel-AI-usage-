@@ -71,8 +71,13 @@ export function CheckoutButtons({
     const priceId = plan === 'monthly' ? cfg.priceMonthly : cfg.priceYearly
     if (!paddleRef.current || !priceId) { setStatus('error'); return }
     setBusyPlan(plan)
+    // Founding-member offer: a Paddle-side discount (50% off the first month), applied
+    // only when configured. Paddle computes and displays the discounted total inside the
+    // overlay — the UI never does its own price math, so it can never mislead.
+    const discountId = plan === 'monthly' ? cfg.discountMonthly || undefined : undefined
     paddleRef.current.Checkout.open({
       items: [{ priceId, quantity: 1 }],
+      ...(discountId ? { discountId } : {}),
       customer: { email },
       customData: { user_id: userId }, // webhook attribution — must match mapPaddleEvent
       settings: {
@@ -107,7 +112,16 @@ export function CheckoutButtons({
 
   const loading = status === 'loading'
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
+    <div>
+      {cfg.discountMonthly && (
+        <p className="mb-3 text-[13px] leading-relaxed text-soft">
+          <span className="font-medium text-ink">Founding thanks:</span> the monthly plan is
+          half price for your first month — ${PLANS.monthly.priceUsd / 2} instead of
+          ${PLANS.monthly.priceUsd}, applied automatically at checkout. Every month after
+          renews at the plain ${PLANS.monthly.priceUsd}.
+        </p>
+      )}
+      <div className="grid gap-2 sm:grid-cols-2">
       {(['monthly', 'annual'] as const).map((plan) => {
         const p = PLANS[plan]
         const isBusy = busyPlan === plan
@@ -127,6 +141,7 @@ export function CheckoutButtons({
           </button>
         )
       })}
+      </div>
     </div>
   )
 }

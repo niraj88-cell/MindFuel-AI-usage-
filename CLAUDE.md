@@ -126,7 +126,10 @@ where something was verified. Trust is shown through restraint, not decoration. 
   Paddle.js overlay checkout in Settings (`components/billing/CheckoutButtons.tsx`),
   migrations 020/021. **Two env-var classes**: SECRET server-only = `PADDLE_WEBHOOK_SECRET`
   (enables webhook), `PADDLE_API_KEY` (portal); PUBLIC client = `NEXT_PUBLIC_PADDLE_ENV`,
-  `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `NEXT_PUBLIC_PADDLE_PRICE_MONTHLY/YEARLY`. Webhook
+  `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `NEXT_PUBLIC_PADDLE_PRICE_MONTHLY/YEARLY`, plus optional
+  `NEXT_PUBLIC_PADDLE_DISCOUNT_MONTHLY` (founding offer: a Paddle discount id, dsc_…, for 50%
+  off the FIRST month — pricing page + checkout mention it ONLY when set, so the UI can never
+  promise a discount Paddle won't apply). Webhook
   answers 404 and checkout stays inert until set; price→plan resolves from the price-id env
   (no dashboard custom_data needed). Read `docs/payments-architecture-2026-07-02.md` + the
   DECISIONS entries before touching billing. Non-negotiables: cardless trial stays; only

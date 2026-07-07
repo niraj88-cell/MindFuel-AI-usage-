@@ -7,6 +7,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { TrustPage } from '@/components/site/TrustPage'
+import { readPaddlePublicEnv } from '@/lib/billing/public-config'
 import { PLANS, TRIAL_DAYS } from '@/lib/subscription'
 
 export const metadata: Metadata = {
@@ -15,13 +16,21 @@ export const metadata: Metadata = {
 }
 
 // Both plans are the whole product — pricing chooses a cadence, never a feature set.
-// Stated once, under the cards, instead of two padded checklists pretending to differ.
-const INCLUDED = [
-  'Verified focus sessions — proof from the extension, not self-reporting',
-  'Domain-only tracking: the site, never the page, your typing, or your history',
-  'Your circle — quiet accountability that sees verified time, nothing else',
-  'A weekly noticing drawn from your own patterns, and only yours',
-  'Export and delete everything, free, always',
+// Stated once, under the cards, as OUTCOMES first: what a person gains, then the plain
+// mechanism that delivers it. No feature-name bingo, nothing the product doesn't do.
+const INCLUDED: Array<{ lead: string; detail: string }> = [
+  { lead: 'Understand how you actually work.',
+    detail: 'A behavioral profile built only from your own sessions — patterns, not generic advice.' },
+  { lead: 'Prove your focus.',
+    detail: 'Sessions verified quietly in the browser, so the record can’t be fooled — not even by you.' },
+  { lead: 'Catch drift while it’s happening.',
+    detail: 'One gentle nudge when attention starts circling. Never a guilt trip, never a score.' },
+  { lead: 'Keep each other going.',
+    detail: 'Your circle sees verified time and your own words — never your sites, never your quality.' },
+  { lead: 'Work somewhere calmer.',
+    detail: 'Quiet generated environments (rain, fire, waves) and a one-line desktop companion.' },
+  { lead: 'Stay free to leave.',
+    detail: 'Export and deletion are free, always. Your data is never the hostage.' },
 ]
 
 // The discount, derived — never hand-typed, so it stays true if prices change.
@@ -30,6 +39,9 @@ const YEARLY_SAVING = YEAR_AT_MONTHLY - PLANS.annual.priceUsd
 const ANNUAL_PER_MONTH = PLANS.annual.priceUsd / 12
 
 export default function PricingPage() {
+  // Founding offer (50% off the first month) — mentioned ONLY when the matching Paddle
+  // discount is configured, so this page can never advertise a price checkout won't honor.
+  const foundingOffer = !!readPaddlePublicEnv().discountMonthly
   return (
     <TrustPage
       title="Pricing"
@@ -50,6 +62,13 @@ export default function PricingPage() {
             The full product, month to month. Cancel any time in one click; access runs to
             the end of what you paid for.
           </p>
+          {foundingOffer && (
+            <p className="mt-3 text-[13px] leading-relaxed text-soft">
+              <span className="font-medium text-ink">Founding thanks:</span> your first month
+              is ${PLANS.monthly.priceUsd / 2}, applied automatically at checkout. It renews
+              at the plain ${PLANS.monthly.priceUsd} — a thank-you for being early, not a hook.
+            </p>
+          )}
           <div className="mt-auto pt-7">
             <Link
               href="/signup"
@@ -100,8 +119,9 @@ export default function PricingPage() {
 
       {/* Trust, stated as fact, next to the decision. */}
       <p className="mt-5 text-center text-xs leading-relaxed text-faint">
-        No card for the trial &middot; Cancel in one click &middot; 30-day money-back
-        guarantee &middot; Payments by Paddle — card details never touch our servers
+        No card for the trial &middot; Cancel in one click &middot; No hidden fees &middot;
+        30-day money-back guarantee &middot; Payments by Paddle — card details never touch
+        our servers
       </p>
       <p className="mt-1.5 text-center text-xs leading-relaxed text-faint">
         And the product itself: analysis uses domains and time only — never pages,
@@ -111,11 +131,13 @@ export default function PricingPage() {
       {/* What the money buys — once, because both plans are the whole product. */}
       <section className="mt-12">
         <h2 className="text-lg font-semibold tracking-tight">Both plans are the whole product</h2>
-        <ul className="mt-3 space-y-1.5">
+        <ul className="mt-4 space-y-3">
           {INCLUDED.map((item) => (
-            <li key={item} className="flex gap-2.5 text-[15px] leading-relaxed text-soft">
+            <li key={item.lead} className="flex gap-2.5 text-[15px] leading-relaxed">
               <span className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-green" aria-hidden="true" />
-              {item}
+              <span className="text-soft">
+                <span className="font-medium text-ink">{item.lead}</span> {item.detail}
+              </span>
             </li>
           ))}
         </ul>

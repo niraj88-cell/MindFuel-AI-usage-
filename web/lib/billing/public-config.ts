@@ -13,6 +13,10 @@ export interface PaddlePublicConfig {
   priceYearly: string | null
   /** True when the overlay checkout can actually be opened. */
   checkoutEnabled: boolean
+  /** Optional founding-member offer: a Paddle discount id (dsc_…) for 50% off the FIRST
+   *  month, created in the Paddle dashboard. The UI mentions the offer ONLY when this is
+   *  set, so the page can never promise a discount the checkout won't apply. */
+  discountMonthly?: string | null
 }
 
 export function readPaddlePublicEnv(): PaddlePublicConfig {
@@ -27,5 +31,6 @@ export function readPaddlePublicEnv(): PaddlePublicConfig {
     priceMonthly,
     priceYearly,
     checkoutEnabled: !!(clientToken && priceMonthly && priceYearly),
+    discountMonthly: process.env.NEXT_PUBLIC_PADDLE_DISCOUNT_MONTHLY || null,
   }
 }
