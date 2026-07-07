@@ -3,6 +3,12 @@ import Link from 'next/link'
 import { SatyaMark } from '@/components/brand/SatyaMark'
 import { VerifiedMark } from '@/components/brand/VerifiedMark'
 import { SiteFooter } from '@/components/site/SiteFooter'
+import { PLANS, TRIAL_DAYS } from '@/lib/subscription'
+
+// Price on the front door, derived from the same constants the app bills from —
+// the anchor is simply what monthly adds up to over a year.
+const YEAR_AT_MONTHLY = PLANS.monthly.priceUsd * 12
+const YEARLY_SAVING = YEAR_AT_MONTHLY - PLANS.annual.priceUsd
 
 // Public front door (a statement of belief, not a sales page). A visitor should understand in
 // seconds: what it is, why it exists, why it's private, why it can be trusted. One honest
@@ -91,14 +97,38 @@ export default function LandingPage() {
           </Link>
         </div>
 
+        {/* Pricing on the front door — the price is part of the honesty. */}
+        <div className="mt-10 rounded-xl border border-line bg-card p-5">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Pricing</span>
+            <span className="rounded-full bg-green px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-white">
+              Save ${YEARLY_SAVING} a year
+            </span>
+          </div>
+          <div className="mt-3 flex flex-wrap items-baseline gap-x-7 gap-y-2">
+            <p>
+              <span className="font-mono text-2xl font-medium tracking-tight text-ink">${PLANS.monthly.priceUsd}</span>
+              <span className="text-sm text-faint"> / month</span>
+            </p>
+            <p>
+              <span className="mr-1.5 font-mono text-sm text-faint line-through" aria-hidden="true">${YEAR_AT_MONTHLY}</span>
+              <span className="font-mono text-2xl font-medium tracking-tight text-ink">${PLANS.annual.priceUsd}</span>
+              <span className="text-sm text-faint"> / first year</span>
+            </p>
+          </div>
+          <p className="mt-3 border-t border-hairline pt-3 text-xs leading-relaxed text-faint">
+            Every account starts with {TRIAL_DAYS} days free — full product, no card.{' '}
+            <Link href="/pricing" className="font-medium text-ink underline decoration-line underline-offset-4 transition-colors hover:decoration-ink">
+              Pricing, in plain words
+            </Link>
+            .
+          </p>
+        </div>
+
         <p className="mt-8 text-[14px] leading-relaxed text-faint">
           New here?{' '}
           <Link href="/how-it-works" className="font-medium text-ink underline decoration-line underline-offset-4 transition-colors hover:decoration-ink">
             See how it works
-          </Link>{' '}
-          and{' '}
-          <Link href="/pricing" className="font-medium text-ink underline decoration-line underline-offset-4 transition-colors hover:decoration-ink">
-            what it costs
           </Link>
           .
         </p>

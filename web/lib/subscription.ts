@@ -18,7 +18,7 @@ export const PLANS = {
   annual: {
     id: 'annual' as const,
     label: 'Annual',
-    priceUsd: 30,
+    priceUsd: 60,
     period: 'year' as const,
     note: 'Launch price for your first year.',
   },
