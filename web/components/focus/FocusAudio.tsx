@@ -1,177 +1,169 @@
 'use client'
 
-// FocusAudio — an optional, quiet ambient backdrop for a running focus session.
+// FocusAudio — the Environment System's one surface: an optional place to work in,
+// alongside a running focus session. Grown from the original two-noise backdrop; the
+// concept is unchanged (off by default, device-local preference, generated audio).
 //
-// Privacy by design: the sound is GENERATED locally with WebAudio. There are no audio
-// files, no streaming, no third-party requests, and nothing about what you listen to
-// ever leaves this browser. The preference lives in localStorage, not your account.
+// Privacy + licensing by design: every environment is SYNTHESIZED locally with WebAudio
+// (lib/environments.ts). No audio files, no streaming, no third-party requests, nothing
+// about what you listen to ever leaves this browser, and nothing needed a license.
 //
-// Deliberately only two sounds. Steady broadband noise is the one ambience with
-// consistent evidence for masking distraction during focused work; "Deep" (brown noise,
-// more low end, the common favorite for sustained concentration) and "Soft" (pink noise,
-// gentler) cover both comfort preferences. More options would just be another decision
-// between the user and their work.
+// Playback rules, enforced here:
+//   - Never autoplay. The remembered environment is restored SELECTED but silent; sound
+//     starts only from a click (also what the browser's gesture policy requires).
+//   - Choosing a place starts it (the click is the gesture); Silent is a real choice.
+//   - Pause / resume / volume are always one small control away, keyboard included.
+//   - Leaving the session screen releases the audio device entirely.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-
-type NoiseKind = 'off' | 'brown' | 'pink'
-
-const PREF_KEY = 'satyashift_focus_audio'
-const DEFAULT_VOLUME = 0.3
-
-function makeNoiseBuffer(ctx: AudioContext, kind: 'brown' | 'pink'): AudioBuffer {
-  const len = ctx.sampleRate * 4 // 4s of noise loops seamlessly enough for broadband sound
-  const buf = ctx.createBuffer(1, len, ctx.sampleRate)
-  const data = buf.getChannelData(0)
-  if (kind === 'brown') {
-    let last = 0
-    for (let i = 0; i < len; i++) {
-      const white = Math.random() * 2 - 1
-      last = (last + 0.02 * white) / 1.02
-      data[i] = last * 3.5
-    }
-  } else {
-    // Pink noise via Paul Kellet's economy filter.
-    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0
-    for (let i = 0; i < len; i++) {
-      const w = Math.random() * 2 - 1
-      b0 = 0.99886 * b0 + w * 0.0555179
-      b1 = 0.99332 * b1 + w * 0.0750759
-      b2 = 0.96900 * b2 + w * 0.1538520
-      b3 = 0.86650 * b3 + w * 0.3104856
-      b4 = 0.55000 * b4 + w * 0.5329522
-      b5 = -0.7616 * b5 - w * 0.0168980
-      data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11
-      b6 = w * 0.115926
-    }
-  }
-  return buf
-}
-
-function loadPref(): { kind: NoiseKind; volume: number } {
-  try {
-    const raw = localStorage.getItem(PREF_KEY)
-    if (raw) {
-      const p = JSON.parse(raw)
-      if ((p.kind === 'brown' || p.kind === 'pink' || p.kind === 'off') && typeof p.volume === 'number') {
-        return { kind: p.kind, volume: Math.min(1, Math.max(0, p.volume)) }
-      }
-    }
-  } catch { /* corrupt pref — fall back to default */ }
-  return { kind: 'off', volume: DEFAULT_VOLUME }
-}
+import { Pause, Play } from 'lucide-react'
+import {
+  ENVIRONMENTS, ENV_PREF_KEY, LEGACY_PREF_KEY, DEFAULT_VOLUME,
+  buildEnvironment, parseEnvironmentPref, type EnvironmentId,
+} from '@/lib/environments'
 
 export function FocusAudio() {
-  // Off by default and remembered per device. Audio starts only from a click, so we never
-  // fight the browser's autoplay policy.
-  const [kind, setKind] = useState<NoiseKind>('off')
+  const [env, setEnv] = useState<EnvironmentId>('silent')
   const [volume, setVolume] = useState(DEFAULT_VOLUME)
+  const [playing, setPlaying] = useState(false)
   const ctxRef = useRef<AudioContext | null>(null)
-  const srcRef = useRef<AudioBufferSourceNode | null>(null)
-  const gainRef = useRef<GainNode | null>(null)
+  const masterRef = useRef<GainNode | null>(null)
+  const cleanupRef = useRef<(() => void) | null>(null)
 
+  // Restore the remembered place and volume — selected, not playing.
   useEffect(() => {
-    const p = loadPref()
-    setVolume(p.volume)
-    // Restore the chosen kind but stay silent until the user turns it on this session:
-    // resuming audio without a gesture is both blocked by browsers and rude.
-    setKind('off')
+    try {
+      const p = parseEnvironmentPref(
+        localStorage.getItem(ENV_PREF_KEY),
+        localStorage.getItem(LEGACY_PREF_KEY),
+      )
+      setEnv(p.env)
+      setVolume(p.volume)
+    } catch { /* storage unavailable — defaults stand */ }
   }, [])
 
-  const stop = useCallback(() => {
+  const savePref = useCallback((e: EnvironmentId, v: number) => {
+    try { localStorage.setItem(ENV_PREF_KEY, JSON.stringify({ env: e, volume: v })) } catch { /* private mode */ }
+  }, [])
+
+  /** Fade out and release whatever is playing. Captures locals so a quick environment
+   *  switch can't race the delayed teardown. */
+  const stopGraph = useCallback(() => {
     const ctx = ctxRef.current
-    const gain = gainRef.current
-    const src = srcRef.current
-    if (ctx && gain && src) {
-      // Short fade-out so stopping never clicks.
-      gain.gain.setTargetAtTime(0, ctx.currentTime, 0.15)
-      const oldSrc = src
-      setTimeout(() => { try { oldSrc.stop() } catch { /* already stopped */ } }, 500)
-    }
-    srcRef.current = null
+    const master = masterRef.current
+    const cleanup = cleanupRef.current
+    masterRef.current = null
+    cleanupRef.current = null
+    if (!ctx || !master) { cleanup?.(); return }
+    master.gain.setTargetAtTime(0, ctx.currentTime, 0.12) // no clicks, ever
+    setTimeout(() => {
+      cleanup?.()
+      try { master.disconnect() } catch { /* already gone */ }
+    }, 450)
   }, [])
 
-  const play = useCallback((k: 'brown' | 'pink', vol: number) => {
+  /** Build and fade in one environment. Only this environment exists in memory. */
+  const startGraph = useCallback((id: EnvironmentId, vol: number) => {
     let ctx = ctxRef.current
     if (!ctx) {
       ctx = new AudioContext()
       ctxRef.current = ctx
     }
     if (ctx.state === 'suspended') void ctx.resume()
-    // Replace whatever is playing.
-    if (srcRef.current) { try { srcRef.current.stop() } catch { /* noop */ } srcRef.current = null }
-    const src = ctx.createBufferSource()
-    src.buffer = makeNoiseBuffer(ctx, k)
-    src.loop = true
-    const gain = ctx.createGain()
-    gain.gain.setValueAtTime(0, ctx.currentTime)
-    gain.gain.setTargetAtTime(vol, ctx.currentTime, 0.4) // soft fade-in
-    src.connect(gain).connect(ctx.destination)
-    src.start()
-    srcRef.current = src
-    gainRef.current = gain
-  }, [])
+    stopGraph()
+    const master = ctx.createGain()
+    master.gain.setValueAtTime(0, ctx.currentTime)
+    master.gain.setTargetAtTime(vol, ctx.currentTime, 0.4) // soft arrival
+    master.connect(ctx.destination)
+    masterRef.current = master
+    cleanupRef.current = buildEnvironment(ctx, id, master)
+    setPlaying(true)
+  }, [stopGraph])
 
-  function choose(k: NoiseKind) {
-    setKind(k)
-    try { localStorage.setItem(PREF_KEY, JSON.stringify({ kind: k, volume })) } catch { /* private mode */ }
-    if (k === 'off') stop()
-    else play(k, volume)
+  function choose(id: EnvironmentId) {
+    setEnv(id)
+    savePref(id, volume)
+    if (id === 'silent') {
+      stopGraph()
+      setPlaying(false)
+    } else {
+      // Choosing a place is the gesture — begin there right away.
+      startGraph(id, volume)
+    }
+  }
+
+  function togglePlay() {
+    if (env === 'silent') return
+    if (playing) {
+      stopGraph()
+      setPlaying(false)
+    } else {
+      startGraph(env, volume)
+    }
   }
 
   function changeVolume(v: number) {
     setVolume(v)
-    try { localStorage.setItem(PREF_KEY, JSON.stringify({ kind, volume: v })) } catch { /* private mode */ }
+    savePref(env, v)
     const ctx = ctxRef.current
-    if (ctx && gainRef.current && srcRef.current) {
-      gainRef.current.gain.setTargetAtTime(v, ctx.currentTime, 0.1)
+    if (ctx && masterRef.current) {
+      masterRef.current.gain.setTargetAtTime(v, ctx.currentTime, 0.08)
     }
   }
 
-  // Silence and release the device when the session screen goes away.
+  // Leaving the session screen silences and releases the device.
   useEffect(() => () => {
-    try { srcRef.current?.stop() } catch { /* noop */ }
+    cleanupRef.current?.()
     void ctxRef.current?.close().catch(() => { /* already closed */ })
   }, [])
 
-  const options: Array<{ id: NoiseKind; label: string }> = [
-    { id: 'off', label: 'Quiet' },
-    { id: 'brown', label: 'Deep noise' },
-    { id: 'pink', label: 'Soft noise' },
-  ]
-
   return (
-    <div className="mt-8 w-full max-w-xs">
+    <div className="mt-8 w-full max-w-sm">
       <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.14em] text-ghost">
-        Backdrop <span className="normal-case tracking-normal">· generated on this device</span>
+        Environment <span className="normal-case tracking-normal">&middot; generated on this device</span>
       </p>
-      <div className="flex items-center justify-center gap-2">
-        {options.map((o) => (
+
+      <div className="flex flex-wrap items-center justify-center gap-1.5" role="group" aria-label="Environment">
+        {ENVIRONMENTS.map((e) => (
           <button
-            key={o.id}
-            onClick={() => choose(o.id)}
+            key={e.id}
+            title={e.hint}
+            aria-pressed={env === e.id}
+            onClick={() => choose(e.id)}
             className={
-              'rounded-full px-4 py-1.5 text-xs font-medium transition-colors ' +
-              (kind === o.id
-                ? 'bg-green text-white'
+              'rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ' +
+              (env === e.id
+                ? playing && e.id !== 'silent'
+                  ? 'bg-green text-white' // live sound — the one green state here
+                  : 'bg-line text-ink'
                 : 'bg-hairline text-soft hover:bg-line')
             }
           >
-            {o.label}
+            {e.name}
           </button>
         ))}
       </div>
-      {kind !== 'off' && (
-        <input
-          type="range"
-          min={0}
-          max={1}
-          step={0.05}
-          value={volume}
-          onChange={(e) => changeVolume(Number(e.target.value))}
-          aria-label="Backdrop volume"
-          className="mt-3 w-full"
-        />
+
+      {env !== 'silent' && (
+        <div className="mt-3 flex items-center justify-center gap-3">
+          <button
+            onClick={togglePlay}
+            aria-label={playing ? 'Pause environment' : 'Play environment'}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-line text-ink transition-colors hover:bg-hairline"
+          >
+            {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+          </button>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.02}
+            value={volume}
+            onChange={(e) => changeVolume(Number(e.target.value))}
+            aria-label="Environment volume"
+            className="w-40 accent-ink"
+          />
+        </div>
       )}
     </div>
   )
