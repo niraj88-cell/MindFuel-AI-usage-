@@ -75,6 +75,9 @@ function Dashboard() {
   // Flow Continuation: one confidence-gated invitation back to previous work, or null.
   // Null is the normal case — the dashboard must look unchanged on most visits.
   const [continuation, setContinuation] = useState<(ContinuationInvite & { domains: string[] }) | null>(null)
+  // Whether the last 7 days hold any sessions — gates the quiet /week link so a brand-new
+  // account never sees a door to an empty room.
+  const [hasWeek, setHasWeek] = useState(false)
   // Inline session start (the old Focus idle screen, folded into Today).
   const [startOpen, setStartOpen] = useState(false)
   const [intention, setIntention] = useState('')
@@ -129,6 +132,8 @@ function Dashboard() {
       setActiveId(activeRow?.id ?? null)
       const dayStart = startOfDay(new Date()).getTime()
       setToday(rows.filter((r) => r.status !== 'active' && new Date(r.created_at).getTime() >= dayStart))
+      const weekStart = dayStart - 6 * 86_400_000
+      setHasWeek(rows.some((r) => r.status !== 'active' && (r.duration_s ?? 0) > 0 && new Date(r.created_at).getTime() >= weekStart))
       // On query error, leave connected = true (fail-safe: never nag on a false negative).
       const isConnected = ingestRes.error ? true : (ingestRes.count ?? 0) > 0
       setConnected(isConnected)
@@ -460,6 +465,18 @@ function Dashboard() {
             </div>
           )}
         </div>
+      )}
+
+      {/* The week of attention — the one shareable artifact. A quiet door, only once
+          there is a week to look at. */}
+      {hasWeek && (
+        <Link
+          href="/week"
+          className="mt-6 flex items-center gap-3 rounded-xl border border-line bg-card px-5 py-4 transition-colors hover:bg-green-wash"
+        >
+          <span className="flex-1 text-sm font-medium text-ink">Your week of attention</span>
+          <ChevronRight className="h-4 w-4 text-ghost" />
+        </Link>
       )}
 
       {/* Squad entry point. Still on your own? Echo the landing promise with a real

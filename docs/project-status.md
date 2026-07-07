@@ -5,6 +5,35 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-07 — Launch blockers sprint: /week artifact + Chrome Web Store kit
+
+Doubling down on the main weakness (the product is dark). Blocker #2 (public pitch
+page) was found ALREADY SOLVED by the earlier pricing session ( / is a real front door);
+CLAUDE.md's launch-readiness note is stale on that point. Shipped the two remaining
+code-shippable blockers:
+
+- **Blocker #4 — the week-1 aha artifact.** New `/week` page ("A week of attention"):
+  a seven-day ledger (verified green over on-trust ghost bars), verified-total headline,
+  deepest stretch, the same weeklyInsight line + seed the dashboard speaks, and a
+  "Save as image" button that draws a 1080×1080 PNG on canvas (no deps; palette mirrored
+  as literals like the extension, since canvas can't read CSS tokens; fonts pulled from
+  the rendered page's computed families). Domain-free BY CONSTRUCTION: the new pure
+  `lib/week.ts` fold (buildWeek) never receives a domain, so page and image cannot leak
+  one; footer states the promise ("domains only, never content"). 5 tests in
+  `lib/week.test.mjs`. Dashboard gained one quiet "Your week of attention" door, shown
+  only when the last 7 days hold a session. /week is auth-gated (default-deny verified:
+  logged-out → /login).
+- **Blocker #1 prep — `extension/STORE_LISTING.md`.** Complete Chrome Web Store
+  submission kit: listing copy, plain-language permission justifications (tabs/cookies
+  per the launch note), data-usage disclosure answers, screenshot checklist, a packaging
+  script that strips localhost from the store manifest, the 15-minute founder
+  submission steps, post-approval wiring (EXTENSION_STORE_URL/EXTENSION_PUBLISHED), and
+  the VAPID rotation commands. The upload itself is founder-only (dev account, $5).
+- Verified: 91 pure-module tests pass (5 new), tsc clean, next build clean (/week
+  route present), preview boot clean.
+
+---
+
 ## 2026-07-07 — Flow Continuation (one quiet invitation back to yesterday's work)
 
 Reduces the cognitive cost of RESUMING: on the first dashboard visit of a day, if the
