@@ -91,7 +91,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isPublicRoute = [
     '/', '/login', '/signup', '/forgot-password',
-    '/privacy', '/terms', '/refund', '/pricing', '/how-it-works',
+    '/privacy', '/terms', '/refund', '/pricing', '/how-it-works', '/demo',
     '/sitemap.xml', '/robots.txt',
   ].includes(pathname)
   const isStatic = pathname.startsWith('/_next') || /\.(ico|png|jpg|jpeg|svg|css|js|xml|txt|json|webmanifest|zip)$/.test(pathname)

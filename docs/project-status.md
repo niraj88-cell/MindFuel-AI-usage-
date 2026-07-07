@@ -5,6 +5,35 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-08 — /demo: the proof before the ask (public, no-signup live demo)
+
+The one minimal high-leverage conversion feature: skeptical visitors (especially the
+privacy-conscious developers we target) bounce at "install an extension that watches
+your browsing." /demo answers the objection by SHOWING a finished session with no
+account: the verified hero, the owner-only domain view, the Satya reflection, the
+circle card, and — the trust argument made literal — "The complete record": the raw
+8-row (domain, seconds, category) table with "if our database leaked tomorrow, this is
+all anyone would learn."
+
+- HONESTY RULE baked in: the sample events run through the REAL lib/behavior.ts
+  engine at render time (analyzeSession/qualityOf/reflectionFor) — the page's Satya
+  line is computed, not copywritten (currently: "133 minutes, most of it in one
+  place. The longest unbroken stretch was 80 minutes.", quality "deep"). If the
+  engine changes, the demo changes.
+- Landing: secondary CTA is now "See it working — no account" → /demo; Sign in
+  demoted to a quiet text link under the buttons. /demo added to proxy.ts
+  isPublicRoute and to sitemap.ts.
+- SECURITY PASS (this session's whole diff): Supabase advisors re-run — zero new
+  findings, all WARNs match the known-accepted list; billing_events no-policy INFO is
+  deny-all by design. /demo static, no inputs; .zip static allowance only affects the
+  auth redirect; zip contains extension source only; /week + continuation are
+  owner-scoped RLS reads, no new API surface. Residual (pre-existing, founder list):
+  no CSP header yet; VAPID rotation still pending (STORE_LISTING.md §7).
+- Verified: tsc clean, build clean (/demo static), preview: /demo 200 logged-out,
+  renders correctly (screenshot), zero console/server errors.
+
+---
+
 ## 2026-07-08 — Extension install made real (downloadable zip + guided steps)
 
 The install surfaces told people to "Load unpacked → choose the SatyaShift extension
