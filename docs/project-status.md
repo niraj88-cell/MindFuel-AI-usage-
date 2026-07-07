@@ -5,6 +5,46 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-07 — Pre-launch product review (verdict: DELAY ~1 month; foundation strong, not shippable as public paid)
+
+Full adversarial review (product/eng/security/YC/skeptical-user lenses). Code is strong; a public
+PAID launch is blocked by distribution, activation, and offer — not craft.
+
+**The three questions, answered honestly.**
+- *Understands drifting, or just time?* Partial-yes. `lib/behavior.ts` reads attention SHAPE
+  (loops, fragmentation, recovery, drift-trend) and the nudge fires on a sustained distraction
+  BLOCK — genuinely better than a timer. But "meaningful work" is a hardcoded proxy: `core.js
+  categoryFor()` is a ~10-domain distraction / ~8-domain productive list; the rest of the web is
+  "neutral" and uncounted, and context (a tutorial vs. a doomscroll) is invisible. It understands
+  the geometry of attention, not the user's actual work.
+- *Would a privacy engineer trust + recommend it?* Yes, with caveats. Owner-only RLS, definer-fn
+  column privacy (019), domain-only, no content, least-privilege MV3, HMAC webhooks — a code-reader
+  trusts it. Caveats: `cookies`/`tabs` permissions need plain-language justification on the store
+  listing; rotate the VAPID key leaked in git history before mass scrutiny.
+- *Week-1 "I didn't realize I drifted, and it didn't shame me"?* No, not reliably. The per-session
+  reflection delivers that feeling on day one and is guilt-free — but only if the extension is
+  running (today a dev load-unpack), and the longitudinal "understands me" payoff is confidence-
+  gated (~14 sessions) so week one is mostly silent. The emotion is real; the delivery path is broken.
+
+**Ranked launch blockers.** (1) Extension not on the Chrome Web Store (`EXTENSION_STORE_URL=''`) →
+core loop uninstallable → intelligence dark; store review is the long pole. (2) No public pitch page
+(`/`→`/login` is a bare wall for discovery traffic). (3) Offer isn't real — nothing gated + Paddle
+checkout unverified; gate the SQUAD layer only (never the user's own data) and prove checkout, or
+launch free. (4) No week-1 "aha"/demo artifact.
+
+**Scorecard (1–10, uninflated).** Security 9 · Privacy 9 · Product craft 8 · Performance 8 · Trust 8 ·
+Reliability 7 · Originality 7 · Long-term differentiation 7 · Dashboard 6 · Extension (once installed)
+6 · Accessibility 6 · Community 5 · Retention 4 · Onboarding 4 · Cross-device 4 · Pricing 3 ·
+Subscription value 3.
+
+**Decision: C (delay ~1 month).** Highest-impact work only: submit + ship the Web Store extension
+and set `EXTENSION_STORE_URL`; ship a real pitch page; decide+wire the paid story (gate squad only,
+verify Paddle, remove dev-checkout) OR launch free; add the week-1 attention picture + an
+"extension connected" activation state; rotate VAPID; add permission copy. Do NOT redesign the soul
+(unverified honesty, guilt-free copy, domain-only privacy, fixed-phrase encouragement).
+
+---
+
 ## 2026-07-03 — Behavioral Intelligence, Phases 3 + 4 (local nudge loop + notif/squad personalization)
 
 Extended the intelligence layer with its two learning loops, both additive and privacy-preserving.

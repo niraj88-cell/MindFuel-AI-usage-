@@ -4,6 +4,33 @@ Newest first. Each entry is a decision that should not be silently reversed. For
 change log see `docs/project-status.md`; for the full security reference see
 `docs/security-review-2026-07-02.md`.
 
+## Launch readiness — the four gates (2026-07-07)
+
+Durable strategic decisions from the pre-launch review (full record: `docs/project-status.md`
+2026-07-07). The product is NOT public-launch-ready; the blockers are distribution/activation/offer,
+not code quality. These gates must be true before advertising a public paid launch — do not silently
+reverse them:
+
+- **The extension is the product; it must be one-click installable.** Ship it to the Chrome Web
+  Store and set `web/lib/extension.ts EXTENSION_STORE_URL`. Until then every install surface honestly
+  shows the founding-preview state — never pretend it's one-click. No `domain_logs` ⇒ every session is
+  `unverified` ⇒ the intelligence layer is dark; the whole value chain depends on this one step.
+- **Public discovery needs a pitch page, not a wall.** Retiring the waitlist EMAIL gate was correct;
+  redirecting `/`→`/login` for anonymous discovery traffic is not. A public launch needs a real pitch
+  page (what it is + the privacy promise + one honest artifact). Returning-user redirect stays.
+- **When paid ships, gate the SOCIAL/squad layer — never the user's own data.** (Reaffirms the
+  payment architecture.) Don't advertise $8/mo until something is actually gated AND Paddle checkout
+  is verified in production; otherwise launch free and enable billing later. Remove the owner-only
+  dev-checkout scaffolding at launch (it is marked for deletion).
+- **The week-1 payoff must be legible.** The product is deliberately quiet; that is right for daily
+  use but leaves no felt value or demo moment. Add ONE honest, shareable "your week of attention"
+  artifact and an "extension connected" activation state — resist turning it into a chart dashboard.
+
+Not-blockers but do before mass scrutiny: rotate the VAPID keypair leaked in git history; add
+plain-language `cookies`/`tabs` permission justifications to the store listing. Non-negotiable: the
+review does NOT change the product's soul — honest `unverified` labels, guilt-free copy, domain-only
+privacy, and fixed-phrase encouragement stay exactly as they are.
+
 ## Behavioral Intelligence System — the longitudinal layer (2026-07-03)
 
 The product's durable edge is understanding HOW a person loses focus, recovers, and returns

@@ -8,6 +8,27 @@ verification, squads, insights.
 Principles: effortless deep work · quiet accountability · privacy by design (bare domains
 only, never URLs/content) · trust over engagement · calm, premium UX.
 
+## Launch readiness (verdict 2026-07-07 — NOT yet public-launch-ready; delay ~1 month)
+Foundation (security, privacy, intelligence architecture) is strong; a public PAID launch is
+blocked by distribution + activation + offer, not by code quality. Four blockers, in order:
+1. **Extension not on the Chrome Web Store.** `web/lib/extension.ts` `EXTENSION_STORE_URL=''`,
+   so onboarding + the Today card ship load-unpacked dev steps no normal user will do. Without
+   the extension there are no `domain_logs`, every session is `unverified`, and the whole
+   intelligence layer stays dark. Store review is the long pole → sets the ~1-month timeline.
+2. **No public pitch page.** `/` redirects to `/login` (waitlist retired), so discovery traffic
+   hits a bare login wall. Need a real pitch page (what it is + privacy promise + one honest
+   artifact), separate from the login wall.
+3. **Offer isn't real.** Nothing is gated (no reason to pay) and Paddle checkout is unverified.
+   Don't advertise $8/mo until the SQUAD layer is gated (never the user's own data) AND checkout
+   is proven in prod, or launch free and enable billing later. Remove the dev-checkout scaffolding.
+4. **No week-1 "aha" artifact.** The product is (rightly) quiet, leaving nothing to demo and no
+   felt payoff in week one. Add one honest, shareable "your week of attention" picture + an
+   "extension connected" activation state. Also: rotate the leaked VAPID key; add plain-language
+   `cookies`/`tabs` permission copy to the store listing.
+What genuinely works today: shape-aware drift detection (loops/fragmentation/recovery, not just
+time), guilt-free reflection copy, and best-in-class domain-only privacy. Full review + scorecard:
+`docs/project-status.md` (2026-07-07) and `docs/DECISIONS.md` "Launch readiness".
+
 ## Read these before changing anything
 - `docs/project-status.md` — canonical, append-only implementation log. Newest entry first.
   Every session appends what it did and verified.
