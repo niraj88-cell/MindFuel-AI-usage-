@@ -303,14 +303,25 @@ function Dashboard() {
             </p>
 
             {EXTENSION_PUBLISHED ? (
-              <a
-                href={EXTENSION_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white transition-colors hover:bg-green-deep"
-              >
-                <Puzzle className="h-4 w-4" /> Add to Chrome
-              </a>
+              <>
+                <a
+                  href={EXTENSION_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white transition-colors hover:bg-green-deep"
+                >
+                  <Puzzle className="h-4 w-4" /> Add to Chrome
+                </a>
+                {/* Pre-empt Chrome's scariest words at the exact moment they'll appear. */}
+                <p className="mt-2.5 text-[12px] leading-relaxed text-faint">
+                  Chrome will warn <span className="font-medium text-soft">&ldquo;Read your browsing history&rdquo;</span> —
+                  that&rsquo;s the one permission that lets it see which site you&rsquo;re on. The domain, nothing more.{' '}
+                  <a href="/demo" target="_blank" rel="noopener noreferrer" className="font-medium text-ink underline decoration-line underline-offset-2 transition-colors hover:decoration-ink">
+                    See exactly what it records
+                  </a>
+                  .
+                </p>
+              </>
             ) : (
               <>
                 {howOpen ? (

@@ -129,6 +129,11 @@ Tests, CLAUDE.md, package.json stay out of the zip on purpose.
 4. Distribution: Public, all regions, Free.
 5. Submit for review. Reviews for tabs+cookies extensions typically take a few days
    to ~3 weeks. Respond quickly if the reviewer emails.
+   Note: the install dialog will warn "Read your browsing history" — that's the
+   `tabs` permission and it cannot be avoided for passive domain tracking (the
+   alternative, `<all_urls>` host access, warns worse). Section 2's justification
+   covers it for the reviewer, and the product's install surfaces pre-empt it for
+   users with a plain-words explanation plus a link to /demo.
 6. **After approval:** put the store URL into `web/lib/extension.ts`
    (`EXTENSION_STORE_URL`), flip `EXTENSION_PUBLISHED`, deploy. Onboarding and the
    dashboard connect card switch to "Add to Chrome" automatically.

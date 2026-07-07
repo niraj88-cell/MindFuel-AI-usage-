@@ -5,6 +5,31 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-08 — Final research pass: OG share card + permission-warning pre-empt
+
+Web research surfaced two conversion facts and both were actionable in minutes:
+(1) links with a real og:image get ~2–3x the click-through of bare text previews, and
+satyashift.vercel.app had NO og:image — every share rendered as a dull text box;
+(2) Chrome's `tabs` permission triggers the "Read your browsing history" install
+warning, the single biggest install-killer for extensions, and it cannot be avoided
+for passive domain tracking (`<all_urls>` warns worse).
+
+- `app/opengraph-image.tsx` (next/og ImageResponse, edge): site-wide 1200×630 card —
+  bindu, "Proof you did the work.", the domains-only promise, the /demo invitation.
+  CAUGHT LIVE BY VERIFICATION: the extensionless /opengraph-image route was being
+  bounced to /login by the default-deny middleware (the PWA-manifest trap, third
+  occurrence) — social crawlers would have silently gotten HTML. proxy.ts now
+  bypasses auth for the metadata file conventions (opengraph-image/twitter-image/
+  icon/apple-icon). Verified: image/png 45KB served logged-out, og:image meta
+  injected on all routes.
+- Permission pre-empt: InstallGuide + BOTH dormant "Add to Chrome" store branches
+  (onboarding, dashboard) now name Chrome's exact warning in plain words ("the one
+  permission that lets it see which site you're on — the domain, nothing more") and
+  link /demo as proof. STORE_LISTING.md section 6 notes the warning for the founder.
+- Verified: tsc clean, build clean, OG card screenshot correct, deployed + live-checked.
+
+---
+
 ## 2026-07-08 — /demo: the proof before the ask (public, no-signup live demo)
 
 The one minimal high-leverage conversion feature: skeptical visitors (especially the

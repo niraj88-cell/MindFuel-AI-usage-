@@ -64,6 +64,14 @@ export function InstallGuide() {
       </ol>
 
       <p className="mt-2 text-center text-[11px] text-faint">Desktop Chrome (or any Chromium browser). About a minute.</p>
+      <p className="mt-2 text-[12px] leading-relaxed text-faint">
+        Chrome may warn <span className="font-medium text-soft">&ldquo;Read your browsing history&rdquo;</span> —
+        that&rsquo;s the one permission that lets it see which site you&rsquo;re on. The domain, nothing more.{' '}
+        <a href="/demo" className="font-medium text-ink underline decoration-line underline-offset-2 transition-colors hover:decoration-ink">
+          See exactly what it records
+        </a>
+        .
+      </p>
     </div>
   )
 }

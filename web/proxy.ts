@@ -94,7 +94,10 @@ export async function proxy(request: NextRequest) {
     '/privacy', '/terms', '/refund', '/pricing', '/how-it-works', '/demo',
     '/sitemap.xml', '/robots.txt',
   ].includes(pathname)
-  const isStatic = pathname.startsWith('/_next') || /\.(ico|png|jpg|jpeg|svg|css|js|xml|txt|json|webmanifest|zip)$/.test(pathname)
+  // Metadata file conventions (opengraph-image etc.) serve extensionless URLs — social
+  // crawlers fetch them logged-out, so they must bypass the auth redirect like statics.
+  const isMetadataImage = /(?:^|\/)(?:opengraph-image|twitter-image|icon|apple-icon)$/.test(pathname)
+  const isStatic = pathname.startsWith('/_next') || isMetadataImage || /\.(ico|png|jpg|jpeg|svg|css|js|xml|txt|json|webmanifest|zip)$/.test(pathname)
 
   if (!user && !isPublicRoute && !isApiRoute && !isStatic) {
     // Redirect unauthenticated users to login page
