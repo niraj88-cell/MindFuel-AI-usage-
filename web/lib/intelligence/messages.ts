@@ -51,9 +51,11 @@ const TEMPLATES: Record<string, Partial<Record<Register, Template[]>>> = {
     reflective: [
       () => "This week the hard part wasn't distraction itself. It was getting going again after each interruption.",
       () => 'The pattern this week was less about drifting and more about how long the way back took.',
+      () => 'Interruptions cost less time this week than the restarts after them. The gap after each break is where the minutes went.',
     ],
     supportive: [
-      () => 'Restarting after a break was the real work this week. Coming back at all is the skill — you did, repeatedly.',
+      () => 'The real work this week was starting again after each interruption. You did start again, every time.',
+      () => 'Restarts came slowly this week. They came, though — each break ended with a return.',
     ],
   },
   'insight:morning_strength': {
@@ -62,24 +64,25 @@ const TEMPLATES: Record<string, Partial<Record<Register, Template[]>>> = {
       () => 'Mornings are where your attention holds best. The day loosens from there.',
     ],
     encouraging: [
-      () => 'Mornings are quietly your best hours. Worth protecting the ones you have.',
+      () => 'Mornings are quietly your best hours. The pattern has held long enough to trust.',
     ],
   },
   'insight:late_night_drift': {
     reflective: [
       () => 'Late evenings are where attention tends to slip. Earlier in the day it holds better.',
-      () => 'The later it got, the more attention wandered. A pattern worth knowing, not fixing tonight.',
+      () => 'The later it got, the more attention wandered. Earlier hours kept their shape.',
     ],
   },
   'insight:weekend_collapse': {
     reflective: [
       () => 'Weekends scatter more than your weekdays do. That might be exactly what they are for.',
-      () => 'Attention loosens on weekends and tightens on weekdays. Worth noticing, no verdict attached.',
+      () => 'Attention loosens on weekends and tightens again on weekdays. The rhythm repeats.',
     ],
   },
   'insight:monday_resistance': {
     reflective: [
       () => 'Mondays start slow for you. The week tends to find its feet after that.',
+      () => 'The slowest starts land on Mondays. By midweek the sessions run longer on their own.',
     ],
     supportive: [
       () => 'Mondays ask the most to get moving. The rest of the week comes easier — it has before.',
@@ -87,44 +90,49 @@ const TEMPLATES: Record<string, Partial<Record<Register, Template[]>>> = {
   },
   'insight:post_lunch_dip': {
     reflective: [
-      () => 'Early afternoon is where focus dips. A short, deliberate reset there might be the whole game.',
+      () => 'Early afternoon is where focus thins. It tends to gather again later, without much ceremony.',
+      () => "Focus dips after midday and returns later in the afternoon. That's been the shape of your days.",
     ],
   },
   'insight:rapid_fragmentation': {
     reflective: [
-      () => 'Attention moved around a lot this week. Shorter but unbroken usually feels better than long and scattered.',
+      () => 'Attention moved between more places this week, and stayed in each for less time.',
+      () => "This week's sessions were more scattered than settled — many short stays, few long ones.",
     ],
   },
   'insight:steady_improvement': {
     encouraging: [
-      () => 'Your recent sessions are landing deeper than your earlier ones. Something is working.',
-      () => "The trend is quietly upward — lately you're going deeper than you were. Worth seeing.",
+      () => 'Your recent sessions have run deeper than the ones from a few weeks back. The change has been gradual and steady.',
+      () => 'Session by session, the recent ones hold longer than the earlier ones did.',
     ],
   },
   'insight:quiet_week': {
     calm: [
-      () => 'A steady week. Nothing loud to report, which is its own kind of good.',
+      () => 'A steady week — regular sessions, nothing that stood out.',
+      () => 'The sessions this week came and went without drama. An even stretch.',
     ],
   },
   // Session-level noticings (reflection.ts).
   'notice:beat_typical_streak': {
     encouraging: [
-      (c) => `Your longest clean stretch here (${c.streakMin} min) is well past your recent typical (${c.typicalMin} min).`,
+      (c) => `Your longest clean stretch here (${c.streakMin} min) ran well past your recent typical (${c.typicalMin} min).`,
     ],
   },
   'notice:more_circling': {
     supportive: [
-      (c) => `This one circled back more than your sessions usually do (${c.returns} times; you're typically nearer ${c.typical}). No verdict — just a heads-up.`,
+      (c) => `This one circled back more often than your sessions usually do — ${c.returns} times, where ${c.typical} is more usual.`,
     ],
   },
   'notice:recovered_well': {
     supportive: [
-      () => "You drifted and found your way back within the session. That return is the part worth keeping.",
+      () => 'You drifted partway through and came back before the end. The session closed on the work.',
+      () => 'There was a wander in the middle of this one, and then a return. The ending held.',
     ],
   },
   'notice:calmer_than_usual': {
     calm: [
-      () => 'Steadier than your recent run — less switching, longer stretches. A calm one.',
+      () => 'Steadier than your recent run — fewer moves, longer stays.',
+      () => 'This one sat stiller than your sessions usually do. Less switching, longer stretches.',
     ],
   },
 }

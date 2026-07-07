@@ -192,9 +192,21 @@ export function qualityOf(sig: BehaviorSignals): SessionQuality {
 // ---------------------------------------------------------------------------
 // Honest reflection (the Satya line). One or two plain sentences that describe the
 // session's actual shape. Never flattery, never shame, no "should".
+//
+// Each shape has several phrasings that state the same facts; which one appears is a
+// pure function of the signals, so a session always reads the same line on every visit
+// while months of sessions don't read like one template. Every phrasing in a bucket
+// carries the bucket's factual anchor (the count, "distracting sites", "came back"…),
+// which is also what the tests pin.
 // ---------------------------------------------------------------------------
 function mins(s: number) {
   return Math.max(1, Math.round(s / 60))
+}
+
+/** Deterministic per-session variety: same signals → same line, different sessions vary. */
+function pick(variants: string[], sig: BehaviorSignals): string {
+  const seed = Math.abs(Math.trunc(sig.total_s + sig.distraction_s * 3 + sig.switches * 7))
+  return variants[seed % variants.length]
 }
 
 export function reflectionFor(sig: BehaviorSignals, durationS?: number): string {
@@ -207,35 +219,73 @@ export function reflectionFor(sig: BehaviorSignals, durationS?: number): string 
   // The loop is the most important pattern to name honestly — it is exactly the shape the
   // old percentage-only line used to paper over.
   if (sig.distraction_returns >= 2) {
-    const back = `You left distraction and came back to it ${sig.distraction_returns + 1} times`
+    const times = sig.distraction_returns + 1
+    const head = pick([
+      `You left distraction and came back to it ${times} times in ${sessionMin} minutes.`,
+      `Distraction pulled attention back ${times} times across these ${sessionMin} minutes.`,
+      `Across ${sessionMin} minutes, attention returned to the same distracting places ${times} times.`,
+    ], sig)
     const tail = sig.ended_clean
-      ? ' The last stretch was clean — you did find your way out.'
-      : ' The circling is the pattern worth noticing, more than the minutes.'
-    return `${back} in ${sessionMin} minutes.${tail}`
+      ? pick([
+          ' The last stretch settled, and the session ended on the work.',
+          ' The final stretch stayed with the work.',
+        ], sig)
+      : pick([
+          ' The shape of it was circling more than staying.',
+          ' That back-and-forth was the session’s shape.',
+        ], sig)
+    return `${head}${tail}`
   }
 
   if (sig.distraction_pct >= 70) {
-    return `Most of this session lived on distracting sites — about ${mins(sig.distraction_s)} of ${sessionMin} minutes. Seeing it clearly is the point; no story needed.`
+    const dm = mins(sig.distraction_s)
+    return pick([
+      `Most of this session sat on distracting sites — about ${dm} of ${sessionMin} minutes.`,
+      `About ${dm} of these ${sessionMin} minutes went to distracting sites. That’s the whole account.`,
+      `Distracting sites held most of this one: roughly ${dm} of ${sessionMin} minutes.`,
+    ], sig)
   }
 
   if (sig.drift_trend === 'escalating') {
-    return `The first stretch was clean, then drift built toward the end. Sessions often loosen late — worth knowing that about this one.`
+    return pick([
+      'The first stretch held; the drift arrived toward the end.',
+      'This one started clean and loosened toward the end.',
+      'Attention held early, then slipped toward the end.',
+    ], sig)
   }
 
   if (sig.distraction_pct >= 10 && sig.total_s >= 20 * 60
       && sig.switches_per_hour >= 15 && sig.longest_focus_streak_s < 10 * 60) {
-    return `Attention changed places about ${sig.switches_per_hour} times an hour, and nothing got a long run. Shorter but unbroken tends to feel better than long and scattered.`
+    return pick([
+      `Attention changed places about ${sig.switches_per_hour} times an hour, and nothing got a long run.`,
+      `Attention changed places roughly ${sig.switches_per_hour} times an hour here — many short stays, no long ones.`,
+    ], sig)
   }
 
   if (sig.distraction_pct >= 15 && sig.ended_clean) {
-    return `There was drift in the middle, and you came back — the final ${mins(Math.min(sig.longest_focus_streak_s, sig.total_s))} minutes were clean. Coming back is the skill.`
+    const finalMin = mins(Math.min(sig.longest_focus_streak_s, sig.total_s))
+    return pick([
+      `There was drift in the middle, and you came back — the last ${finalMin} minutes stayed with the work.`,
+      `The middle wandered. You came back, and the final ${finalMin} minutes held.`,
+      `Part of this one drifted before you came back to it; the closing ${finalMin} minutes ran unbroken.`,
+    ], sig)
   }
 
   if (sig.distraction_pct < 15) {
-    return `${sessionMin} minutes with barely a detour — your longest unbroken stretch was ${mins(sig.longest_focus_streak_s)} minutes. A clean session.`
+    const streakMin = mins(sig.longest_focus_streak_s)
+    return pick([
+      `${sessionMin} minutes with barely a detour — the longest unbroken stretch ran ${streakMin} minutes.`,
+      `${sessionMin} minutes, most of it in one place. The longest unbroken stretch was ${streakMin} minutes.`,
+      `Little pulled at this one: ${streakMin} of its ${sessionMin} minutes passed as one unbroken stretch.`,
+    ], sig)
   }
 
-  return `${sessionMin} minutes in, with a detour you caught. Your longest clean stretch was ${mins(sig.longest_focus_streak_s)} minutes.`
+  const streakMin = mins(sig.longest_focus_streak_s)
+  return pick([
+    `${sessionMin} minutes, with a detour you caught. The longest clean stretch was ${streakMin} minutes.`,
+    `Some drift moved through this one. The longest clean stretch ran ${streakMin} of ${sessionMin} minutes.`,
+    `A detour or two inside ${sessionMin} minutes — the longest clean stretch held for ${streakMin}.`,
+  ], sig)
 }
 
 // ---------------------------------------------------------------------------
@@ -265,11 +315,11 @@ export function noticeAgainstBaseline(
   // Streak meaningfully above the user's own typical: worth a quiet mention.
   if (typicalStreak > 0 && current.longest_focus_streak_s >= typicalStreak * 1.5
       && current.longest_focus_streak_s - typicalStreak >= 5 * 60) {
-    return `Your longest clean stretch here (${mins(current.longest_focus_streak_s)} min) is well past your recent typical (${mins(typicalStreak)} min).`
+    return `The longest clean stretch here ran ${mins(current.longest_focus_streak_s)} minutes — past your recent typical of ${mins(typicalStreak)}.`
   }
   // Circling meaningfully above typical: name it, without judgment.
   if (current.distraction_returns >= typicalReturns + 3) {
-    return `This one circled back to distraction more than your recent sessions usually do (${current.distraction_returns} returns; typically ${Math.round(typicalReturns)}).`
+    return `This one circled back to distraction more than your recent sessions have — ${current.distraction_returns} returns, where ${Math.round(typicalReturns)} is more usual for you.`
   }
   return null
 }

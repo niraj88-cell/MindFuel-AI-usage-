@@ -210,7 +210,9 @@ export default function SessionDetailPage() {
     hour: startLocal.getHours(),
     dow: startLocal.getDay(),
   }
-  const baselineNote = sessionNoticing(sessionRecord, profile ?? emptyProfile(), history)?.line ?? null
+  // Seeded by the session's own duration so the phrasing varies between sessions but a
+  // given session reads the same on every visit.
+  const baselineNote = sessionNoticing(sessionRecord, profile ?? emptyProfile(), history, Date.now(), Math.round(durationS))?.line ?? null
 
   return (
     <div className="mx-auto max-w-3xl py-2">

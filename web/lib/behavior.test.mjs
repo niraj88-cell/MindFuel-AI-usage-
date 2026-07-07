@@ -48,7 +48,7 @@ test('THE TRAP the old model failed: a loop diluted by neutral time must not rea
   // New model: the circling caps it.
   assert.equal(qualityOf(sig), 'focused') // returns=3 → capped at focused (not deep)…
   const line = reflectionFor(sig)
-  assert.match(line, /came back to it 4 times/, 'the loop is named, not papered over')
+  assert.match(line, /4 times/, 'the loop is named, not papered over')
 })
 
 test('a heavy loop (4+ returns) is capped at mixed even with a low percentage', () => {
@@ -75,7 +75,7 @@ test('clean deep session: one detour, long unbroken stretch', () => {
   const sig = analyzeSession([p('github.com', 50 * MIN), d('reddit.com', 2 * MIN)])
   assert.ok(sig.distraction_pct < 15)
   assert.equal(qualityOf(sig), 'deep')
-  assert.match(reflectionFor(sig), /clean session/i)
+  assert.match(reflectionFor(sig), /unbroken stretch/i)
 })
 
 test('deep must be earned by an unbroken stretch, not just a low percentage', () => {
@@ -112,7 +112,7 @@ test('escalating drift is detected and named', () => {
   ])
   assert.equal(sig.drift_trend, 'escalating')
   assert.equal(sig.distraction_returns, 0)
-  assert.match(reflectionFor(sig), /drift built toward the end/)
+  assert.match(reflectionFor(sig), /toward the end/)
 })
 
 test('recovery: drift in the middle, clean ending — acknowledged honestly', () => {

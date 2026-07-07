@@ -163,7 +163,9 @@ function Dashboard() {
 
   // One weekly realization from the behavioral profile — or nothing. The generator only
   // speaks when a pattern clears the confidence bar, so most weeks this is simply null.
-  const insight = profile ? weeklyInsight(profile) : null
+  // Seeded by the calendar week so a persistent pattern doesn't repeat the exact same
+  // sentence week after week, while staying stable within a week.
+  const insight = profile ? weeklyInsight(profile, Date.now(), Math.floor(Date.now() / (7 * 24 * 3600 * 1000))) : null
 
   // Squad recommendation: only ever OFFER support, never expose anything. When the profile
   // shows someone sustaining focus well on their own, we quietly leave them be rather than
@@ -173,12 +175,12 @@ function Dashboard() {
 
   // One honest, non-punitive reflection derived from the real day.
   const reflection = activeId
-    ? 'You’re in a session right now. Stay with it — this page will be here after.'
+    ? 'You’re in a session right now. This page can wait.'
     : today.length === 0
       ? 'A fresh day. Start a session and your verified focus will show up here.'
       : today.length === 1
-        ? `One session, ${humanDuration(totalS)} of focus. A good start.`
-        : `${today.length} sessions, ${humanDuration(totalS)} of focus${verifiedCount > 0 ? `, ${verifiedCount} verified` : ''}. Steady work.`
+        ? `One session so far — ${humanDuration(totalS)} of focus.`
+        : `${today.length} sessions today — ${humanDuration(totalS)} of focus${verifiedCount > 0 ? `, ${verifiedCount} verified` : ''}.`
 
   if (loading) {
     return (
