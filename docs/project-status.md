@@ -5,6 +5,30 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-08 — Extension install made real (downloadable zip + guided steps)
+
+The install surfaces told people to "Load unpacked → choose the SatyaShift extension
+folder" but never gave them the folder — connecting was impossible for anyone but the
+founder. Interim fix until the store listing lands (all surfaces still flip to the
+one-click store button automatically when EXTENSION_PUBLISHED goes true):
+
+- `web/scripts/package-extension.ps1` (+ `npm run package:extension`) builds
+  `web/public/satyashift-extension.zip` (runtime files only, manifest as-is, 38 KB;
+  verified manifest sits at the zip root so Extract-All → Load unpacked just works).
+  RE-RUN IT AFTER ANY EXTENSION CHANGE or the download goes stale.
+- `lib/extension.ts` gained EXTENSION_DOWNLOAD_URL; proxy.ts static regex now allows
+  `.zip` (remember: default-deny middleware bounced unknown file types — this was the
+  PWA-manifest lesson again).
+- New shared `components/extension/InstallGuide.tsx`: green "Download the extension"
+  + four plain steps, with a copy-to-clipboard chip for chrome://extensions (Chrome
+  refuses chrome:// links from pages, so copy is the honest affordance). Used by
+  onboarding step 2 (steps now always visible in the card) and the Today connect card
+  ("Get the extension" toggle → guide).
+- Verified: tsc clean, build clean, preview logged-out fetch of the zip = 200
+  application/zip 38 KB with no login bounce, zero console/server errors.
+
+---
+
 ## 2026-07-07 — Launch blockers sprint: /week artifact + Chrome Web Store kit
 
 Doubling down on the main weakness (the product is dark). Blocker #2 (public pitch

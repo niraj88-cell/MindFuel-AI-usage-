@@ -17,6 +17,7 @@ import { EXTENSION_PUBLISHED, EXTENSION_STORE_URL } from '@/lib/extension'
 import { weeklyInsight } from '@/lib/intelligence/insights'
 import { recommendSquadSupport } from '@/lib/intelligence/squad'
 import { deriveContinuation, workingSet, type ContinuationInvite, type DomainStay } from '@/lib/continuation'
+import { InstallGuide } from '@/components/extension/InstallGuide'
 import type { BehavioralProfile } from '@/lib/intelligence/types'
 
 // Shown once, the first time an "unverified" chip appears, then never again.
@@ -312,19 +313,23 @@ function Dashboard() {
               </a>
             ) : (
               <>
-                <button
-                  onClick={() => setHowOpen((v) => !v)}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white transition-colors hover:bg-green-deep"
-                >
-                  <Puzzle className="h-4 w-4" /> {howOpen ? 'Hide steps' : 'How to connect'}
-                </button>
-                {howOpen && (
-                  <ol className="mt-3 space-y-2 rounded-lg bg-paper p-4 text-[13px] leading-relaxed text-soft">
-                    <li><span className="font-mono font-medium text-ink">1.</span> Open <span className="font-mono text-[12px]">chrome://extensions</span> and turn on <span className="font-semibold">Developer mode</span> (top-right).</li>
-                    <li><span className="font-mono font-medium text-ink">2.</span> Click <span className="font-semibold">Load unpacked</span> and choose the SatyaShift <span className="font-mono text-[12px]">extension</span> folder.</li>
-                    <li><span className="font-mono font-medium text-ink">3.</span> Make sure you&rsquo;re signed in here, then reload this page.</li>
-                    <li className="text-faint">It connects on its own — this card disappears once it sends its first activity.</li>
-                  </ol>
+                {howOpen ? (
+                  <div className="mt-4">
+                    <InstallGuide />
+                    <button
+                      onClick={() => setHowOpen(false)}
+                      className="mt-2 w-full py-1 text-center text-xs font-medium text-faint transition-colors hover:text-ink"
+                    >
+                      Hide the steps
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setHowOpen(true)}
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white transition-colors hover:bg-green-deep"
+                  >
+                    <Puzzle className="h-4 w-4" /> Get the extension
+                  </button>
                 )}
               </>
             )}

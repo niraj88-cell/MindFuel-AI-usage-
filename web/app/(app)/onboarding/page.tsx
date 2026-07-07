@@ -13,12 +13,12 @@ import { useRouter } from 'next/navigation'
 import { Check, Lock, X, ArrowRight, Loader2, Puzzle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { SatyaMark } from '@/components/brand/SatyaMark'
+import { InstallGuide } from '@/components/extension/InstallGuide'
 import { EXTENSION_PUBLISHED, EXTENSION_STORE_URL } from '@/lib/extension'
 
 export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
-  const [howOpen, setHowOpen] = useState(false)
   const [saving, setSaving] = useState(false)
 
   async function finish() {
@@ -103,26 +103,14 @@ export default function OnboardingPage() {
             </a>
           ) : (
             <div className="mt-6 rounded-xl border border-line bg-card p-4">
-              <div className="flex items-start gap-2.5">
+              <div className="mb-3 flex items-start gap-2.5">
                 <Puzzle className="mt-0.5 h-4 w-4 shrink-0 text-green" />
                 <p className="text-[13px] leading-relaxed text-soft">
                   We&rsquo;re in founding preview &mdash; the Chrome Web Store listing is on its way.
-                  For now the install is manual (about a minute):
+                  Until then, the install is a download and one click:
                 </p>
               </div>
-              <button
-                onClick={() => setHowOpen((v) => !v)}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white transition-colors hover:bg-green-deep"
-              >
-                {howOpen ? 'Hide the steps' : 'Show me the steps'}
-              </button>
-              {howOpen && (
-                <ol className="mt-3 space-y-2 rounded-lg bg-paper p-4 text-[13px] leading-relaxed text-soft">
-                  <li><span className="font-mono font-medium text-ink">1.</span> Open <span className="font-mono text-[12px]">chrome://extensions</span> and turn on <span className="font-semibold">Developer mode</span> (top-right).</li>
-                  <li><span className="font-mono font-medium text-ink">2.</span> Click <span className="font-semibold">Load unpacked</span> and choose the SatyaShift <span className="font-mono text-[12px]">extension</span> folder.</li>
-                  <li><span className="font-mono font-medium text-ink">3.</span> That&rsquo;s it &mdash; it signs in with this account on its own.</li>
-                </ol>
-              )}
+              <InstallGuide />
             </div>
           )}
 

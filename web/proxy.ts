@@ -94,7 +94,7 @@ export async function proxy(request: NextRequest) {
     '/privacy', '/terms', '/refund', '/pricing', '/how-it-works',
     '/sitemap.xml', '/robots.txt',
   ].includes(pathname)
-  const isStatic = pathname.startsWith('/_next') || /\.(ico|png|jpg|jpeg|svg|css|js|xml|txt|json|webmanifest)$/.test(pathname)
+  const isStatic = pathname.startsWith('/_next') || /\.(ico|png|jpg|jpeg|svg|css|js|xml|txt|json|webmanifest|zip)$/.test(pathname)
 
   if (!user && !isPublicRoute && !isApiRoute && !isStatic) {
     // Redirect unauthenticated users to login page
