@@ -5,6 +5,89 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-07 — Desktop Reflection Widget (optional companion window; one line, no dashboard)
+
+An optional small window that sits beside the user's work and holds ONE quiet line.
+Opened explicitly from Settings; closing the window is the whole off switch. Not a
+dashboard: no scores, streaks, charts, controls, or ticking timers — a running session
+reads in coarse bands ("You've stayed with this for over an hour"), never a live count.
+
+- New pure `lib/widget.ts` (`widgetMessage`): the single decision of what to show.
+  Priority: running session (coarse presence + intention as the only support line) →
+  weekly insight (same `weeklyInsight` line + seed as the dashboard, so the week speaks
+  with one voice) → plain day line → quiet empty state. Tested in `lib/widget.test.mjs`
+  incl. a content-rule guard (no score/streak/%/hype ever).
+- New `app/widget/page.tsx` OUTSIDE the (app) group: paper, mono overline, one serif
+  line, optional faint support line; static green dot only while a session is live (no
+  motion — the widget must stay comfortable for a whole workday). Client reads own rows
+  under RLS (today's focus_sessions + behavioral_profiles), refreshes every 60s. NO
+  middleware change needed: default-deny already requires auth for /widget.
+- Settings (/profile): new "Desktop widget" section with an Open button —
+  `window.open('/widget', 'satyashift-widget', popup 360×200)`; the named window
+  prevents duplicates.
+- FLOAT ON TOP (same session): the widget can move onto the real desktop via Document
+  Picture-in-Picture (Chrome 116+) — an always-on-top window above every application.
+  Implementation: the card's DOM node is physically moved into the PiP document (the
+  documented framework pattern; React keeps driving the moved node, so the tree renders
+  it unconditionally and it never unmounts), styles + next/font variable classes are
+  cloned in, `pagehide` moves the card home. Button appears only when the API exists;
+  gesture-gated; while floating, the tab shows one faint keep-this-open note. Known
+  constraint stated in-page: the PiP window lives only as long as its opener tab (a
+  native tray widget would need Electron/Tauri — deliberately out of pre-launch scope).
+- Untouched: dashboard, focus flow, intelligence, notifications, extension, DB, deps.
+- Verified: `node --test` 75/75 (incl. new widget tests), `tsc --noEmit` clean,
+  `next build` green (/widget prerenders, hydrates client-side). Visual check in a real
+  signed-in window still needs a human (agent has no credentials). Not deployed.
+
+The two-noise "Backdrop" on the focus screen became a small curated Environment System —
+a place to work, not a music feature. Concept unchanged: optional, off by default,
+device-local preference, audio GENERATED with WebAudio (no files, no streaming, no
+third-party requests → nothing to license, nothing leaves the browser). Environments that
+can't be synthesized honestly (café murmur, piano) were excluded rather than sourced.
+
+- New `lib/environments.ts`: catalog (Silent · Deep Noise · Gentle Rain · Ocean Waves ·
+  Forest Wind · Fireplace — curation guard ≤8), pure pref parsing with legacy
+  `satyashift_focus_audio` migration (brown/pink → Deep Noise, volume carried), and the
+  synthesis builders (looped filtered noise layers + slow LFO swells/sweeps; rain droplets
+  and fire crackle as short bursts scheduled ~2.5s ahead on the AUDIO clock so background-tab
+  timer throttling can't thin them out). Each builder returns a full cleanup — only the
+  selected environment ever exists in memory.
+- `components/focus/FocusAudio.tsx` rewritten as the thin UI: environment chips (choosing a
+  place starts it — the click is the gesture), play/pause toggle, volume slider. Never
+  autoplays: the remembered environment restores SELECTED but silent. Green appears only on
+  the actively sounding chip (live state). Fades on every start/stop/switch; leaving the
+  screen closes the AudioContext. aria-pressed / aria-labels / keyboard-native controls.
+- Mounting unchanged: `focus/page.tsx` still renders `<FocusAudio />`; no other surface,
+  no layout/dashboard/middleware changes, no new deps, no DB anything.
+- Verified: `node --test` 70/70 (incl. new `lib/environments.test.mjs`: catalog invariants,
+  naming rules, pref clamp/migration), `tsc --noEmit` clean, `next build` green. Sound
+  QUALITY needs a human ear in a real session (agent can't listen) — tuning knobs are the
+  gain/LFO constants in `buildEnvironment`. Not deployed.
+
+Rewrote the user-facing reflection language so it reads as observation, not evaluation, and
+added deterministic phrasing variety so months of sessions don't read like one template.
+Detection logic, signals, quality rules, gating thresholds, validator, privacy model: untouched.
+
+- `lib/behavior.ts` `reflectionFor`: every shape bucket (loop / mostly-distraction / escalating /
+  fragmentation / recovery / clean / default) now has 2–3 phrasings sharing that bucket's factual
+  anchor; a pure `pick()` seeded from the signals chooses one, so a session reads identically on
+  every visit while different sessions vary. Dropped the evaluative/coaching tails ("Coming back
+  is the skill", "Seeing it clearly is the point", "tends to feel better…"). `noticeAgainstBaseline`
+  lines reworded to plain prose (kept the "past your recent typical" / "circled back" anchors).
+- `lib/intelligence/messages.ts`: templates rewritten to describe rather than advise — removed
+  "Worth protecting…", "might be the whole game", "Something is working", "No verdict — just a
+  heads-up"; added variants to every single-phrasing bucket. Validator + compose untouched.
+- Dashboard day line: dropped trailing verdicts ("A good start.", "Steady work.") — the line now
+  states the count and duration only. Active-session line softened.
+- Seeds actually wired: session page passes `durationS` to `sessionNoticing`, dashboard passes the
+  ISO-week number to `weeklyInsight`, so the existing seed rotation (previously always 0) is live.
+- Tests: 3 regex anchors in `behavior.test.mjs` relaxed to the per-bucket invariants ("4 times",
+  "unbroken stretch", "toward the end"); all wording buckets keep an anchor every variant carries.
+- Verified: `node --test` 64/64 (full lib suite) and 27/27 (copy-touching files), `tsc --noEmit`
+  clean, `next build` green. Not deployed.
+
+---
+
 ## 2026-07-07 — Pre-launch product review (verdict: DELAY ~1 month; foundation strong, not shippable as public paid)
 
 Full adversarial review (product/eng/security/YC/skeptical-user lenses). Code is strong; a public

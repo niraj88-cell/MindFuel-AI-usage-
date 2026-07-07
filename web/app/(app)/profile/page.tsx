@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
+  AppWindow,
   CreditCard,
   FileJson,
   FileText,
@@ -267,6 +268,27 @@ export default function SettingsPage() {
             {exporting === 'csv' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />} Export CSV
           </button>
         </div>
+      </section>
+
+      {/* Desktop widget — optional ambient companion window. Opening it is always an
+          explicit choice; closing the window is the whole off switch. */}
+      <section className="rounded-xl border border-line bg-card p-5">
+        <div className="mb-1 flex items-center gap-2">
+          <AppWindow className="h-4 w-4 text-green" />
+          <h2 className="text-sm font-semibold text-ink">Desktop widget</h2>
+        </div>
+        <p className="mb-3 text-xs leading-relaxed text-faint">
+          A small window that sits beside your work and holds one quiet line — a running
+          session, or the week&rsquo;s one noticing. In Chrome, &ldquo;Float on top&rdquo;
+          keeps it above every other window, right on your desktop. Nothing to watch,
+          nothing to manage; close it whenever you like.
+        </p>
+        <button
+          onClick={() => window.open('/widget', 'satyashift-widget', 'popup=yes,width=360,height=200')}
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-line bg-paper text-sm font-semibold text-ink transition-colors hover:bg-green-wash"
+        >
+          <AppWindow className="h-4 w-4" /> Open the widget
+        </button>
       </section>
 
       {/* Account */}
