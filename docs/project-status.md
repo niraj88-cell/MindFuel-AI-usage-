@@ -5,6 +5,34 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-07 — Flow Continuation (one quiet invitation back to yesterday's work)
+
+Reduces the cognitive cost of RESUMING: on the first dashboard visit of a day, if the
+evidence has earned it, one card hands back the previous session's mental context — the
+user's own intention, the time window, and the 2–3 domains the work lived on — with a
+single decision: "Pick this back up" (starts a session under the same intention via the
+existing /api/focus/start) or "Not now" (per-anchor localStorage dismissal, permanent,
+never re-offers a runner-up). Silence is the default.
+
+- New pure `lib/continuation.ts` (peer of behavior.ts — NOT in lib/intelligence/, whose
+  zero-domain invariant this owner-only surface would violate): `deriveContinuation`
+  picks an anchor by quality × depth × recency, boosted by 7-day working rhythm, gated
+  at the shared `CONFIDENCE.speak` bar; `workingSet` drops drift-dominant domains (never
+  invite the loop back) and sub-3-min visits. Hard bails: any session today, an active
+  session, <6h absence, <20min anchors, 'distracted' anchors, unverified without an
+  intention, >7 days old. 17 tests in `lib/continuation.test.mjs` (mostly silence cases).
+- Dashboard: session query widened to 14 days/40 rows (today's UI unchanged — filtered
+  client-side); invitation derived fail-safe (any error → no card); the anchor's
+  domain_logs window is the same owner-only read the session page already does. Card
+  replaces the generic green start button so the page keeps ONE primary action; hidden
+  while the extension is unconnected (activation first). No new tracking, tables,
+  routes, or storage; every invite carries confidence + evidence.
+- Verified: 17 new + 86 existing pure-module tests pass, tsc clean, next build clean,
+  dev preview boots with zero console/server errors, middleware default-deny intact.
+  NOT yet committed/deployed this session.
+
+---
+
 ## 2026-07-07 — Pricing refined + corrected + CRO pass (annual $60; dormant founding offer)
 
 Three rounds on the public pricing surface, all DEPLOYED (74647f8, 09928ad):

@@ -16,10 +16,15 @@ import { VerifiedMark } from '@/components/brand/VerifiedMark'
 import { EXTENSION_PUBLISHED, EXTENSION_STORE_URL } from '@/lib/extension'
 import { weeklyInsight } from '@/lib/intelligence/insights'
 import { recommendSquadSupport } from '@/lib/intelligence/squad'
+import { deriveContinuation, workingSet, type ContinuationInvite, type DomainStay } from '@/lib/continuation'
 import type { BehavioralProfile } from '@/lib/intelligence/types'
 
 // Shown once, the first time an "unverified" chip appears, then never again.
 const VERIFY_NOTE_KEY = 'satya_verified_note_seen'
+// "Not now" on a continuation invite is remembered per anchor session, forever.
+const CONTINUATION_DISMISSED_KEY = 'satya_continuation_dismissed'
+// How far back deriveContinuation may look for an anchor (its own gate is 7 days).
+const CONTINUATION_LOOKBACK_DAYS = 14
 
 interface SessionRow {
   id: string
@@ -67,6 +72,9 @@ function Dashboard() {
   const [aloneInCircle, setAloneInCircle] = useState<boolean | null>(null)
   // The user's evolving behavioral profile — feeds the one weekly realization (or nothing).
   const [profile, setProfile] = useState<BehavioralProfile | null>(null)
+  // Flow Continuation: one confidence-gated invitation back to previous work, or null.
+  // Null is the normal case — the dashboard must look unchanged on most visits.
+  const [continuation, setContinuation] = useState<(ContinuationInvite & { domains: string[] }) | null>(null)
   // Inline session start (the old Focus idle screen, folded into Today).
   const [startOpen, setStartOpen] = useState(false)
   const [intention, setIntention] = useState('')
@@ -92,15 +100,17 @@ function Dashboard() {
       if (!user) return
       setName(user.user_metadata?.full_name?.split(' ')[0] || 'there')
 
-      const since = startOfDay(new Date()).toISOString()
+      // Two weeks of sessions in one query: today's rows feed the page as before,
+      // the rest exist only so deriveContinuation can look for an anchor.
+      const lookback = new Date(Date.now() - CONTINUATION_LOOKBACK_DAYS * 86_400_000).toISOString()
       const [sessionsRes, ingestRes, squadsData, profileRes] = await Promise.all([
         supabase
           .from('focus_sessions')
           .select('id, created_at, status, duration_s, session_quality, intention')
           .eq('user_id', user.id)
-          .gte('created_at', since)
+          .gte('created_at', lookback)
           .order('created_at', { ascending: false })
-          .limit(20),
+          .limit(40),
         // "Has the extension ever run for this account?" — any owner-readable domain_log
         // means a batch was ingested. Cheap head/count, no rows returned.
         supabase
@@ -115,10 +125,39 @@ function Dashboard() {
       setProfile((profileRes.data?.profile as unknown as BehavioralProfile) ?? null)
 
       const rows = (sessionsRes.data as SessionRow[]) || []
-      setActiveId(rows.find((r) => r.status === 'active')?.id ?? null)
-      setToday(rows.filter((r) => r.status !== 'active'))
+      const activeRow = rows.find((r) => r.status === 'active') ?? null
+      setActiveId(activeRow?.id ?? null)
+      const dayStart = startOfDay(new Date()).getTime()
+      setToday(rows.filter((r) => r.status !== 'active' && new Date(r.created_at).getTime() >= dayStart))
       // On query error, leave connected = true (fail-safe: never nag on a false negative).
-      setConnected(ingestRes.error ? true : (ingestRes.count ?? 0) > 0)
+      const isConnected = ingestRes.error ? true : (ingestRes.count ?? 0) > 0
+      setConnected(isConnected)
+
+      // Flow Continuation — entirely fail-safe: any error, low confidence, or noise
+      // simply means the card never existed. Suppressed until the extension is
+      // connected (activation comes first, and there would be no working set anyway).
+      try {
+        if (!activeRow && isConnected) {
+          const invite = deriveContinuation(rows, new Date(), localStorage.getItem(CONTINUATION_DISMISSED_KEY))
+          if (invite) {
+            // The anchor's own window of activity — the same owner-only read the
+            // session page already does. Nothing new is collected or stored.
+            const { data: stays } = await supabase
+              .from('domain_logs')
+              .select('domain, duration_s, category')
+              .eq('user_id', user.id)
+              .gte('created_at', invite.startIso)
+              .lte('created_at', new Date(new Date(invite.endIso).getTime() + 60_000).toISOString())
+            setContinuation({ ...invite, domains: workingSet((stays as DomainStay[]) ?? []) })
+          } else {
+            setContinuation(null)
+          }
+        } else {
+          setContinuation(null)
+        }
+      } catch {
+        setContinuation(null)
+      }
 
       const squads: { members?: unknown[] }[] | null = squadsData?.squads ?? null
       // Unknown on error -> null -> show the plain link, never a false invite.
@@ -137,13 +176,15 @@ function Dashboard() {
   useEffect(() => { load() }, [load])
 
   // Start a session right here — /focus is only the running screen now.
-  async function startSession() {
+  // `withIntention` lets the continuation card resume under the previous intention
+  // in one press; the inline starter passes nothing and uses the typed field.
+  async function startSession(withIntention?: string) {
     setStartBusy(true); setStartError(null)
     try {
       const res = await fetch('/api/focus/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ intention: intention.trim() || undefined }),
+        body: JSON.stringify({ intention: (withIntention ?? intention).trim() || undefined }),
       })
       if (!res.ok) throw new Error('Could not start the session. Give it a moment and try again.')
       router.push('/focus')
@@ -151,6 +192,12 @@ function Dashboard() {
       setStartError(e instanceof Error ? e.message : 'Could not start the session.')
       setStartBusy(false)
     }
+  }
+
+  // "Not now" is permanent for this anchor — the same invitation never returns.
+  function dismissContinuation() {
+    if (continuation) localStorage.setItem(CONTINUATION_DISMISSED_KEY, continuation.anchorId)
+    setContinuation(null)
   }
 
   function dismissVerifyNote() {
@@ -303,7 +350,7 @@ function Dashboard() {
               </p>
               {startError && <p className="mt-3 text-sm text-rust">{startError}</p>}
               <button
-                onClick={startSession}
+                onClick={() => startSession()}
                 disabled={startBusy}
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3.5 text-sm font-semibold text-white transition-colors hover:bg-green-deep disabled:opacity-60"
               >
@@ -318,6 +365,44 @@ function Dashboard() {
             >
               Start a session without verifying <ChevronRight className="h-3.5 w-3.5" />
             </button>
+          ) : continuation ? (
+            /* Flow Continuation — hands back yesterday's mental context (their own
+               intention, the window, the tools) with exactly one decision. Replaces
+               the generic start button so the page still has ONE primary action.
+               Domains here are the owner's own, same as the session page's private view. */
+            <div className="mt-6 rounded-xl border border-line bg-card p-5">
+              <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Where you left off</p>
+              <p className="text-[15px] leading-relaxed text-ink">
+                {continuation.intention ? (
+                  <>You were working on <span className="font-medium">&ldquo;{continuation.intention}&rdquo;</span> {continuation.timeLabel}.</>
+                ) : (
+                  <>Your focus held for {humanDuration(continuation.durationS)} {continuation.timeLabel}.</>
+                )}
+              </p>
+              <p className="mt-1.5 font-mono text-xs text-faint">
+                {format(new Date(continuation.startIso), 'h:mm')}&ndash;{format(new Date(continuation.endIso), 'h:mm a')}
+                {continuation.domains.map((d) => (
+                  <span key={d}> &middot; {d}</span>
+                ))}
+              </p>
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  onClick={() => startSession(continuation.intention ?? '')}
+                  disabled={startBusy}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white transition-colors hover:bg-green-deep disabled:opacity-60"
+                >
+                  {startBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" fill="currentColor" strokeWidth={0} />}
+                  Pick this back up
+                </button>
+                <button
+                  onClick={dismissContinuation}
+                  className="shrink-0 px-2 py-3 text-[13px] font-medium text-faint transition-colors hover:text-ink"
+                >
+                  Not now
+                </button>
+              </div>
+              {startError && <p className="mt-3 text-sm text-rust">{startError}</p>}
+            </div>
           ) : (
             <button
               onClick={() => setStartOpen(true)}
