@@ -5,6 +5,28 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-07 — Pricing refined + corrected + CRO pass (annual $60; dormant founding offer)
+
+Three rounds on the public pricing surface, all DEPLOYED (74647f8, 09928ad):
+- /pricing rebuilt for hierarchy + trust: price-led mono typography, a CTA per card into
+  the existing signup→cardless-trial flow (no checkout from this page), ONE shared
+  outcome-led included list ("Understand how you actually work." … mechanism after),
+  factual trust strip (no card / cancel in one click / no hidden fees / 30-day money-back /
+  Paddle holds card details), stale waitlist copy replaced with open signup.
+- PRICE CORRECTION per founder: annual is $60, not $30 (`lib/subscription.ts` priceUsd).
+  Discount framing is derived, never hand-typed: anchor = 12×monthly ($96 struck),
+  "Save $36 a year" chip; landing page (/) gained a compact pricing card under the CTAs.
+  REMINDER: constants are display-only — confirm the Paddle annual price id also bills $60.
+- Founding offer (50% off FIRST month), honest by construction and DORMANT:
+  `NEXT_PUBLIC_PADDLE_DISCOUNT_MONTHLY` (Paddle discount id) → only when set do /pricing +
+  CheckoutButtons mention it, and Paddle applies it in the overlay (UI does no price math).
+  Unset in prod today → invisible (verified live). Activation: create the 50%/1-period
+  discount on the monthly price in Paddle, set the env var, redeploy.
+- Verified each round: preview screenshots (desktop+mobile, no console errors), tsc,
+  next build, live-content probes. CLAUDE.md billing env docs updated.
+
+---
+
 ## 2026-07-07 — Desktop Reflection Widget (optional companion window; one line, no dashboard)
 
 An optional small window that sits beside the user's work and holds ONE quiet line.
