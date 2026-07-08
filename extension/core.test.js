@@ -12,6 +12,7 @@ import {
   emptyNudgeProfile, updateNudgeOutcome, nudgeCooldownMultiplier, nudgeRegister,
   NUDGE_BACKOFF_MAX, NUDGE_COOLDOWN_MIN,
   nextThread, threadIsWarm, shouldOfferThread, threadLine, THREAD_TTL_MIN,
+  emptyDomainPrefs, recordStay, pendingWorkOffer, resolveWorkOffer,
 } from './core.js';
 
 const REF = 'sztvvvphpawuxvvmuddm';
@@ -515,4 +516,48 @@ test('threadLine: quiet ledger register — domain + age, no push, no shame', ()
   assert.equal(threadLine({ domain: 'overleaf.com', at: now - 20_000 }, now), 'Your thread: overleaf.com · moments ago');
   assert.match(threadLine({ domain: 'github.com', at: now - 90 * 60_000 }, now), /1h 30m ago/);
   assert.doesNotMatch(threadLine({ domain: 'github.com', at: now }, now), /should|hurry|back to work|wasting/i);
+});
+
+// ---------------------------------------------------------------------------
+// Domain correction ("this is work for me") — explicit, once per domain, back-off only.
+// ---------------------------------------------------------------------------
+
+test('categoryFor: an explicit work override beats the distraction heuristic, subdomains included', () => {
+  assert.equal(categoryFor('twitter.com'), 'distraction');
+  assert.equal(categoryFor('twitter.com', ['twitter.com']), 'productive');
+  assert.equal(categoryFor('mobile.twitter.com', ['twitter.com']), 'productive');
+  assert.equal(categoryFor('youtube.com', ['twitter.com']), 'distraction', 'override is per-domain, never global');
+  assert.equal(categoryFor('example.com', []), 'neutral');
+});
+
+test('domain prefs: two deliberate stays earn ONE question; either answer is permanent', () => {
+  let prefs = emptyDomainPrefs();
+  assert.equal(pendingWorkOffer(prefs), null);
+
+  prefs = recordStay(prefs, 'youtube.com');
+  assert.equal(pendingWorkOffer(prefs), null, 'one stay is not a pattern');
+  prefs = recordStay(prefs, 'youtube.com');
+  assert.equal(pendingWorkOffer(prefs), 'youtube.com', 'two stays earn the question');
+
+  // "Keep checking in": never asked again, nudges unchanged.
+  const declined = resolveWorkOffer(prefs, 'youtube.com', false);
+  assert.equal(pendingWorkOffer(declined), null, 'asked-ness is permanent');
+  assert.deepEqual(declined.work, [], 'declining changes no category');
+
+  // "It's work": reclassified, and still never asked again.
+  const accepted = resolveWorkOffer(prefs, 'youtube.com', true);
+  assert.deepEqual(accepted.work, ['youtube.com']);
+  assert.equal(pendingWorkOffer(accepted), null);
+  assert.equal(categoryFor('youtube.com', accepted.work), 'productive');
+  // Further stays on an already-worked domain never resurrect the question.
+  assert.equal(pendingWorkOffer(recordStay(recordStay(accepted, 'youtube.com'), 'youtube.com')), null);
+});
+
+test('domain prefs: null-safe and bounded', () => {
+  assert.equal(pendingWorkOffer(null), null);
+  assert.deepEqual(recordStay(null, null), emptyDomainPrefs());
+  let prefs = emptyDomainPrefs();
+  for (let i = 0; i < 60; i++) { prefs = recordStay(recordStay(prefs, `site${i}.com`), `site${i}.com`); }
+  assert.ok(Object.keys(prefs.stays).length <= 40, 'stays map is bounded');
+  assert.ok(pendingWorkOffer(prefs), 'recent domains still offerable');
 });

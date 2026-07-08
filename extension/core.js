@@ -64,11 +64,73 @@ const PRODUCTIVE_DOMAINS = [
   'notion.so', 'linear.app', 'figma.com', 'overleaf.com',
 ];
 // domain_logs.category only allows 'distraction' | 'productive' | 'neutral'.
-export function categoryFor(host) {
+// workDomains: domains the USER explicitly reclassified as work (see the domain-correction
+// block below). Their word beats our heuristic — a social manager's twitter.com IS work.
+export function categoryFor(host, workDomains = []) {
   if (!host) return 'neutral';
+  if (workDomains.some((d) => matchesDomain(host, d))) return 'productive';
   if (DISTRACTION_DOMAINS.some((d) => matchesDomain(host, d))) return 'distraction';
   if (PRODUCTIVE_DOMAINS.some((d) => matchesDomain(host, d))) return 'productive';
   return 'neutral';
+}
+
+// ---------------------------------------------------------------------------
+// Domain correction ("this is work for me"). The hardcoded distraction list is a heuristic,
+// and a wrong nudge is a false accusation from a product whose brand is truth. The fix is
+// EXPLICIT and consensual, never silent: when someone answers "Stay, on purpose" to a
+// single-domain nudge twice, the popup asks ONCE whether that domain is work for them.
+//   - "It's work" => the domain is treated as productive from then on (nudges stop for it,
+//     and its time counts as work in session verdicts). Their word, their record.
+//   - "Keep checking in" => never asked again for that domain; nudges continue unchanged.
+// Only ever backs off — this can never make nudging more aggressive, and the fire
+// threshold/cooldown machinery is untouched. All of it lives in chrome.storage.local and
+// is never transmitted; the only server-visible effect is the category label on future
+// domain_logs, which the extension has always chosen locally.
+// ---------------------------------------------------------------------------
+export const WORK_OFFER_STAYS = 2;   // deliberate stays on one domain before we ask
+const MAX_PREF_DOMAINS = 40;         // bound each prefs map/list
+
+export function emptyDomainPrefs() {
+  return { stays: {}, asked: {}, work: [] };
+}
+
+function boundKeys(obj) {
+  const keys = Object.keys(obj);
+  if (keys.length <= MAX_PREF_DOMAINS) return obj;
+  const next = { ...obj };
+  for (const k of keys.slice(0, keys.length - MAX_PREF_DOMAINS)) delete next[k];
+  return next;
+}
+
+// Fold one deliberate "Stay, on purpose" into the prefs. Scattered blocks teach nothing
+// (they name no single domain honestly), so callers must only record single-domain stays.
+export function recordStay(prev, domain) {
+  const p = prev || emptyDomainPrefs();
+  if (!domain) return p;
+  const stays = boundKeys({ ...(p.stays || {}), [domain]: ((p.stays || {})[domain] || 0) + 1 });
+  return { ...p, stays };
+}
+
+// The one domain (if any) the popup should offer to reclassify right now.
+export function pendingWorkOffer(prefs) {
+  const p = prefs || emptyDomainPrefs();
+  for (const [domain, count] of Object.entries(p.stays || {})) {
+    if (count >= WORK_OFFER_STAYS && !(p.asked || {})[domain] && !(p.work || []).includes(domain)) {
+      return domain;
+    }
+  }
+  return null;
+}
+
+// Resolve the offer, either way. Asked-ness is permanent: one question per domain, ever.
+export function resolveWorkOffer(prev, domain, isWork) {
+  const p = prev || emptyDomainPrefs();
+  if (!domain) return p;
+  const asked = boundKeys({ ...(p.asked || {}), [domain]: true });
+  const work = isWork && !(p.work || []).includes(domain)
+    ? [...(p.work || []), domain].slice(-MAX_PREF_DOMAINS)
+    : (p.work || []);
+  return { stays: p.stays || {}, asked, work };
 }
 
 // Clamp a dwell to a sane integer second count. Guards against clock jumps (negative or

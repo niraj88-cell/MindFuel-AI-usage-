@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { requirePremium } from '@/lib/billing/gate'
+import { readPaddlePublicEnv } from '@/lib/billing/public-config'
 import crypto from 'crypto'
 
 export async function POST(req: Request) {
@@ -9,6 +11,17 @@ export async function POST(req: Request) {
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // HOSTING a circle is the premium boundary (the host pays; joining stays free —
+    // invitees experience the full product, some become hosts). The gate arms itself
+    // ONLY when checkout is actually payable: while the Paddle client env is absent,
+    // nobody can be locked out of something they have no way to pay for. This is the
+    // deliberate activation DECISIONS.md required — gate the social layer, never the
+    // user's own data. Trial and grace count as premium (see lib/entitlement.ts).
+    if (readPaddlePublicEnv().checkoutEnabled) {
+      const gate = await requirePremium(supabase, user.id)
+      if (!gate.ok) return gate.response
     }
 
     const { name } = await req.json()

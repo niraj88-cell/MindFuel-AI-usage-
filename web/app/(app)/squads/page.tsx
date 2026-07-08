@@ -125,6 +125,11 @@ export default function SquadsPage() {
         body: JSON.stringify({ name: newName.trim() }),
       })
       const data = await res.json()
+      // 402: hosting is the one premium boundary (joining is always free). Say so in
+      // plain words with the way forward — never a bare "error".
+      if (res.status === 402) {
+        throw new Error('Hosting a circle is part of the paid plan — joining one is always free. You can pick a plan in Settings.')
+      }
       if (!res.ok) throw new Error(data.error || 'Could not create your circle')
       setNewName('')
       await loadSquads()

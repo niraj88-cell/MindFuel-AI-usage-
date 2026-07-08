@@ -135,8 +135,11 @@ where something was verified. Trust is shown through restraint, not decoration. 
   DECISIONS entries before touching billing. Non-negotiables: cardless trial stays; only
   the webhook (service role) writes billing state; entitlement checks go through
   `entitlementOf`/`requirePremium` only; success redirects grant nothing; the extension
-  never touches billing; no gating until you deliberately add it (then gate the social
-  layer, never the user's own data).
+  never touches billing. Gating EXISTS as of 2026-07-08, deliberately scoped: POST
+  /api/squads (HOSTING a circle) runs requirePremium, armed only while
+  readPaddlePublicEnv().checkoutEnabled — with no client Paddle env nothing is gated, so
+  nobody is ever locked out of an unpayable plan. Joining, encourage, and the user's own
+  data stay free forever (DECISIONS "premium boundary", host-pays).
 - The middleware (`web/proxy.ts`) is default-deny: any new public page must be added to its
   `isPublicRoute` list, and any new static file type to the static regex, or visitors get
   bounced to /login (this silently broke the PWA manifest once).

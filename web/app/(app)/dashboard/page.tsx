@@ -226,6 +226,22 @@ function Dashboard() {
   const squadRec = profile ? recommendSquadSupport({ profile, aloneInCircle: aloneInCircle === true }) : null
   const showInvite = aloneInCircle === true && squadRec?.recommend !== 'solo'
 
+  // ONE ask speaks per visit — the calm-page rule. Everything on Today that requests
+  // something of the user (connect the extension, learn the verified vocabulary, invite a
+  // friend) goes through this ladder, so the quiet ledger can never stack pitches. During
+  // a live session nothing asks at all. Value surfaces (the insight, continuation, the
+  // week door) are not asks and stay independent.
+  const hasUnverifiedToday = today.some((s) => !s.session_quality || s.session_quality === 'unverified')
+  const ask: 'connect' | 'verifyNote' | 'invite' | null = activeId
+    ? null
+    : connected === false
+      ? 'connect'
+      : showVerifyNote && hasUnverifiedToday
+        ? 'verifyNote'
+        : showInvite
+          ? 'invite'
+          : null
+
   // One honest, non-punitive reflection derived from the real day.
   const reflection = activeId
     ? 'You’re in a session right now. This page can wait.'
@@ -292,7 +308,7 @@ function Dashboard() {
       ) : (
         <>
           {/* Not connected — verification is impossible until the extension runs, so lead with it. */}
-          {connected === false && (
+          {ask === 'connect' && (
           <div className="mt-6 rounded-xl border border-line bg-card p-5">
             <div className="flex items-center gap-2 text-green">
               <Puzzle className="h-4 w-4" />
@@ -466,8 +482,9 @@ function Dashboard() {
               )
             })}
           </div>
-          {/* Teach the vocabulary once: shown until dismissed, only when an unverified chip is on screen. */}
-          {showVerifyNote && today.some((s) => !s.session_quality || s.session_quality === 'unverified') && (
+          {/* Teach the vocabulary once: shown until dismissed, only when an unverified chip is
+              on screen AND nothing louder is asking (the one-ask ladder). */}
+          {ask === 'verifyNote' && (
             <div className="mt-2 flex items-start gap-3 px-1">
               <p className="flex-1 text-xs leading-relaxed text-faint">
                 Verified means the extension confirmed this time. Unverified sessions still count, they are just on trust.
@@ -496,8 +513,9 @@ function Dashboard() {
       )}
 
       {/* Squad entry point. Still on your own? Echo the landing promise with a real
-          invitation. Already have a circle? A quiet link is enough. */}
-      {showInvite ? (
+          invitation — but only when nothing louder is asking (the one-ask ladder).
+          Already have a circle, or another ask has the floor? A quiet link is enough. */}
+      {ask === 'invite' ? (
         <div className="mt-6 rounded-xl border border-line bg-card p-5">
           <div className="flex items-center gap-2 text-green">
             <UserPlus className="h-4 w-4" />

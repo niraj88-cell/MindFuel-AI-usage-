@@ -71,17 +71,19 @@ export async function POST(req: Request) {
       duration_s: l.duration_s ?? 0,
     }))
 
-    // No ambient signal (e.g. the extension wasn't running) means we CANNOT verify focus
-    // quality — analyzeSession reports it honestly as unverified rather than claiming depth.
+    // No ambient signal (extension not running) OR too little of it (the session ran
+    // mostly off-browser — an IDE, a call) means we CANNOT verify focus quality.
+    // qualityOf reports both honestly as 'unverified' rather than judging a sliver:
+    // a 3-minute browser glance must never brand a 60-minute session (evidenceIsThin).
     const signals = analyzeSession(events)
-    const sessionQuality = qualityOf(signals)
+    const sessionQuality = qualityOf(signals, durationS)
     const distractionPct = signals.distraction_pct
-    const hasSignal = signals.verified
 
     // 3. Lifecycle status (server-authoritative): completed / mixed / abandoned.
+    // 'mixed' only when the evidence was thick enough to verify — same honesty rule.
     const status =
       forgotten || durationS < MIN_REAL_SESSION_S ? 'abandoned' :
-      hasSignal && distractionPct >= 50 ? 'mixed' : 'completed'
+      sessionQuality !== 'unverified' && distractionPct >= 50 ? 'mixed' : 'completed'
 
     const { data: updated, error } = await supabase
       .from('focus_sessions')

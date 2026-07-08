@@ -5,6 +5,36 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-08 (evening) — Product-evolution fixes: trust, retention, subscription coherence (ext 2.9.0)
+
+Iterative review (simulated 100k users) → five shipped fixes, each challenged before build.
+Durable rules: docs/DECISIONS.md "Evidence honesty + domain correction + the premium boundary".
+
+- **Thin-evidence honesty** (`web/lib/behavior.ts` + `/api/focus/stop`): a session ≥15 min
+  whose browser coverage is <25% reads `unverified` + a "nothing to verify, nothing to
+  doubt" reflection — never 'distracted' off a 3-min sliver (the developer trust bug).
+  New signals `recoveries` / `median_recovery_s` (Sutra v2): the recovery reflection now
+  names the detour's length ("about 4 minutes before you came back"). 19 behavior tests.
+- **Domain correction** (extension): two deliberate "Stay, on purpose" answers on one
+  domain → one popup question "Is <domain> work for you?" → permanent, local, back-off-only
+  reclassification honored by nudges, queue categories, and verdicts. Pure logic
+  (`emptyDomainPrefs`/`recordStay`/`pendingWorkOffer`/`resolveWorkOffer`) + integration
+  tests (accept ends nudging; scattered stays teach nothing).
+- **One-ask ladder** (dashboard): connect > verify-note > circle-invite; at most one speaks
+  per visit, none during a live session.
+- **Host-pays gate** (`/api/squads` POST): requirePremium, armed ONLY when
+  `checkoutEnabled` (Paddle client env present) — zero lockout while checkout can't work.
+  Joining/encourage stay free forever. Squads UI explains a 402 in plain words; pricing
+  page gains "What stays free, forever".
+- **Night ledger** (extension popup + welcome): `prefers-color-scheme: dark` designed
+  palette (warm near-black, off-white ink, AA-checked deep green), not an inversion.
+
+Verified: extension 62/62, web modules 117/117, tsc clean, next build clean, zip repacked
+(2.9.0). Founder tasks unchanged: store submission, Paddle env (gate + founding offer arm
+themselves), VAPID rotation.
+
+---
+
 ## 2026-07-08 — Sutra v1: the re-entry thread (extension 2.8.0)
 
 Strategy investigation → one defining capability: **own the moment of RETURN, not the moment

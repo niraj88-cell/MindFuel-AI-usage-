@@ -24,6 +24,32 @@
       --clay: #8A5A18;
       --clay-tint: #F6EEDC;
     }
+    /* Night ledger — a designed nighttime experience, not an inversion (the popup is the
+       surface people actually see at 11pm). Warm near-black paper, warm off-white ink,
+       separation by hairlines exactly as in daylight, and the one earned green desaturated
+       so verified marks read without glowing. Follows the OS scheme. */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --paper: #191713;
+        --card: #211E19;
+        --ink: #EDE9E1;
+        --soft: #BDB6AA;
+        --faint: #97907F;
+        --ghost: #6E6759;
+        --line: rgba(237, 233, 225, 0.14);
+        --hairline: rgba(237, 233, 225, 0.07);
+        --green: #38804A;        /* deep enough that white button text stays AA at 13px */
+        --green-deep: #8FC49A;   /* night role: readable green TEXT on the moss tint */
+        --green-bright: #5FA870;
+        --green-tint: #20291F;
+        --clay: #CE9B60;
+        --clay-tint: #2A2216;
+      }
+      .tile { background: #0F0E0B; }
+      .primary { color: #FFFFFF; }
+      .primary:hover { background: #4C9A5C; } /* hover moves toward light, never toward mud */
+    }
     * { box-sizing: border-box; }
     body { margin: 0; width: 300px; background: var(--paper); color: var(--ink);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
@@ -118,6 +144,15 @@
     <div id="thread" class="thread">
       <div id="threadline" class="threadline"></div>
       <button id="threadbtn" class="threadbtn" type="button">Pick it back up</button>
+    </div>
+
+    <!-- Domain correction: asked at most once per domain, only after two deliberate stays. -->
+    <div id="workoffer" class="thread">
+      <div id="workofferline" class="threadline"></div>
+      <div style="display:flex; gap:8px">
+        <button id="workyes" class="threadbtn" type="button">It&rsquo;s work</button>
+        <button id="workno" class="threadbtn" type="button" style="color: var(--faint)">Keep checking in</button>
+      </div>
     </div>
 
     <div id="synced" class="synced"></div>

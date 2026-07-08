@@ -22,6 +22,7 @@ import {
   nextNudge, nudgeCopy, gateAllowsCounting, nextWelcome, NUDGE_AFTER_MIN, NUDGE_COOLDOWN_MIN,
   emptyNudgeProfile, updateNudgeOutcome, nudgeCooldownMultiplier, nudgeRegister,
   nextThread, threadIsWarm, shouldOfferThread, threadLine,
+  emptyDomainPrefs, recordStay, pendingWorkOffer, resolveWorkOffer,
 } from './core.js';
 
 const PRODUCTION_URL = 'https://satyashift.vercel.app';
@@ -45,6 +46,8 @@ const SESSION_KEY = 'focus_session';       // { id, startedAt } — active deep 
 const NUDGE_DIAG_KEY = 'nudge_diag';       // liveness proof for the nudge pipeline (see checkNudge)
 const NUDGE_PROFILE_KEY = 'nudge_profile'; // { responsiveness, consecutiveIgnored, ... } — LOCAL
                                            // nudge-tone/fatigue learning. Never transmitted.
+const DOMAIN_PREFS_KEY = 'domain_prefs';   // { stays, asked, work } — explicit "this is work
+                                           // for me" corrections. LOCAL, never transmitted.
 
 // chrome.storage.session — cleared when the browser closes.
 const ACTIVE_KEY = 'active';               // { domain, segmentStart, accumulatedMs }
@@ -105,12 +108,22 @@ function elapsedMs(a, now) {
   return (a.accumulatedMs || 0) + (a.segmentStart != null ? now - a.segmentStart : 0);
 }
 
+// The user's explicit domain corrections. Read wherever a category is decided so a
+// "this is work for me" answer holds everywhere: nudges, queue labels, session verdicts.
+async function getDomainPrefs() {
+  const { [DOMAIN_PREFS_KEY]: p } = await chrome.storage.local.get(DOMAIN_PREFS_KEY);
+  return p || emptyDomainPrefs();
+}
+async function categoryOf(domain) {
+  return categoryFor(domain, (await getDomainPrefs()).work);
+}
+
 // --- Queue a finished dwell (caller holds LOCK_STATE) ---
 async function enqueue(domain, durationS) {
   const capped = capDuration(durationS); // H1: never emit a duration the server would reject
   if (!domain || capped < MIN_DWELL_S) return;
   const { [QUEUE_KEY]: q = [] } = await chrome.storage.local.get(QUEUE_KEY);
-  q.push({ domain, duration_s: capped, category: categoryFor(domain) });
+  q.push({ domain, duration_s: capped, category: await categoryOf(domain) });
   const trimmed = q.length > MAX_QUEUE ? q.slice(q.length - MAX_QUEUE) : q;
   await chrome.storage.local.set({ [QUEUE_KEY]: trimmed });
 }
@@ -383,7 +396,7 @@ async function checkNudge() {
   const ctx = {
     domain: a.domain,
     counting,
-    category: a.domain ? categoryFor(a.domain) : 'neutral',
+    category: a.domain ? await categoryOf(a.domain) : 'neutral',
     now: Date.now(),
   };
   // Local intelligence: repeated ignores space check-ins further apart (cooldown only — the
@@ -461,7 +474,9 @@ async function fireNudge(domain, minutes, distinctDomains = 1, register = 'curio
   const id = `${NUDGE_TARGET_PREFIX}${Date.now()}`;
   // Remember where to send them on click: the nudged domain, plus (Sutra) the warm thread —
   // the exact tab their work lives in — so "return" means the work, not a generic dashboard.
-  await chrome.storage.session.set({ [id]: { domain, thread } });
+  // distinctDomains rides along so a "Stay, on purpose" only teaches when the nudge honestly
+  // named ONE domain (a scattered block can't teach a domain preference).
+  await chrome.storage.session.set({ [id]: { domain, thread, distinctDomains } });
   // Seed the rotation with the block minutes; hand the scatter count so the copy names a
   // fragmented block ("a few different places") instead of over-claiming one domain.
   const { title, message } = nudgeCopy(domain, minutes, minutes, { distinctDomains, register });
@@ -517,11 +532,25 @@ async function openIntercept(notificationId) {
   }
   try { await chrome.notifications.clear(notificationId); } catch { /* ignore */ }
 }
+// "Stay, on purpose": honor the choice AND learn from it. A deliberate stay on a
+// single-domain nudge counts toward the one-time "is this work for you?" question in the
+// popup (domain correction, all local). Scattered nudges teach nothing.
+async function recordDeliberateStay(notificationId) {
+  const { [notificationId]: target } = await chrome.storage.session.get(notificationId);
+  await chrome.storage.session.remove(notificationId);
+  try { await chrome.notifications.clear(notificationId); } catch { /* ignore */ }
+  const domain = target && typeof target === 'object' ? target.domain : null;
+  const distinct = (target && typeof target === 'object' && target.distinctDomains) || 1;
+  if (!domain || distinct >= 3) return;
+  const prefs = recordStay(await getDomainPrefs(), domain);
+  await chrome.storage.local.set({ [DOMAIN_PREFS_KEY]: prefs });
+}
+
 if (chrome.notifications) {
   chrome.notifications.onClicked.addListener(openIntercept);
   chrome.notifications.onButtonClicked.addListener((id, idx) => {
-    if (idx === 0) openIntercept(id); // "Refocus"
-    else { chrome.storage.session.remove(id); chrome.notifications.clear(id); } // "Keep scrolling"
+    if (idx === 0) openIntercept(id); // "Back to <work>" / "Return to focus"
+    else recordDeliberateStay(id);    // "Stay, on purpose"
   });
 }
 
@@ -798,7 +827,7 @@ async function offeredThread(active) {
   const now = Date.now();
   const ctx = {
     counting: active.domain != null && active.segmentStart != null,
-    category: active.domain ? categoryFor(active.domain) : 'neutral',
+    category: active.domain ? await categoryOf(active.domain) : 'neutral',
     tabId: active.tabId ?? null,
     now,
   };
@@ -822,6 +851,8 @@ async function buildStatus() {
     welcomePending: !!welcomePending,
     // Sutra: a warm, verified way back ({ domain, line }) — or null, which is most of the time.
     thread: await offeredThread(active),
+    // Domain correction: the one domain we should ask about ("is this work for you?"), or null.
+    workOffer: pendingWorkOffer(await getDomainPrefs()),
     // The one silent-delivery failure we can detect: the user muted this extension's Chrome
     // notifications, so nudges would render nothing. The popup says so instead of staying quiet.
     nudgesMuted: store[NUDGE_DIAG_KEY]?.permission === 'denied',
@@ -889,6 +920,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   if (msg?.type === 'GET_PRESENCE') {
     getPresence().then(sendResponse);
+    return true;
+  }
+  // Domain correction: the popup's one-time answer to "is <domain> work for you?".
+  // Either answer resolves the question forever for that domain (see core.js).
+  if (msg?.type === 'SET_DOMAIN_WORK') {
+    (async () => {
+      const prefs = resolveWorkOffer(await getDomainPrefs(), msg.domain, !!msg.isWork);
+      await chrome.storage.local.set({ [DOMAIN_PREFS_KEY]: prefs });
+      sendResponse(await buildStatus());
+    })();
     return true;
   }
   // Sutra: the popup's "Pick it back up" — focus the tab the thread points at. Cold threads

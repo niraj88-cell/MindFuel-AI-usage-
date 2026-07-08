@@ -185,3 +185,66 @@ test('baseline noticing never runs against unverified sessions', () => {
   const history = [1, 2, 3].map(() => analyzeSession([p('github.com', 20 * MIN)]))
   assert.equal(noticeAgainstBaseline(analyzeSession([]), history), null)
 })
+
+// ---------------------------------------------------------------------------
+// Thin evidence (the developer-honesty rule) + Sutra recovery signals.
+// ---------------------------------------------------------------------------
+
+test('THE INJUSTICE: a 3-min reddit glance in a 60-min off-browser session is NOT "distracted"', () => {
+  // A developer codes for 57 minutes in the IDE; the browser only ever saw a short
+  // reddit break. The old model: distraction_pct=100 → 'distracted'. That verdict is
+  // a false accusation — the browser witnessed 5% of the session.
+  const sig = analyzeSession([d('reddit.com', 3 * MIN)])
+  assert.equal(sig.distraction_pct, 100)
+  assert.equal(qualityOf(sig, 60 * MIN), 'unverified', 'thin evidence is not a verdict')
+  const line = reflectionFor(sig, 60 * MIN)
+  assert.match(line, /browser/i)
+  assert.match(line, /doubt/i, 'the copy explicitly refuses suspicion')
+  assert.doesNotMatch(line, /Most of this session sat on distracting sites/, 'never judged by the sliver')
+})
+
+test('thin evidence also refuses to PRAISE a sliver, and leaves short/covered sessions alone', () => {
+  // 3 productive minutes of a 60-minute session: refusing to verify cuts both ways.
+  const sliver = analyzeSession([p('github.com', 3 * MIN)])
+  assert.equal(qualityOf(sliver, 60 * MIN), 'unverified')
+  // Without duration context (legacy callers), behavior is unchanged.
+  assert.equal(qualityOf(sliver), 'deep')
+  // Solid coverage (>=25%) keeps the normal verdict.
+  const covered = analyzeSession([p('github.com', 30 * MIN)])
+  assert.equal(qualityOf(covered, 60 * MIN), 'deep')
+  // Short sessions are exempt from the coverage rule entirely.
+  const short = analyzeSession([p('github.com', 5 * MIN)])
+  assert.equal(qualityOf(short, 10 * MIN), 'deep')
+})
+
+test('sutra recovery signals: returned detours are counted and measured; a trailing bout is not', () => {
+  // One 8-minute detour, then back to the work: one recovery, measured.
+  const recovered = analyzeSession([
+    p('overleaf.com', 10 * MIN), d('tiktok.com', 8 * MIN), p('overleaf.com', 15 * MIN),
+  ])
+  assert.equal(recovered.recoveries, 1)
+  assert.equal(recovered.median_recovery_s, 8 * MIN)
+  assert.match(reflectionFor(recovered), /8 minutes/, 'the detour length is named')
+  assert.match(reflectionFor(recovered), /came back/i, 'the return stays the anchor')
+
+  // A session that ENDS inside a distraction bout: that departure is not a recovery.
+  const departed = analyzeSession([p('github.com', 10 * MIN), d('youtube.com', 12 * MIN)])
+  assert.equal(departed.recoveries, 0)
+  assert.equal(departed.median_recovery_s, 0)
+
+  // Loops: every completed return counts, and the median is the typical detour.
+  const loopy = analyzeSession([
+    n('docs.google.com', 9 * MIN), d('x.com', 2 * MIN),
+    n('docs.google.com', 9 * MIN), d('x.com', 4 * MIN),
+    n('docs.google.com', 9 * MIN), d('x.com', 6 * MIN),
+    n('docs.google.com', 9 * MIN),
+  ])
+  assert.equal(loopy.recoveries, 3)
+  assert.equal(loopy.median_recovery_s, 4 * MIN)
+})
+
+test('privacy: the new signals still contain no domain names', () => {
+  const events = [p('secret-work.example', 20 * MIN), d('private-drift.example', 5 * MIN), p('secret-work.example', 20 * MIN)]
+  const json = JSON.stringify(analyzeSession(events))
+  for (const e of events) assert.ok(!json.includes(e.domain), `leaked ${e.domain}`)
+})

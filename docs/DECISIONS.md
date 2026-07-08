@@ -4,6 +4,44 @@ Newest first. Each entry is a decision that should not be silently reversed. For
 change log see `docs/project-status.md`; for the full security reference see
 `docs/security-review-2026-07-02.md`.
 
+## Evidence honesty + domain correction + the premium boundary (2026-07-08, evening)
+
+Three durable decisions from the product-evolution review, all shipped together:
+
+**1. Thin evidence is never a verdict (`evidenceIsThin`, lib/behavior.ts).** The browser can
+only witness what happens in the browser. When a session ≥15 min had less than 25% of its
+duration recorded, quality reads `unverified` (= "too little evidence"), the reflection names
+the coverage plainly ("nothing to verify, and nothing to doubt"), and `status` can't be
+'mixed'. This kills the worst trust bug for developers: a 3-minute reddit glance branding a
+57-minute IDE session 'distracted'. It can only ever DOWNGRADE (honesty invariant). Never
+"fix" this by inflating instead.
+
+**2. The user's word beats our heuristic (domain correction, extension).** Two deliberate
+"Stay, on purpose" answers on a SINGLE-domain nudge earn exactly one popup question:
+"Is <domain> work for you?". "It's work" reclassifies the domain as productive everywhere
+(nudges, queue labels, verdicts); "Keep checking in" is permanent silence on the question.
+Scattered blocks teach nothing. All local (`domain_prefs`), never transmitted, only ever
+backs off. This is the sanctioned form of adaptation — explicit and consensual; silent
+threshold changes remain banned.
+
+**3. The premium boundary is HOSTING a circle; joining is free forever (host-pays).**
+POST /api/squads runs `requirePremium`, but the gate arms itself ONLY when
+`readPaddlePublicEnv().checkoutEnabled` — nobody can be locked out of something they cannot
+pay for. Trial/grace count as premium. Joining, encourage, and every own-data surface stay
+ungated permanently. This resolves the gating-vs-growth tension: invitees experience the
+full product free; hosts pay. Pricing page states "What stays free, forever". When the
+founder sets the Paddle client env, the offer becomes real automatically — no code change.
+
+**4. One ask per visit (Today).** Everything on the dashboard that requests something
+(connect extension > verified-vocabulary note > circle invite) goes through one priority
+ladder; during a live session nothing asks. Value surfaces (insight, continuation, week
+door) are not asks. Don't add a new promotional card without putting it in the ladder.
+
+**5. Night ledger (extension surfaces).** popup/welcome follow `prefers-color-scheme`:
+warm near-black paper, warm off-white ink, hairline separation, desaturated earned green —
+a designed night experience, never an inversion. The web app stays daylight-only for now;
+extending dark to the web is a future deliberate project, not a CSS toggle.
+
 ## Sutra — the re-entry thread (2026-07-08)
 
 **The defining-capability bet: SatyaShift owns the moment of RETURN.** Root cause (interruption

@@ -26,7 +26,7 @@ const INCLUDED: Array<{ lead: string; detail: string }> = [
   { lead: 'Catch drift while it’s happening.',
     detail: 'One gentle nudge when attention starts circling. Never a guilt trip, never a score.' },
   { lead: 'Keep each other going.',
-    detail: 'Your circle sees verified time and your own words — never your sites, never your quality.' },
+    detail: 'Host circles for the people you work alongside. They see verified time and your own words — never your sites, never your quality.' },
   { lead: 'Work somewhere calmer.',
     detail: 'Quiet generated environments (rain, fire, waves) and a one-line desktop companion.' },
   { lead: 'Stay free to leave.',
@@ -144,6 +144,18 @@ export default function PricingPage() {
       </section>
 
       <div className="mt-12 space-y-8">
+        <section>
+          <h2 className="text-lg font-semibold tracking-tight">What stays free, forever</h2>
+          <p className="mt-2 text-[15px] leading-relaxed text-soft">
+            Your own record is never the thing you pay for. Tracking, sessions, reflections,
+            your behavioral profile, export, and deletion stay free after the trial — and so
+            does <span className="font-medium text-ink">joining</span> a circle someone invites
+            you to. The paid plan is for <span className="font-medium text-ink">hosting</span>{' '}
+            circles and keeping the whole practice running. If you never pay us a cent, your
+            data is still yours, still private, still exportable.
+          </p>
+        </section>
+
         <section>
           <h2 className="text-lg font-semibold tracking-tight">How the free trial works</h2>
           <p className="mt-2 text-[15px] leading-relaxed text-soft">

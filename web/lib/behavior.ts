@@ -45,6 +45,10 @@ export interface BehaviorSignals {
   drift_trend: 'steady' | 'escalating' | 'recovering'
   /** The session's last stretch was non-distraction and long enough to mean something. */
   ended_clean: boolean
+  /** Sutra: distraction bouts that ended with attention RETURNING to the work. */
+  recoveries: number
+  /** Sutra: typical recorded length of a detour before the return (median; 0 when none). */
+  median_recovery_s: number
 }
 
 export type SessionQuality = 'unverified' | 'deep' | 'focused' | 'mixed' | 'distracted'
@@ -81,6 +85,7 @@ export function analyzeSession(events: AttentionEvent[]): BehaviorSignals {
       longest_focus_streak_s: 0, longest_distraction_streak_s: 0,
       distraction_bouts: 0, distraction_returns: 0, top_loop_domain_visits: 0,
       drift_trend: 'steady', ended_clean: false,
+      recoveries: 0, median_recovery_s: 0,
     }
   }
 
@@ -89,9 +94,11 @@ export function analyzeSession(events: AttentionEvent[]): BehaviorSignals {
 
   // Streaks: consecutive time on one side of the distraction line.
   let longestFocus = 0, longestDistraction = 0, curFocus = 0, curDistraction = 0
-  // Bouts + loop counting.
+  // Bouts + loop counting, and (Sutra) the detours that ended with a RETURN to the work —
+  // a trailing bout the session ended inside is a departure, not a recovery.
   let bouts = 0
   let inBout = false
+  const recoveredBouts: number[] = []
   const visitsPerDistractionDomain = new Map<string, number>()
 
   for (const r of runs) {
@@ -101,6 +108,7 @@ export function analyzeSession(events: AttentionEvent[]): BehaviorSignals {
       if (!inBout) { bouts++; inBout = true }
       visitsPerDistractionDomain.set(r.domain, (visitsPerDistractionDomain.get(r.domain) ?? 0) + 1)
     } else {
+      if (inBout) recoveredBouts.push(curDistraction) // the detour ended and attention came back
       curFocus += r.duration_s
       curDistraction = 0
       inBout = false
@@ -146,7 +154,26 @@ export function analyzeSession(events: AttentionEvent[]): BehaviorSignals {
     top_loop_domain_visits: Math.max(0, ...visitsPerDistractionDomain.values()),
     drift_trend,
     ended_clean,
+    recoveries: recoveredBouts.length,
+    median_recovery_s: recoveredBouts.length ? Math.round(median(recoveredBouts)) : 0,
   }
+}
+
+// ---------------------------------------------------------------------------
+// Evidence coverage (the developer-honesty rule). The browser can only witness what
+// happens IN the browser. When a session ran mostly elsewhere (an IDE, a call, a
+// notebook), the recorded slice is too thin to characterize the whole session — and
+// judging 60 minutes by a 3-minute glance at reddit branded real deep work as
+// 'distracted'. Thin evidence therefore reads as UNVERIFIED (we saw too little to
+// verify), never as a verdict. This can only ever downgrade, honoring the honesty
+// invariant at the top of this file.
+// ---------------------------------------------------------------------------
+const THIN_MIN_SESSION_S = 15 * 60  // short sessions are exempt — coverage noise dominates
+const THIN_COVERAGE = 0.25          // browser witnessed less than a quarter of the session
+
+export function evidenceIsThin(sig: BehaviorSignals, durationS?: number): boolean {
+  if (!durationS || !sig.verified || sig.total_s <= 0) return false
+  return durationS >= THIN_MIN_SESSION_S && sig.total_s < durationS * THIN_COVERAGE
 }
 
 // ---------------------------------------------------------------------------
@@ -159,8 +186,11 @@ export function analyzeSession(events: AttentionEvent[]): BehaviorSignals {
 //   - fragmentation cap: constant switching with no long stretch is not "deep"/"focused"
 //   - deep additionally requires a real unbroken stretch, not just a low percentage
 // ---------------------------------------------------------------------------
-export function qualityOf(sig: BehaviorSignals): SessionQuality {
+export function qualityOf(sig: BehaviorSignals, durationS?: number): SessionQuality {
   if (!sig.verified || sig.total_s <= 0) return 'unverified'
+  // Thin coverage: the browser witnessed too little of the session to judge it (see
+  // evidenceIsThin). 'unverified' here means "not enough evidence", never suspicion.
+  if (evidenceIsThin(sig, durationS)) return 'unverified'
 
   const order: SessionQuality[] = ['deep', 'focused', 'mixed', 'distracted']
   const capTo = (q: SessionQuality, cap: SessionQuality): SessionQuality =>
@@ -216,6 +246,18 @@ export function reflectionFor(sig: BehaviorSignals, durationS?: number): string 
     return 'The extension wasn’t connected, so this one is yours on trust. It still counts as time you set aside.'
   }
 
+  // Thin coverage MUST speak first: judging a mostly off-browser session by its browser
+  // sliver is the one way this page could accuse someone falsely. Name the coverage,
+  // claim nothing about the unwitnessed time — in either direction.
+  if (evidenceIsThin(sig, durationS)) {
+    const seen = mins(sig.total_s)
+    return pick([
+      `The browser saw about ${seen} of these ${sessionMin} minutes — the rest of this session lived in other tools. Nothing to verify there, and nothing to doubt.`,
+      `Most of this session happened off the browser: it witnessed only ${seen} of ${sessionMin} minutes, so there’s nothing to verify — and nothing to doubt.`,
+      `About ${seen} of ${sessionMin} minutes were in the browser; the rest ran elsewhere. Too little to verify, which is not the same as doubt.`,
+    ], sig)
+  }
+
   // The loop is the most important pattern to name honestly — it is exactly the shape the
   // old percentage-only line used to paper over.
   if (sig.distraction_returns >= 2) {
@@ -264,10 +306,13 @@ export function reflectionFor(sig: BehaviorSignals, durationS?: number): string 
 
   if (sig.distraction_pct >= 15 && sig.ended_clean) {
     const finalMin = mins(Math.min(sig.longest_focus_streak_s, sig.total_s))
+    // Sutra: name the detour's actual length — the return is the achievement, and a
+    // measured "you were back after ~4 minutes" makes the recovery feel real, not lucky.
+    const detourMin = mins(sig.median_recovery_s || sig.longest_distraction_streak_s)
     return pick([
-      `There was drift in the middle, and you came back — the last ${finalMin} minutes stayed with the work.`,
-      `The middle wandered. You came back, and the final ${finalMin} minutes held.`,
-      `Part of this one drifted before you came back to it; the closing ${finalMin} minutes ran unbroken.`,
+      `A detour of about ${detourMin} minutes in the middle, and you came back — the last ${finalMin} minutes stayed with the work.`,
+      `The middle wandered for about ${detourMin} minutes. You came back, and the final ${finalMin} minutes held.`,
+      `Drift held this one for roughly ${detourMin} minutes before you came back; the closing ${finalMin} minutes ran unbroken.`,
     ], sig)
   }
 

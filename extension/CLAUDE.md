@@ -72,6 +72,21 @@ never over-claim a single domain it barely visited. Firing stays strictly determ
 5-minute block; fragmentation signals are recorded/observable but do NOT lower the threshold (keep
 it high-confidence — adaptive threshold-lowering is a deliberate future layer, not a silent one).
 
+## Domain correction — "this is work for me" (2026-07-08 — locked)
+The distraction list is a heuristic; the user's word beats it. Two deliberate "Stay, on
+purpose" answers on a SINGLE-domain nudge (distinctDomains < 3) earn exactly ONE popup
+question per domain, ever. "It's work" adds the domain to `domain_prefs.work` (storage.local,
+never transmitted) and every category decision flows through `categoryOf()` so the answer
+holds everywhere: nudge policy, queue labels, session verdicts. Rules: explicit only (no
+silent reclassification), back-off only (can never nudge MORE), scattered blocks teach
+nothing, maps bounded at 40 domains. Pure logic in core.js with tests.
+
+## Night ledger (2026-07-08)
+popup.html + welcome.html carry a `prefers-color-scheme: dark` block: warm near-black paper,
+warm off-white ink, hairline separation, `--green` deepened so white button text stays AA,
+`--green-deep` flips role to readable green TEXT on the moss tint. Keep both blocks in step;
+never a plain inversion, and don't add shadows in either scheme.
+
 ## Sutra — the re-entry thread (2026-07-08 — locked; full rationale in docs/DECISIONS.md)
 The thread remembers WHICH TAB holds the work so a drift's end is one click from re-entry,
 not minutes of "where was I?". Invariants:

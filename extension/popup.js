@@ -100,6 +100,19 @@ function render(s) {
     $('thread').style.display = 'none';
   }
 
+  // Domain correction — asked once, after two deliberate "Stay, on purpose" answers.
+  // Their word beats our heuristic: "It's work" ends the check-ins for that domain and
+  // counts its time as work from then on.
+  if (s && s.workOffer) {
+    $('workofferline').textContent =
+      `You’ve chosen to stay with ${s.workOffer} twice. Is it work for you?`;
+    $('workyes').disabled = false;
+    $('workno').disabled = false;
+    $('workoffer').style.display = 'block';
+  } else {
+    $('workoffer').style.display = 'none';
+  }
+
   // Keep the elapsed time fresh while a session runs; stop the ticker otherwise.
   if (tick) { clearInterval(tick); tick = null; }
   if (inSession) tick = setInterval(paintSession, 20000);
@@ -212,6 +225,21 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.disabled = false;
     }
   });
+
+  const answerWorkOffer = (isWork) => async () => {
+    const domain = current && current.workOffer;
+    if (!domain) return;
+    $('workyes').disabled = true;
+    $('workno').disabled = true;
+    try {
+      render(await chrome.runtime.sendMessage({ type: 'SET_DOMAIN_WORK', domain, isWork }));
+    } catch {
+      $('workyes').disabled = false;
+      $('workno').disabled = false;
+    }
+  };
+  $('workyes').addEventListener('click', answerWorkOffer(true));
+  $('workno').addEventListener('click', answerWorkOffer(false));
 
   $('threadbtn').addEventListener('click', async () => {
     const btn = $('threadbtn');

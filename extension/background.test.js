@@ -497,6 +497,67 @@ test('sutra: a work tab that navigated to another domain is not offered as the w
   assert.deepEqual(env.openedTabs, ['https://satyashift.vercel.app/dashboard']);
 });
 
+test('domain correction: two deliberate stays → one popup question → "It\'s work" ends the nudging', async () => {
+  const env = makeChrome({ tabs: [YT] });
+  await boot(env);
+
+  // Two nudge → "Stay, on purpose" cycles on the same single domain.
+  for (let round = 0; round < 2; round++) {
+    await tickNudge(env, 5);
+    assert.equal(env.created.length, round + 1, `nudge ${round + 1} fired`);
+    const { id } = env.created[round];
+    await env.chrome.notifications.onButtonClicked.emit(id, 1); // "Stay, on purpose"
+    await settle();
+    // Clear the cooldown so the next round can fire.
+    const st = await getSessionValue(env, 'nudge_state');
+    st.lastNudgeAt = Date.now() - 60 * 60_000;
+    await env.chrome.storage.session.set({ nudge_state: st });
+  }
+
+  // The popup now carries the one-time question.
+  let status = await new Promise((resolve) => {
+    env.chrome.runtime.onMessage.emit({ type: 'GET_STATUS' }, { id: 'test-extension-id' }, resolve);
+  });
+  assert.equal(status.workOffer, 'youtube.com');
+
+  // "It's work": category flips to productive, so the block can never build again.
+  status = await new Promise((resolve) => {
+    env.chrome.runtime.onMessage.emit(
+      { type: 'SET_DOMAIN_WORK', domain: 'youtube.com', isWork: true }, { id: 'test-extension-id' }, resolve);
+  });
+  assert.equal(status.workOffer, null, 'the question is resolved forever');
+
+  const before = env.created.length;
+  await tickNudge(env, 8);
+  assert.equal(env.created.length, before, 'no more nudges: their word beats our heuristic');
+  const diag = await getDiag(env);
+  assert.equal(diag.category, 'productive', 'the tick itself now sees the corrected category');
+  assert.equal(fetchCalls, 0, 'the correction is fully local');
+});
+
+test('domain correction: a scattered-block stay teaches nothing (no single domain was named)', async () => {
+  const tabList = [
+    { id: 1, url: 'https://www.youtube.com/watch?v=a', active: true },
+    { id: 2, url: 'https://instagram.com/p/x', active: false },
+    { id: 3, url: 'https://reddit.com/r/x', active: false },
+    { id: 4, url: 'https://x.com/x', active: false },
+    { id: 5, url: 'https://tiktok.com/@x', active: false },
+  ];
+  const env = makeChrome({ tabs: tabList });
+  await boot(env);
+  for (const id of [1, 2, 3, 4, 5]) {
+    for (const t of tabList) env.tabs.get(t.id).active = (t.id === id);
+    await env.chrome.tabs.onActivated.emit({ tabId: id });
+    await settle();
+    await tickNudge(env, 1);
+  }
+  assert.equal(env.created.length, 1, 'the scattered nudge fired');
+  await env.chrome.notifications.onButtonClicked.emit(env.created[0].id, 1);
+  await settle();
+  const { domain_prefs } = await env.chrome.storage.local.get('domain_prefs');
+  assert.equal(domain_prefs, undefined, 'nothing recorded — the block named no honest domain');
+});
+
 test('sutra: the popup offers the thread during a drift, stays quiet while working, and OPEN_THREAD returns', async () => {
   const env = makeChrome({ tabs: [{ ...YT, active: false }, GH] });
   await boot(env);
