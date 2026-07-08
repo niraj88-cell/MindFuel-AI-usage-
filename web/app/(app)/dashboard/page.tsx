@@ -298,12 +298,12 @@ function Dashboard() {
       {activeId ? (
         <Link
           href="/focus"
-          className="mt-6 flex items-center justify-between rounded-xl border border-green-line bg-green-wash px-5 py-4 transition-colors hover:bg-green-tint"
+          className="focus-ring group mt-6 flex items-center justify-between rounded-xl border border-green-line bg-green-wash px-5 py-4 transition-colors hover:bg-green-tint"
         >
           <span className="flex items-center gap-2.5 text-sm font-semibold text-green">
             <span className="h-2 w-2 rounded-full bg-green-bright satya-breathe" /> You&rsquo;re focusing now
           </span>
-          <span className="flex items-center gap-1 text-sm font-medium text-green">Resume <ChevronRight className="h-4 w-4" /></span>
+          <span className="flex items-center gap-1 text-sm font-medium text-green">Resume <ChevronRight className="row-arrow h-4 w-4" /></span>
         </Link>
       ) : (
         <>
@@ -324,7 +324,7 @@ function Dashboard() {
                   href={EXTENSION_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white transition-colors hover:bg-green-deep"
+                  className="focus-ring press mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white hover:bg-green-deep"
                 >
                   <Puzzle className="h-4 w-4" /> Add to Chrome
                 </a>
@@ -353,7 +353,7 @@ function Dashboard() {
                 ) : (
                   <button
                     onClick={() => setHowOpen(true)}
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white transition-colors hover:bg-green-deep"
+                    className="focus-ring press mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white hover:bg-green-deep"
                   >
                     <Puzzle className="h-4 w-4" /> Get the extension
                   </button>
@@ -389,7 +389,7 @@ function Dashboard() {
               <button
                 onClick={() => startSession()}
                 disabled={startBusy}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3.5 text-sm font-semibold text-white transition-colors hover:bg-green-deep disabled:opacity-60"
+                className="focus-ring press mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3.5 text-sm font-semibold text-white hover:bg-green-deep disabled:opacity-60"
               >
                 {startBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" fill="currentColor" strokeWidth={0} />}
                 Begin focus
@@ -426,7 +426,7 @@ function Dashboard() {
                 <button
                   onClick={() => startSession(continuation.intention ?? '')}
                   disabled={startBusy}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white transition-colors hover:bg-green-deep disabled:opacity-60"
+                  className="focus-ring press flex flex-1 items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white hover:bg-green-deep disabled:opacity-60"
                 >
                   {startBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" fill="currentColor" strokeWidth={0} />}
                   Pick this back up
@@ -443,7 +443,7 @@ function Dashboard() {
           ) : (
             <button
               onClick={() => setStartOpen(true)}
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3.5 text-sm font-semibold text-white transition-colors hover:bg-green-deep"
+              className="focus-ring press mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3.5 text-sm font-semibold text-white hover:bg-green-deep"
             >
               <Play className="h-4 w-4" fill="currentColor" strokeWidth={0} /> Start a focus session
             </button>
@@ -462,7 +462,7 @@ function Dashboard() {
                 <Link
                   key={s.id}
                   href={`/session/${s.id}`}
-                  className="flex items-center gap-3 border-b border-hairline px-4 py-3 transition-colors last:border-0 hover:bg-green-wash"
+                  className="focus-ring group flex items-center gap-3 border-b border-hairline px-4 py-3 transition-colors last:border-0 hover:bg-green-wash"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-ink">
@@ -477,7 +477,7 @@ function Dashboard() {
                     <VerifiedMark verified={verified} size={13} /> {verified ? 'verified' : 'unverified'}
                   </span>
                   <span className="font-mono text-sm font-medium text-green-deep">{humanDuration(s.duration_s ?? 0)}</span>
-                  <ChevronRight className="h-4 w-4 text-ghost" />
+                  <ChevronRight className="row-arrow h-4 w-4 text-ghost group-hover:text-faint" />
                 </Link>
               )
             })}
@@ -505,10 +505,10 @@ function Dashboard() {
       {hasWeek && (
         <Link
           href="/week"
-          className="mt-6 flex items-center gap-3 rounded-xl border border-line bg-card px-5 py-4 transition-colors hover:bg-green-wash"
+          className="focus-ring group mt-6 flex items-center gap-3 rounded-xl border border-line bg-card px-5 py-4 transition-colors hover:bg-green-wash"
         >
           <span className="flex-1 text-sm font-medium text-ink">Your week of attention</span>
-          <ChevronRight className="h-4 w-4 text-ghost" />
+          <ChevronRight className="row-arrow h-4 w-4 text-ghost group-hover:text-faint" />
         </Link>
       )}
 

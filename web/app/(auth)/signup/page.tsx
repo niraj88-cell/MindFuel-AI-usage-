@@ -178,7 +178,7 @@ export default function SignupPage() {
                 }
               }}
               disabled={googleLoading}
-              className="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-line bg-card text-sm font-semibold text-ink transition-colors hover:bg-green-wash disabled:opacity-60"
+              className="focus-ring press flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-line bg-card text-sm font-semibold text-ink hover:bg-green-wash disabled:opacity-60"
             >
               {googleLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

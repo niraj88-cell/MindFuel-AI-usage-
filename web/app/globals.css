@@ -89,10 +89,46 @@
   animation: satya-settle 0.4s ease-out;
 }
 
+/* ── Interaction craft: three shared micro-interactions, defined once ──
+   Every one CONFIRMS an action (the only motion the ledger permits); none
+   decorate. Kept as utilities so the markup stays declarative and identical
+   everywhere — the same press, the same focus ring, the same row hint. */
+
+/* One keyboard-focus ring across every interactive element — the earned green,
+   shown only to keyboard users (:focus-visible), following the element's radius.
+   Trust + accessibility: nothing focusable is ever left without a visible anchor. */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-green);
+  outline-offset: 2px;
+}
+
+/* Press confirmation — a control yields a hair under the finger, then returns.
+   The physical acknowledgement that separates a considered button from a link. */
+.press {
+  transition: transform 0.12s ease, background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.press:active {
+  transform: scale(0.98);
+}
+
+/* Row affordance — a navigating row's arrow leans toward its destination on
+   hover, so a list quietly says which items lead somewhere and in which direction. */
+.row-arrow {
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+.group:hover .row-arrow {
+  transform: translateX(2px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .satya-breathe,
   .satya-settle {
     animation: none;
+  }
+  /* Confirmation transforms still apply instantly (state stays legible) but never travel. */
+  .press:active,
+  .group:hover .row-arrow {
+    transform: none;
   }
   * {
     scroll-behavior: auto !important;

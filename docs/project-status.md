@@ -5,6 +5,36 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-08 (late night) — Interaction craft pass: five micro-interactions, in-law
+
+Evolution not redesign — every change lives in the interaction layer and obeys the design
+language (motion only confirms · depth from borders · green earned · no shadows/lifts/
+gradients). Three shared utilities in `globals.css` keep the markup declarative and identical
+everywhere:
+- **`.press`** — `active:scale(0.98)` confirmation on buttons/tappable controls (baked into
+  the `Button` cva base + the raw green CTAs). The physical "the press registered" beat.
+- **`.focus-ring`** — one consistent earned-green `:focus-visible` outline across every
+  interactive element that had none (nav links, icon buttons, logout, session rows, auth
+  Google buttons). Accessibility + trust + craft.
+- **`.row-arrow`** — a navigating row's chevron leans 2px toward its destination on
+  `group-hover` (today's sessions, week card, resume). Declares "this navigates," which way.
+- **Sidebar sense of place**: the loud full-black active pill → a raised `bg-card` tile with
+  a left ink rail (`before:`) + `aria-current`; the icon-only bottom bar resolves active to
+  ink (calmer tab-bar convention). Green is NOT spent on location.
+- **Reduced-motion**: extended so `.press`/`.row-arrow` transforms neutralize — the
+  confirmation stays legible, never travels.
+
+NOTE for next session: Turbopack DEV serves a stale globals CSS chunk that omits the three
+new utilities (cache pins an old hash); the PRODUCTION `next build` compiles them correctly
+(verified by grepping `.next/static/.../*.css`: press/focusRing/rowArrow all present). Live
+Vercel serves the production build, so this is a local-dev-only artifact. If iterating
+locally, `rm -rf web/.next` before `next dev` to force a clean recompile.
+
+Verified: tsc clean, next build clean, production CSS grep confirms all three utilities,
+deployed, live URL re-checked.
+
+---
+
 ## 2026-07-08 (late night) — Brand trust pass: the code-level fixes from the brand audit (ext 2.9.1)
 
 Full brand-trust audit ran first (all touchpoints); founder-scoped items (custom domain,
