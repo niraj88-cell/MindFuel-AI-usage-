@@ -5,6 +5,33 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-08 — Full production-readiness audit (verification only, no code changes)
+
+Independent end-to-end audit against live prod + DB. Evidence: extension tests 49/49,
+web module tests 116/116, tsc clean, next build clean, 8 live-route probes correct
+(public 200, gated 307→/login, OG png + zip served logged-out), Supabase advisors =
+known-accepted list only, zip current with extension source.
+
+**Verdict: 64/100, LAUNCH AFTER FIXES.** Blockers unchanged in kind:
+- C1 store listing still unsubmitted (EXTENSION_STORE_URL=''); zip interim is good but
+  load-unpacked filters out normal users. Submission kit ready → founder task, long pole.
+- C2 pricing incoherent: front door advertises $8/mo + $60/yr, but NO Paddle client
+  token/price ids exist in ANY deployed js chunk (all 12 checked) → checkout renders its
+  error state; trial expires into nothing (no gating). NEW FACT: webhook probe returned
+  401 (not 404) → PADDLE_WEBHOOK_SECRET IS set in prod; billing is half-armed.
+- C3 $60 annual price object in Paddle still unverified (follow-up from 2026-07-07 open).
+- High: VAPID rotation pending; leaked-password protection off; no CSP; no error
+  alerting; Behavioral Intelligence validated by tests but by only 2 real profiles.
+- DB reality: 45 users, 34 sessions ever, 325/328 domain_logs from last 7 days (founder
+  testing). Dead legacy tables remain (subscriptions/ai_insights/squad_checkins/
+  squad_missions/+participants/reactions) + dead jitai_* columns → cleanup, code-first.
+- Approved as built: /demo (best trust artifact), Flow Continuation gating held up under
+  adversarial reading, nudge copy + registers, /week. CLAUDE.md launch note stale on
+  blocker #2 (pitch page exists). "Flexible Routine System" exists nowhere — never
+  advertise it.
+
+---
+
 ## 2026-07-08 — Final research pass: OG share card + permission-warning pre-empt
 
 Web research surfaced two conversion facts and both were actionable in minutes:
