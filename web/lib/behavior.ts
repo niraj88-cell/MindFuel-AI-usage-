@@ -224,26 +224,40 @@ export function qualityOf(sig: BehaviorSignals, durationS?: number): SessionQual
 // session's actual shape. Never flattery, never shame, no "should".
 //
 // Each shape has several phrasings that state the same facts; which one appears is a
-// pure function of the signals, so a session always reads the same line on every visit
-// while months of sessions don't read like one template. Every phrasing in a bucket
-// carries the bucket's factual anchor (the count, "distracting sites", "came back"…),
-// which is also what the tests pin.
+// pure function of (signals, seed), so a session always reads the same line on every
+// visit while months of sessions don't read like one template. Every phrasing in a
+// bucket carries the bucket's factual anchor (the count, "distracting sites", "came
+// back"…), which is also what the tests pin. The phrasings inside a bucket differ in
+// STRUCTURE (what leads, one sentence vs two), never in what they claim.
 // ---------------------------------------------------------------------------
 function mins(s: number) {
   return Math.max(1, Math.round(s / 60))
 }
 
-/** Deterministic per-session variety: same signals → same line, different sessions vary. */
-function pick(variants: string[], sig: BehaviorSignals): string {
-  const seed = Math.abs(Math.trunc(sig.total_s + sig.distraction_s * 3 + sig.switches * 7))
-  return variants[seed % variants.length]
+/**
+ * Deterministic per-session variety. Callers pass a session-identity seed (the session's
+ * start time) so two same-shaped sessions on different days read differently; without a
+ * seed the choice still varies with the signals themselves. The hash mix matters: the old
+ * additive seed clustered similar sessions onto the same variant, which is exactly what
+ * made the card feel generated.
+ */
+function pick(variants: string[], sig: BehaviorSignals, seed = 0): string {
+  let h = (Math.abs(Math.trunc(sig.total_s)) + 97 * Math.abs(Math.trunc(sig.distraction_s))
+    + 193 * sig.switches + Math.abs(Math.trunc(seed))) >>> 0
+  h = Math.imul(h ^ (h >>> 16), 0x45d9f3b) >>> 0
+  h = (h ^ (h >>> 16)) >>> 0
+  return variants[h % variants.length]
 }
 
-export function reflectionFor(sig: BehaviorSignals, durationS?: number): string {
+export function reflectionFor(sig: BehaviorSignals, durationS?: number, seed = 0): string {
   const sessionMin = mins(durationS ?? sig.total_s)
 
   if (!sig.verified || sig.total_s <= 0) {
-    return 'The extension wasn’t connected, so this one is yours on trust. It still counts as time you set aside.'
+    return pick([
+      'The extension wasn’t connected, so this one is yours on trust. It still counts as time you set aside.',
+      'Nothing was recorded for this one — no extension, no witness — so it stands on trust as time you set aside.',
+      'This session ran without the extension, so it rests on trust. Time set aside is still time set aside.',
+    ], sig, seed)
   }
 
   // Thin coverage MUST speak first: judging a mostly off-browser session by its browser
@@ -255,7 +269,8 @@ export function reflectionFor(sig: BehaviorSignals, durationS?: number): string 
       `The browser saw about ${seen} of these ${sessionMin} minutes — the rest of this session lived in other tools. Nothing to verify there, and nothing to doubt.`,
       `Most of this session happened off the browser: it witnessed only ${seen} of ${sessionMin} minutes, so there’s nothing to verify — and nothing to doubt.`,
       `About ${seen} of ${sessionMin} minutes were in the browser; the rest ran elsewhere. Too little to verify, which is not the same as doubt.`,
-    ], sig)
+      `Only ${seen} of these ${sessionMin} minutes passed through the browser. The rest is beyond what it can see — nothing verified, nothing to doubt.`,
+    ], sig, seed)
   }
 
   // The loop is the most important pattern to name honestly — it is exactly the shape the
@@ -266,16 +281,20 @@ export function reflectionFor(sig: BehaviorSignals, durationS?: number): string 
       `You left distraction and came back to it ${times} times in ${sessionMin} minutes.`,
       `Distraction pulled attention back ${times} times across these ${sessionMin} minutes.`,
       `Across ${sessionMin} minutes, attention returned to the same distracting places ${times} times.`,
-    ], sig)
+      `${times} times in these ${sessionMin} minutes, attention went back to distraction after leaving it.`,
+      `Attention circled out and back ${times} times over ${sessionMin} minutes.`,
+    ], sig, seed)
     const tail = sig.ended_clean
       ? pick([
           ' The last stretch settled, and the session ended on the work.',
           ' The final stretch stayed with the work.',
-        ], sig)
+          ' It closed settled, though — the ending held.',
+        ], sig, seed)
       : pick([
           ' The shape of it was circling more than staying.',
           ' That back-and-forth was the session’s shape.',
-        ], sig)
+          ' It never quite settled.',
+        ], sig, seed)
     return `${head}${tail}`
   }
 
@@ -285,7 +304,9 @@ export function reflectionFor(sig: BehaviorSignals, durationS?: number): string 
       `Most of this session sat on distracting sites — about ${dm} of ${sessionMin} minutes.`,
       `About ${dm} of these ${sessionMin} minutes went to distracting sites. That’s the whole account.`,
       `Distracting sites held most of this one: roughly ${dm} of ${sessionMin} minutes.`,
-    ], sig)
+      `The ledger here is short — distracting sites took about ${dm} of ${sessionMin} minutes.`,
+      `${dm} of ${sessionMin} minutes went to distracting sites. That’s what was recorded, plainly.`,
+    ], sig, seed)
   }
 
   if (sig.drift_trend === 'escalating') {
@@ -293,7 +314,9 @@ export function reflectionFor(sig: BehaviorSignals, durationS?: number): string 
       'The first stretch held; the drift arrived toward the end.',
       'This one started clean and loosened toward the end.',
       'Attention held early, then slipped toward the end.',
-    ], sig)
+      'A steady open, a softer close — most of the drift landed toward the end.',
+      'The early minutes kept their shape. It was toward the end that attention slipped out.',
+    ], sig, seed)
   }
 
   if (sig.distraction_pct >= 10 && sig.total_s >= 20 * 60
@@ -301,7 +324,8 @@ export function reflectionFor(sig: BehaviorSignals, durationS?: number): string 
     return pick([
       `Attention changed places about ${sig.switches_per_hour} times an hour, and nothing got a long run.`,
       `Attention changed places roughly ${sig.switches_per_hour} times an hour here — many short stays, no long ones.`,
-    ], sig)
+      `A restless one. Attention changed places around ${sig.switches_per_hour} times an hour and never stayed long anywhere.`,
+    ], sig, seed)
   }
 
   if (sig.distraction_pct >= 15 && sig.ended_clean) {
@@ -313,7 +337,9 @@ export function reflectionFor(sig: BehaviorSignals, durationS?: number): string 
       `A detour of about ${detourMin} minutes in the middle, and you came back — the last ${finalMin} minutes stayed with the work.`,
       `The middle wandered for about ${detourMin} minutes. You came back, and the final ${finalMin} minutes held.`,
       `Drift held this one for roughly ${detourMin} minutes before you came back; the closing ${finalMin} minutes ran unbroken.`,
-    ], sig)
+      `You came back. The detour ran about ${detourMin} minutes; the work got the last ${finalMin}.`,
+      `About ${detourMin} minutes away, then back — and the ending, ${finalMin} minutes of it, belonged to the work.`,
+    ], sig, seed)
   }
 
   if (sig.distraction_pct < 15) {
@@ -322,15 +348,33 @@ export function reflectionFor(sig: BehaviorSignals, durationS?: number): string 
       `${sessionMin} minutes with barely a detour — the longest unbroken stretch ran ${streakMin} minutes.`,
       `${sessionMin} minutes, most of it in one place. The longest unbroken stretch was ${streakMin} minutes.`,
       `Little pulled at this one: ${streakMin} of its ${sessionMin} minutes passed as one unbroken stretch.`,
-    ], sig)
+      `One unbroken stretch of ${streakMin} minutes carried most of these ${sessionMin}.`,
+      `Quiet, mostly. The longest unbroken stretch ran ${streakMin} of ${sessionMin} minutes.`,
+    ], sig, seed)
   }
 
+  // 40–70% and no clean ending: the time genuinely split. Name the split, no verdict.
+  if (sig.distraction_pct >= 40) {
+    const dm = mins(sig.distraction_s)
+    return pick([
+      `Work and drift shared this one — about ${dm} of ${sessionMin} minutes went to distracting sites.`,
+      `A split session: around ${dm} of its ${sessionMin} minutes sat on distracting sites.`,
+      `About ${dm} of ${sessionMin} minutes went to drift; the rest stayed with the work.`,
+    ], sig, seed)
+  }
+
+  // The ordinary middle (15–40%, no loop, no trend, no clean ending). An unremarkable
+  // session deserves an unremarkable sentence — sometimes the honest reading is simply
+  // that nothing stood out. Saying so IS the observation; inventing significance here is
+  // exactly what would make this card stop being believable.
   const streakMin = mins(sig.longest_focus_streak_s)
   return pick([
-    `${sessionMin} minutes, with a detour you caught. The longest clean stretch was ${streakMin} minutes.`,
     `Some drift moved through this one. The longest clean stretch ran ${streakMin} of ${sessionMin} minutes.`,
-    `A detour or two inside ${sessionMin} minutes — the longest clean stretch held for ${streakMin}.`,
-  ], sig)
+    `An ordinary session — ${sessionMin} minutes, some drift, a longest clean stretch of ${streakMin}.`,
+    `Nothing unusual stood out in this one. ${sessionMin} minutes, work with some drift, the longest clean stretch ${streakMin} minutes.`,
+    `Unremarkable, honestly: ${streakMin} clean minutes at the longest, some drift around it.`,
+    `A middle-of-the-road ${sessionMin} minutes. The longest clean stretch held for ${streakMin}.`,
+  ], sig, seed)
 }
 
 // ---------------------------------------------------------------------------
@@ -347,10 +391,17 @@ function median(xs: number[]): number {
   return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2
 }
 
-export function noticeAgainstBaseline(
+export interface BaselineNote {
+  /** 'streak' praises; 'circling' names a concern. Callers gate coherence on this. */
+  kind: 'streak' | 'circling'
+  text: string
+}
+
+export function baselineComparison(
   current: BehaviorSignals,
   history: BehaviorSignals[],
-): string | null {
+  seed = 0,
+): BaselineNote | null {
   const past = (history ?? []).filter((h) => h && h.verified && h.total_s > 0)
   if (!current.verified || past.length < BASELINE_MIN_SESSIONS) return null
 
@@ -360,11 +411,35 @@ export function noticeAgainstBaseline(
   // Streak meaningfully above the user's own typical: worth a quiet mention.
   if (typicalStreak > 0 && current.longest_focus_streak_s >= typicalStreak * 1.5
       && current.longest_focus_streak_s - typicalStreak >= 5 * 60) {
-    return `The longest clean stretch here ran ${mins(current.longest_focus_streak_s)} minutes — past your recent typical of ${mins(typicalStreak)}.`
+    const cur = mins(current.longest_focus_streak_s)
+    const typ = mins(typicalStreak)
+    return {
+      kind: 'streak',
+      text: pick([
+        `The longest clean stretch here ran ${cur} minutes — past your recent typical of ${typ}.`,
+        `${cur} unbroken minutes at the longest, past your recent typical, which sits near ${typ}.`,
+        `Worth recording: a ${cur}-minute clean stretch, past your recent typical of ${typ}.`,
+      ], current, seed),
+    }
   }
   // Circling meaningfully above typical: name it, without judgment.
   if (current.distraction_returns >= typicalReturns + 3) {
-    return `This one circled back to distraction more than your recent sessions have — ${current.distraction_returns} returns, where ${Math.round(typicalReturns)} is more usual for you.`
+    const typ = Math.round(typicalReturns)
+    return {
+      kind: 'circling',
+      text: pick([
+        `This one circled back to distraction more than your recent sessions have — ${current.distraction_returns} returns, where ${typ} is more usual for you.`,
+        `Attention circled back ${current.distraction_returns} times here; your recent sessions usually see about ${typ}.`,
+      ], current, seed),
+    }
   }
   return null
+}
+
+/** Back-compat wrapper: the plain-string form earlier callers and tests use. */
+export function noticeAgainstBaseline(
+  current: BehaviorSignals,
+  history: BehaviorSignals[],
+): string | null {
+  return baselineComparison(current, history)?.text ?? null
 }

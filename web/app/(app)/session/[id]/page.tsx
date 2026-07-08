@@ -198,9 +198,13 @@ export default function SessionDetailPage() {
       duration_s: l.duration_s,
     })),
   )
-  const satyaLine = reflectionFor(signals, durationS)
-  // At most ONE quiet noticing, chosen against the user's evolving behavioral profile (with
-  // a graceful fallback to the numeric baseline for new users). Silence is the default.
+  // Phrasing seed = the session's identity (start time). A given session reads the same
+  // words on every visit; two similar sessions on different days don't share a template.
+  const phrasingSeed = Math.trunc(new Date(session.created_at).getTime() / 1000)
+  const satyaLine = reflectionFor(signals, durationS, phrasingSeed)
+  // At most ONE quiet noticing, decided by the tiered reflection engine (insight →
+  // observation → silence), coherence-gated against this session's own quality.
+  // Silence is the default.
   const startLocal = new Date(session.created_at)
   const sessionRecord: SessionRecord = {
     startedAt: session.created_at,
@@ -210,9 +214,7 @@ export default function SessionDetailPage() {
     hour: startLocal.getHours(),
     dow: startLocal.getDay(),
   }
-  // Seeded by the session's own duration so the phrasing varies between sessions but a
-  // given session reads the same on every visit.
-  const baselineNote = sessionNoticing(sessionRecord, profile ?? emptyProfile(), history, Date.now(), Math.round(durationS))?.line ?? null
+  const baselineNote = sessionNoticing(sessionRecord, profile ?? emptyProfile(), history, Date.now(), phrasingSeed)?.line ?? null
 
   return (
     <div className="mx-auto max-w-3xl py-2">

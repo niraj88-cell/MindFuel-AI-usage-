@@ -5,6 +5,45 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-08 (night) — Satya reflection card: the Reflection Engine (tiered, coherence-gated)
+
+Shipped bug that triggered this: a 13-min session, 6 min straight on a distracting site,
+quality **Distracted** — and the card's second line read *"This one sat stiller than your
+sessions usually do."* The noticing compared switch rates without checking whether the
+claim was coherent with the session it sat under, and made a rate claim off a 13-minute
+one-tab sample. That contradiction is the fastest way to lose the trust the card exists for.
+
+Redesign (engine, not copy): `lib/intelligence/reflection.ts` rewritten as a decision
+procedure — SILENCE (unverified/thin evidence) → INSIGHT (profile-backed, trait must clear
+`CONFIDENCE.speak` AND cohere) → OBSERVATION (numbers vs the user's own recent sessions) →
+SILENCE (ordinary session, no note; the default state, not a failure state).
+
+- **Coherence gate**: positive noticings require the session's own quality to be
+  deep/focused; the circling comparison stays honest under any quality. The streak praise
+  obeys the same gate (a 20-min streak inside a 70-min drift session is not praised).
+- **Evidence floors**: rate claims ("calmer than usual") need ≥20 witnessed minutes AND a
+  genuinely fragmented typical (`frag.value ≥ 0.25`) to be calmer THAN; thin-coverage
+  sessions get no note at all (the base line already names the coverage).
+- **No echo**: `recovered_well` is skipped when the base line's recovery bucket already
+  told that story — a note must add information, never restate.
+- **Facts over adjectives**: `calmer_than_usual` now states the measured comparison
+  ("about N moves an hour, where M has been more usual"); `validateMessage` rejects
+  broken interpolation (`undefined`/`NaN`) so a missing context can never leak.
+- **Variety without randomness**: `reflectionFor(sig, durationS, seed)` takes a
+  session-identity seed (start time, wired in the session page); `pick()` hash-mixes so
+  similar sessions stop clustering onto one template. Every bucket grew to 3–5 structurally
+  distinct phrasings, each carrying the bucket's factual anchor (tests pin the anchors).
+  New honest buckets: 40–70% "split session", and an ordinary-middle bucket that may
+  plainly say "Nothing unusual stood out in this one" — silence-adjacent honesty.
+- `baselineComparison()` (kind-aware: streak|circling) added in behavior.ts;
+  `noticeAgainstBaseline` kept as the back-compat string wrapper.
+
+Verified: web modules 78/78 (incl. 7 new regression tests: the distracted-praise bug,
+rate floor, thin-evidence muting, streak coherence, determinism, seed variety with fixed
+anchors, the neutral reading), tsc clean, next build clean, deployed to prod.
+
+---
+
 ## 2026-07-08 (evening) — Product-evolution fixes: trust, retention, subscription coherence (ext 2.9.0)
 
 Iterative review (simulated 100k users) → five shipped fixes, each challenged before build.

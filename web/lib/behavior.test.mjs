@@ -243,6 +243,29 @@ test('sutra recovery signals: returned detours are counted and measured; a trail
   assert.equal(loopy.median_recovery_s, 4 * MIN)
 })
 
+test('phrasing varies with the session seed while the facts never move', () => {
+  const sig = analyzeSession([p('github.com', 50 * MIN), d('reddit.com', 2 * MIN)])
+  const lines = new Set()
+  for (let seed = 0; seed < 24; seed++) lines.add(reflectionFor(sig, undefined, seed))
+  assert.ok(lines.size >= 3, `expected structural variety across sessions, got ${lines.size}`)
+  for (const line of lines) assert.match(line, /unbroken stretch/i, 'every phrasing carries the measured anchor')
+  // Same session, same seed → the same words on every visit.
+  assert.equal(reflectionFor(sig, undefined, 7), reflectionFor(sig, undefined, 7))
+})
+
+test('an ordinary session is allowed to plainly say nothing stood out — and invents no shape', () => {
+  // 15–40% drift, no loop, no trend, no clean ending: the unremarkable middle.
+  const sig = analyzeSession([d('x.com', 3 * MIN), p('github.com', 12 * MIN), d('x.com', 2 * MIN)])
+  assert.ok(sig.distraction_pct >= 15 && sig.distraction_pct < 40)
+  assert.ok(sig.distraction_returns < 2 && !sig.ended_clean && sig.drift_trend === 'steady')
+  const all = new Set()
+  for (let seed = 0; seed < 60; seed++) all.add(reflectionFor(sig, undefined, seed))
+  assert.ok([...all].some((l) => /nothing unusual stood out/i.test(l)), 'the neutral reading exists in the rotation')
+  for (const l of all) {
+    assert.doesNotMatch(l, /came back|unbroken stretch|toward the end/i, 'no invented recovery, depth, or trend')
+  }
+})
+
 test('privacy: the new signals still contain no domain names', () => {
   const events = [p('secret-work.example', 20 * MIN), d('private-drift.example', 5 * MIN), p('secret-work.example', 20 * MIN)]
   const json = JSON.stringify(analyzeSession(events))

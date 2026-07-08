@@ -36,6 +36,9 @@ export function validateMessage(text: string): { ok: boolean; reason?: string } 
   const t = (text ?? '').trim()
   if (!t) return { ok: false, reason: 'empty' }
   if (t.length > MAX_LEN) return { ok: false, reason: 'too_long' }
+  // A template rendered without its context leaks "undefined"/"NaN" into user copy —
+  // reject it so compose falls through to a context-free phrasing instead.
+  if (/\b(undefined|NaN)\b/.test(t)) return { ok: false, reason: 'broken_interpolation' }
   if (EMOJI.test(t)) return { ok: false, reason: 'emoji' }
   if (DOMAINISH.test(t)) return { ok: false, reason: 'domain_leak' }
   for (const re of BANNED) if (re.test(t)) return { ok: false, reason: 'shame' }
@@ -127,11 +130,15 @@ const TEMPLATES: Record<string, Partial<Record<Register, Template[]>>> = {
     supportive: [
       () => 'You drifted partway through and came back before the end. The session closed on the work.',
       () => 'There was a wander in the middle of this one, and then a return. The ending held.',
+      // Only composed when the recovery trait is confident, so the pattern claim is earned.
+      () => 'Drift showed up mid-session and the ending still belonged to the work. That return is a pattern of yours by now, not a one-off.',
     ],
   },
   'notice:calmer_than_usual': {
     calm: [
-      () => 'Steadier than your recent run — fewer moves, longer stays.',
+      // Numbered first: a comparison the reader can check beats an adjective.
+      (c) => `Steadier than your recent run — about ${c.perHour} moves an hour, where ${c.typicalPerHour} has been more usual for you.`,
+      (c) => `Fewer moves than your sessions usually make: roughly ${c.perHour} an hour, against a typical closer to ${c.typicalPerHour}.`,
       () => 'This one sat stiller than your sessions usually do. Less switching, longer stretches.',
     ],
   },
