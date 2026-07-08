@@ -12,7 +12,7 @@ import { PLANS, TRIAL_DAYS } from '@/lib/subscription'
 
 export const metadata: Metadata = {
   title: 'Pricing — SatyaShift',
-  description: `One plan, priced simply: ${TRIAL_DAYS}-day free trial with no payment method, then $${PLANS.monthly.priceUsd}/month or $${PLANS.annual.priceUsd} for your first year.`,
+  description: `One plan, priced simply: ${TRIAL_DAYS}-day free trial with no payment method, then $${PLANS.monthly.priceUsd}/month or $${PLANS.annual.priceUsd}/year.`,
 }
 
 // Both plans are the whole product — pricing chooses a cadence, never a feature set.
@@ -87,7 +87,7 @@ export default function PricingPage() {
             <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-green">
               {PLANS.annual.label}
             </p>
-            <span className="rounded-full bg-green px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-white">
+            <span className="rounded-full bg-green px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-wide text-white">
               Save ${YEARLY_SAVING} a year
             </span>
           </div>
@@ -96,7 +96,7 @@ export default function PricingPage() {
               ${YEAR_AT_MONTHLY}
             </span>
             ${PLANS.annual.priceUsd}
-            <span className="ml-1 text-base font-normal text-faint">/ first year</span>
+            <span className="ml-1 text-base font-normal text-faint">/ year</span>
           </p>
           <p className="mt-4 text-[14px] leading-relaxed text-soft">
             {PLANS.annual.note} That&rsquo;s ${ANNUAL_PER_MONTH} a month instead of the

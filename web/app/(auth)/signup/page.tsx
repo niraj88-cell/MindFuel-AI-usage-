@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SatyaMark } from '@/components/brand/SatyaMark'
 import { createClient } from '@/lib/supabase/client'
+import { humanAuthError } from '@/lib/auth-errors'
 import { identifyUser, trackEvent } from '@/lib/mixpanel'
 
 function getPasswordStrength(pw: string) {
@@ -64,7 +65,7 @@ export default function SignupPage() {
     })
 
     if (authError) {
-      setError(authError.message)
+      setError(humanAuthError(authError.message))
       setLoading(false)
       return
     }
@@ -73,7 +74,8 @@ export default function SignupPage() {
     setLoading(false)
 
     if (data.user) {
-      identifyUser(data.user.id, { $email: email })
+      // Account id only — the privacy page promises analytics carry no more than that.
+      identifyUser(data.user.id)
       trackEvent('User Signed Up')
     }
 
@@ -171,7 +173,7 @@ export default function SignupPage() {
                   },
                 })
                 if (oauthError) {
-                  setError(oauthError.message)
+                  setError(humanAuthError(oauthError.message))
                   setGoogleLoading(false)
                 }
               }}

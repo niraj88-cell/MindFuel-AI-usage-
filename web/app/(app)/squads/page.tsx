@@ -177,7 +177,7 @@ export default function SquadsPage() {
   function VerifiedBadge({ verified }: { verified: boolean }) {
     return (
       <span
-        className={`inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wide ${verified ? 'text-green' : 'text-ghost'}`}
+        className={`inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-wide ${verified ? 'text-green' : 'text-ghost'}`}
         title={verified ? 'Extension verified' : 'Not verified'}
       >
         <VerifiedMark verified={verified} size={12} /> {verified ? 'verified' : 'unverified'}

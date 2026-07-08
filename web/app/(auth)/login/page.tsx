@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SatyaMark } from '@/components/brand/SatyaMark'
 import { createClient } from '@/lib/supabase/client'
+import { humanAuthError } from '@/lib/auth-errors'
 import { identifyUser, trackEvent } from '@/lib/mixpanel'
 
 // Three quiet truths, stated plainly — no icon-tile trust grid (a generic tell).
@@ -34,13 +35,14 @@ export default function LoginPage() {
     const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
     if (authError) {
-      setError(authError.message)
+      setError(humanAuthError(authError.message))
       setLoading(false)
       return
     }
 
     if (data.user) {
-      identifyUser(data.user.id, { $email: data.user.email })
+      // Account id only — the privacy page promises analytics carry no more than that.
+      identifyUser(data.user.id)
       trackEvent('User Logged In')
     }
 
@@ -58,7 +60,7 @@ export default function LoginPage() {
       },
     })
     if (oauthError) {
-      setError(oauthError.message)
+      setError(humanAuthError(oauthError.message))
       setGoogleLoading(false)
     }
   }

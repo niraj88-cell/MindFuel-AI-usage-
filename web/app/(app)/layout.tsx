@@ -114,7 +114,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Icon className="h-[18px] w-[18px]" />
         {!compact && <span>{item.label}</span>}
         {isNotif && unreadCount > 0 && (
-          <span className={`${compact ? 'absolute -right-1 top-1' : 'ml-auto'} flex h-5 min-w-5 items-center justify-center rounded-full bg-green px-1 font-mono text-[10px] font-semibold text-white`}>
+          <span className={`${compact ? 'absolute -right-1 top-1' : 'ml-auto'} flex h-5 min-w-5 items-center justify-center rounded-full bg-green px-1 font-mono text-[11px] font-semibold text-white`}>
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -144,7 +144,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </span>
           <div className="leading-none">
             <p className="font-semibold tracking-tight">SatyaShift</p>
-            <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-faint">Focus, verified</p>
+            <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Focus, verified</p>
           </div>
         </Link>
 

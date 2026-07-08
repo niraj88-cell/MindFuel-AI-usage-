@@ -283,9 +283,9 @@ export default function SessionDetailPage() {
                   <span className="flex items-center gap-2.5">
                     <span className="font-mono text-[13px] text-faint">{clock(row.seconds)}</span>
                     {row.drift ? (
-                      <span className="rounded-full bg-clay-tint px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-clay">drift</span>
+                      <span className="rounded-full bg-clay-tint px-2 py-0.5 font-mono text-[11px] uppercase tracking-wide text-clay">drift</span>
                     ) : (
-                      <span className="rounded-full bg-green-tint px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-green">focused</span>
+                      <span className="rounded-full bg-green-tint px-2 py-0.5 font-mono text-[11px] uppercase tracking-wide text-green">focused</span>
                     )}
                   </span>
                 </div>
@@ -330,7 +330,7 @@ export default function SessionDetailPage() {
               <div className="text-right">
                 <div className="font-mono text-[15px] font-medium text-green">{humanDuration(durationS)}</div>
                 {verified && (
-                  <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-green-tint px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-green">
+                  <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-green-tint px-2 py-0.5 font-mono text-[11px] uppercase tracking-wide text-green">
                     <VerifiedMark verified size={11} /> verified
                   </span>
                 )}

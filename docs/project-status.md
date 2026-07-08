@@ -5,6 +5,39 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-08 (late night) — Brand trust pass: the code-level fixes from the brand audit (ext 2.9.1)
+
+Full brand-trust audit ran first (all touchpoints); founder-scoped items (custom domain,
+support@ email, Supabase auth email templates, GitHub source publish, social handles)
+handed over separately. Shipped here, each tied to a trust principle:
+
+- **Favicon** (`web/app/icon.svg`): the bindu seal on the ink tile — the tab was showing
+  the default globe. Bindu, not trishula, at small sizes (the tines smear at 16px).
+- **One strapline everywhere**: "Proof you did the work" (layout titles, landing, footer,
+  JsonLd). The static `public/og-image.png` deleted; the dynamic `opengraph-image.tsx`
+  (already on-strapline) now serves og:image via the file convention — one card, no drift.
+- **JsonLd honesty**: "squad"→"circle" (UI-copy rule), and the structured-data Offer said
+  the product was FREE next to an $8/mo pricing page — now derives Monthly/Annual from
+  `PLANS` (never hand-typed).
+- **Analytics ≤ disclosure**: login/signup no longer send `$email` to Mixpanel — the
+  privacy page promises "page views tied to your account id" and now that's exactly true.
+- **Human auth errors** (`web/lib/auth-errors.ts`): known Supabase messages mapped to the
+  product's voice; infrastructure-smelling ones get a calm generic line; human ones pass.
+- **Pricing suspicion removed**: "$60 / first year" → "/ year"; annual note now states
+  renewal plainly ("Renews at the same price — if that ever changes, you hear about it
+  first"). Matches the real Paddle price (a plain $60/yr recurring).
+- **Paddle named at the button** (CheckoutButtons): merchant-of-record line above the
+  overlay trigger — the third-party iframe becomes a deliberate trust choice.
+- **Readability**: all meaning-bearing `text-[10px]` labels/chips → 11px (15 instances).
+- **Extension 2.9.1**: manifest name unified with the store kit ("SatyaShift — Verified
+  Focus" — the kit's listing title would have conflicted at upload), description no longer
+  leads with "tracking" (now mirrors the kit summary, 125 chars). Zip repacked.
+
+Verified: extension 62/62, tsc clean, next build clean, preview-checked (favicon 200,
+title, og:image route, /og-image.png 404, "/ year", footer strapline), deployed to prod.
+
+---
+
 ## 2026-07-08 (night) — Satya reflection card: the Reflection Engine (tiered, coherence-gated)
 
 Shipped bug that triggered this: a 13-min session, 6 min straight on a distracting site,

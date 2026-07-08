@@ -20,7 +20,7 @@ export const PLANS = {
     label: 'Annual',
     priceUsd: 60,
     period: 'year' as const,
-    note: 'Launch price for your first year.',
+    note: 'Renews at the same price — if that ever changes, you hear about it first.',
   },
 }
 

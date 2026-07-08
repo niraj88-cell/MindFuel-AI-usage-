@@ -29,9 +29,9 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://satyashift.vercel.app'),
-  title: 'SatyaShift — Focus you can prove',
+  title: 'SatyaShift — Proof you did the work',
   description:
-    'SatyaShift verifies your focus sessions in the background — no self-reporting, no manual logging. Your domains stay private to you; your squad sees only verified focus.',
+    'SatyaShift verifies your focus sessions in the background — no self-reporting, no manual logging. Your domains stay private to you; your circle sees only verified focus.',
   keywords: [
     'focus',
     'verified focus',
@@ -49,35 +49,21 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://satyashift.vercel.app',
   },
+  // og:image / twitter:image come from the app/opengraph-image.tsx file convention —
+  // one generated card, one strapline, nothing static to drift out of date.
   openGraph: {
-    title: 'SatyaShift — Focus you can prove',
+    title: 'SatyaShift — Proof you did the work',
     description:
-      'Verified focus, not self-reported. Sessions are confirmed in the background, your domains stay private, and your squad sees only that you showed up.',
+      'Verified focus, not self-reported. Sessions are confirmed in the background, your domains stay private, and your circle sees only that you showed up.',
     type: 'website',
     siteName: 'SatyaShift',
     url: 'https://satyashift.vercel.app',
-    images: [
-      {
-        url: 'https://satyashift.vercel.app/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'SatyaShift — focus you can prove',
-      },
-    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SatyaShift — Focus you can prove',
+    title: 'SatyaShift — Proof you did the work',
     description:
-      'Verified focus, not self-reported. Sessions are confirmed in the background, your domains stay private, and your squad sees only that you showed up.',
-    images: [
-      {
-        url: 'https://satyashift.vercel.app/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'SatyaShift — focus you can prove',
-      },
-    ],
+      'Verified focus, not self-reported. Sessions are confirmed in the background, your domains stay private, and your circle sees only that you showed up.',
   },
   verification: {
     google: 'jbQhKcXinwrOHvVws6RQPrPVZl-UXv1QOqNoHH2L1VY',

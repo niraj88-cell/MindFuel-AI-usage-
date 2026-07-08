@@ -28,7 +28,7 @@ export function SiteFooter() {
           ))}
         </nav>
         <p className="mt-4 text-xs leading-relaxed text-faint">
-          SatyaShift · सत्य · truth — focus you can prove.{' '}
+          SatyaShift · सत्य · truth — proof you did the work.{' '}
           Questions: <a href="mailto:niraj2055adk@gmail.com" className="underline underline-offset-2 hover:text-ink">niraj2055adk@gmail.com</a>
         </p>
       </div>

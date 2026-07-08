@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "SatyaShift — Ambient Focus",
-  "version": "2.9.0",
-  "description": "Passive, domain-only attention tracking. Zero manual logging, ever.",
+  "name": "SatyaShift — Verified Focus",
+  "version": "2.9.1",
+  "description": "Proof you did the work. Counts time per site — only the domain, never the page — and gently checks in when attention drifts.",
   "permissions": [
     "storage",
     "tabs",

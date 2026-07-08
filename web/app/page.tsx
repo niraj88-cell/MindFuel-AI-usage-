@@ -16,11 +16,11 @@ const YEARLY_SAVING = YEAR_AT_MONTHLY - PLANS.annual.priceUsd
 // The waitlist EMAIL gate is retired — this converts straight to signup/login.
 
 export const metadata: Metadata = {
-  title: 'SatyaShift — Focus you can prove',
+  title: 'SatyaShift — Proof you did the work',
   description:
     'Deep work is easier when you are not doing it alone. SatyaShift keeps an honest, verified record of your focus, solo or with friends, and only ever sees the domains you visit, never your screen. Private by default.',
   openGraph: {
-    title: 'SatyaShift — Focus you can prove',
+    title: 'SatyaShift — Proof you did the work',
     description: 'Deep work is easier when you are not doing it alone. Verified focus, solo or with friends. Private by default.',
     type: 'website',
   },
@@ -53,7 +53,7 @@ export default function LandingPage() {
         {/* The one artifact: exactly what a friend in your circle sees. Not a
             mockup for flourish — it is the privacy promise, made concrete. */}
         <figure className="mt-10 rounded-xl border border-line bg-card p-4">
-          <figcaption className="mb-3 font-mono text-[10px] uppercase tracking-[0.16em] text-faint">
+          <figcaption className="mb-3 font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
             What your circle sees
           </figcaption>
           <div className="flex items-center gap-3">
@@ -108,8 +108,8 @@ export default function LandingPage() {
         {/* Pricing on the front door — the price is part of the honesty. */}
         <div className="mt-10 rounded-xl border border-line bg-card p-5">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Pricing</span>
-            <span className="rounded-full bg-green px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-white">
+            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Pricing</span>
+            <span className="rounded-full bg-green px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-wide text-white">
               Save ${YEARLY_SAVING} a year
             </span>
           </div>
@@ -121,7 +121,7 @@ export default function LandingPage() {
             <p>
               <span className="mr-1.5 font-mono text-sm text-faint line-through" aria-hidden="true">${YEAR_AT_MONTHLY}</span>
               <span className="font-mono text-2xl font-medium tracking-tight text-ink">${PLANS.annual.priceUsd}</span>
-              <span className="text-sm text-faint"> / first year</span>
+              <span className="text-sm text-faint"> / year</span>
             </p>
           </div>
           <p className="mt-3 border-t border-hairline pt-3 text-xs leading-relaxed text-faint">

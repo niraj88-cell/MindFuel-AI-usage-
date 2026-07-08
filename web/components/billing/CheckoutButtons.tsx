@@ -121,6 +121,13 @@ export function CheckoutButtons({
           renews at the plain ${PLANS.monthly.priceUsd}.
         </p>
       )}
+      {/* Say who takes the card BEFORE the third-party overlay appears — the foreign
+          iframe at the scariest moment becomes a deliberate, named trust choice. */}
+      <p className="mb-3 text-[13px] leading-relaxed text-soft">
+        Payment opens in a secure overlay from{' '}
+        <span className="font-medium text-ink">Paddle</span>, our merchant of record.
+        Your card details go to Paddle and never touch our servers.
+      </p>
       <div className="grid gap-2 sm:grid-cols-2">
       {(['monthly', 'annual'] as const).map((plan) => {
         const p = PLANS[plan]

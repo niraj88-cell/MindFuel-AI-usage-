@@ -149,7 +149,7 @@ export default function WidgetPage() {
               <div className="flex items-center gap-2">
                 {/* Static presence dot — green only while a session is live, and it does not move. */}
                 {state?.active && <span className="h-2 w-2 shrink-0 rounded-full bg-green-bright" />}
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">
+                <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
                   {msg.overline}
                 </span>
               </div>
