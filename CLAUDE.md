@@ -63,6 +63,16 @@ where something was verified. Trust is shown through restraint, not decoration. 
 - **Motion only confirms:** 150ms color/opacity transitions; the only ambient motion is
   `.satya-breathe` on live presence dots (respects `prefers-reduced-motion`). No hover
   lifts, entrance choreography, ping/pulse theatrics, gradients, or glassmorphism.
+- **Interaction craft uses the three shared utilities in `globals.css`, never inline
+  one-offs:** `.press` (active:scale 0.98 — the ONLY press feedback, on buttons/tappable
+  controls), `.focus-ring` (the one earned-green `:focus-visible` outline — every
+  interactive element gets it; never ship a control with no visible keyboard focus), and
+  `.row-arrow` (a navigating row's chevron leans 2px on `group-hover`). All three neutralize
+  under `prefers-reduced-motion` (already wired). Don't scatter bespoke `active:scale` or
+  focus rings; extend the utility.
+- **Active-nav "you are here" is a raised `bg-card` tile + a left ink rail (`before:`) +
+  `aria-current`, NOT a filled pill; the icon-only mobile bar resolves active to ink.**
+  Location is never green (green stays earned — see above).
 - **Banned (these are the "generic AI SaaS" tells): ** emoji anywhere; decorative icons
   (icons only for comprehension — lock=private, play/stop=session); icon-in-tile card
   headers; three-icon feature-card grids; dark-mode surfaces (except the ink brand tile);
@@ -147,6 +157,10 @@ where something was verified. Trust is shown through restraint, not decoration. 
   exchange); the reset page requires the resulting session.
 - In UI copy the words are "circle" (not squad) and "Activity" (not reminders); routes and
   DB tables keep the squad names.
+- The ONE strapline is **"Proof you did the work."** (layout + landing titles, OG card,
+  footer, JsonLd, store tile). Don't reintroduce "Focus you can prove" as a headline — a
+  second strapline halves recognition. og:image is the generated `app/opengraph-image.tsx`
+  (file convention); there is no static `public/og-image.png` (deleted — don't recreate).
 
 ## Security posture (see docs/security-review-2026-07-02.md + docs/DECISIONS.md)
 - RLS is the authorization boundary (the browser hits Supabase directly with the anon key).
