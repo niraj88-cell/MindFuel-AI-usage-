@@ -43,9 +43,11 @@ function makeStorageArea() {
 //   worker restart  -> reuse BOTH areas (chrome keeps storage.session across SW deaths)
 //   browser restart -> reuse local only (storage.session and alarms are gone)
 function makeChrome({ local, session, tabs: tabList = [], permissionLevel = 'granted' } = {}) {
-  const tabs = new Map(tabList.map((t) => [t.id, { incognito: false, active: true, audible: false, ...t }]));
+  const tabs = new Map(tabList.map((t) => [t.id, { incognito: false, active: true, audible: false, windowId: 1, ...t }]));
   const created = [];   // chrome.notifications.create calls
   const openedTabs = []; // chrome.tabs.create calls
+  const focusedTabs = [];    // chrome.tabs.update calls with { active: true } (Sutra re-entry)
+  const focusedWindows = []; // chrome.windows.update calls with { focused: true }
   const alarms = new Map();
   const state = { permissionLevel, focused: true };
   const chrome = {
@@ -60,11 +62,18 @@ function makeChrome({ local, session, tabs: tabList = [], permissionLevel = 'gra
       async get(id) { const t = tabs.get(id); if (!t) throw new Error('no such tab'); return t; },
       async query() { return [...tabs.values()].filter((t) => t.active); },
       async create({ url }) { openedTabs.push(url); },
+      async update(id, props) {
+        const t = tabs.get(id); if (!t) throw new Error('no such tab');
+        if (props.active) { for (const other of tabs.values()) other.active = (other === t); focusedTabs.push(id); }
+        Object.assign(t, props);
+        return t;
+      },
     },
     windows: {
       WINDOW_ID_NONE: -1,
       onFocusChanged: makeEvent(),
       async getLastFocused() { return { focused: state.focused }; },
+      async update(id, props) { if (props.focused) focusedWindows.push(id); },
     },
     idle: { setDetectionInterval() {}, onStateChanged: makeEvent() },
     alarms: {
@@ -81,7 +90,7 @@ function makeChrome({ local, session, tabs: tabList = [], permissionLevel = 'gra
     cookies: { async getAll() { return []; } },
     action: { async setBadgeText() {}, async setBadgeBackgroundColor() {} },
   };
-  return { chrome, created, openedTabs, alarms, tabs, state };
+  return { chrome, created, openedTabs, focusedTabs, focusedWindows, alarms, tabs, state };
 }
 
 // Per-name async mutex — the real Web Locks semantics background.js depends on.
@@ -407,15 +416,115 @@ test('STOP_SESSION flushes the queue BEFORE asking the server for the verdict', 
   }
 });
 
-test('clicking the nudge opens the dashboard and clears the stored target', async () => {
+test('clicking the nudge with no thread opens the dashboard and clears the stored target', async () => {
+  // Only a YouTube tab was ever attended, so there is no work thread to return to — the
+  // click falls back to the app's Today page, exactly as before Sutra existed.
   const env = makeChrome({ tabs: [YT] });
   await boot(env);
   await tickNudge(env, 5);
-  const { id } = env.created[0];
-  assert.equal(await getSessionValue(env, id), 'youtube.com', 'target domain remembered');
+  const { id, opts } = env.created[0];
+  assert.equal(opts.buttons[0].title, 'Return to focus', 'no thread -> the generic way back');
+  assert.equal((await getSessionValue(env, id))?.domain, 'youtube.com', 'target domain remembered');
 
   await env.chrome.notifications.onClicked.emit(id);
   await settle();
   assert.deepEqual(env.openedTabs, ['https://satyashift.vercel.app/dashboard']);
   assert.equal(await getSessionValue(env, id), undefined, 'target cleaned up');
+});
+
+// ---------------------------------------------------------------------------
+// Sutra — the thread (re-entry) — end to end through the real worker.
+// ---------------------------------------------------------------------------
+
+const GH = { id: 10, url: 'https://github.com/foo/bar/pull/7', active: true, windowId: 2 };
+
+// Work on GitHub for `workTicks` minutes, then drift to YouTube until the nudge fires.
+async function driftAfterWork(env, workTicks = 2) {
+  await tickNudge(env, workTicks); // thread anchors to the GitHub tab
+  env.tabs.get(GH.id).active = false;
+  env.tabs.get(1).active = true;
+  await env.chrome.tabs.onActivated.emit({ tabId: 1 });
+  await settle();
+  await tickNudge(env, 5); // distraction block crosses the threshold
+}
+
+test('sutra: after real work, the nudge offers the way back — and the click returns to the work tab', async () => {
+  const env = makeChrome({ tabs: [{ ...YT, active: false }, GH] });
+  await boot(env);
+  await driftAfterWork(env);
+
+  assert.equal(env.created.length, 1, 'the drift still earns exactly one gentle nudge');
+  const { id, opts } = env.created[0];
+  assert.equal(opts.buttons[0].title, 'Back to github.com', 'the first button IS the way back');
+  const target = await getSessionValue(env, id);
+  assert.equal(target.thread.domain, 'github.com');
+  assert.equal(target.thread.tabId, GH.id);
+  assert.ok(!('url' in target.thread), 'the thread stores NO url — domain + integer ids only');
+
+  await env.chrome.notifications.onButtonClicked.emit(id, 0);
+  await settle();
+  assert.deepEqual(env.focusedTabs, [GH.id], 'the click focuses the exact tab the work lives in');
+  assert.deepEqual(env.focusedWindows, [2], 'and brings its window forward');
+  assert.deepEqual(env.openedTabs, [], 'no dashboard tab — the work itself is the destination');
+  assert.equal(await getSessionValue(env, id), undefined, 'target cleaned up');
+  assert.equal(fetchCalls, 0, 'sutra is fully local — no network involved');
+});
+
+test('sutra: a closed work tab means a cold thread — the click falls back to the dashboard', async () => {
+  const env = makeChrome({ tabs: [{ ...YT, active: false }, GH] });
+  await boot(env);
+  await driftAfterWork(env);
+  const { id, opts } = env.created[0];
+  assert.equal(opts.buttons[0].title, 'Back to github.com');
+
+  env.tabs.delete(GH.id); // the user closed the work tab while drifting
+  await env.chrome.notifications.onButtonClicked.emit(id, 0);
+  await settle();
+  assert.deepEqual(env.focusedTabs, [], 'never "returns" to a tab that no longer exists');
+  assert.deepEqual(env.openedTabs, ['https://satyashift.vercel.app/dashboard'], 'honest fallback');
+});
+
+test('sutra: a work tab that navigated to another domain is not offered as the way back', async () => {
+  const env = makeChrome({ tabs: [{ ...YT, active: false }, GH] });
+  await boot(env);
+  await driftAfterWork(env);
+  const { id } = env.created[0];
+
+  env.tabs.get(GH.id).url = 'https://reddit.com/r/all'; // the "work" tab wandered off too
+  await env.chrome.notifications.onButtonClicked.emit(id, 0);
+  await settle();
+  assert.deepEqual(env.focusedTabs, [], 'domain re-verified at click time — stale context never restored');
+  assert.deepEqual(env.openedTabs, ['https://satyashift.vercel.app/dashboard']);
+});
+
+test('sutra: the popup offers the thread during a drift, stays quiet while working, and OPEN_THREAD returns', async () => {
+  const env = makeChrome({ tabs: [{ ...YT, active: false }, GH] });
+  await boot(env);
+  await tickNudge(env, 2); // thread anchors to GitHub
+
+  // While working, the popup offers nothing — the thread is where they already are.
+  let status = await new Promise((resolve) => {
+    env.chrome.runtime.onMessage.emit({ type: 'GET_STATUS' }, { id: 'test-extension-id' }, resolve);
+  });
+  assert.equal(status.thread, null, 'no offer while attention is on non-distraction ground');
+
+  // Drift to YouTube: the popup now holds the way back.
+  env.tabs.get(GH.id).active = false;
+  env.tabs.get(1).active = true;
+  await env.chrome.tabs.onActivated.emit({ tabId: 1 });
+  await settle();
+  await tickNudge(env, 1);
+  status = await new Promise((resolve) => {
+    env.chrome.runtime.onMessage.emit({ type: 'GET_STATUS' }, { id: 'test-extension-id' }, resolve);
+  });
+  assert.equal(status.thread?.domain, 'github.com');
+  assert.match(status.thread.line, /^Your thread: github\.com · (moments|\d+ min) ago$/);
+
+  // "Pick it back up" focuses the work tab.
+  const res = await new Promise((resolve) => {
+    env.chrome.runtime.onMessage.emit({ type: 'OPEN_THREAD' }, { id: 'test-extension-id' }, resolve);
+  });
+  assert.equal(res.ok, true);
+  assert.deepEqual(env.focusedTabs, [GH.id]);
+  assert.equal(fetchCalls, 0, 'the entire thread lifecycle is local');
 });

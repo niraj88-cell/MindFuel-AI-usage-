@@ -11,6 +11,7 @@ import {
   MAX_DWELL_S,
   emptyNudgeProfile, updateNudgeOutcome, nudgeCooldownMultiplier, nudgeRegister,
   NUDGE_BACKOFF_MAX, NUDGE_COOLDOWN_MIN,
+  nextThread, threadIsWarm, shouldOfferThread, threadLine, THREAD_TTL_MIN,
 } from './core.js';
 
 const REF = 'sztvvvphpawuxvvmuddm';
@@ -457,4 +458,61 @@ test('fatigue back-off delays the NEXT nudge but never the 5-minute threshold of
   const soon = nextNudge({ domain: 'x.com', minutes: NUDGE_AFTER_MIN, gap: 0, domains: ['x.com'], switches: 0, lastNudgeAt: fired * 60000 },
     { domain: 'x.com', counting: true, category: 'distraction', now: fired * 60000 + NUDGE_COOLDOWN_MIN * 60000 + 1 }, cfg);
   assert.equal(soon.fire, false, 'the normal 10-min cooldown is no longer enough when fatigued');
+});
+
+// ---------------------------------------------------------------------------
+// Sutra — the thread (re-entry). The pure rules: what the thread anchors to, when
+// it's warm, and the restraint governing when it may be offered.
+// ---------------------------------------------------------------------------
+
+test('nextThread: counted non-distraction attention anchors the thread; drift/idle leave it alone', () => {
+  const t0 = 1_000_000;
+  // Counted work re-anchors the thread to this tab, refreshing `at` each tick.
+  let t = nextThread(null, { counting: true, category: 'productive', domain: 'github.com', tabId: 7, windowId: 2, now: t0 });
+  assert.deepEqual(t, { domain: 'github.com', tabId: 7, windowId: 2, at: t0 });
+  t = nextThread(t, { counting: true, category: 'neutral', domain: 'en.wikipedia.org', tabId: 9, windowId: 2, now: t0 + 60_000 });
+  assert.equal(t.domain, 'en.wikipedia.org', 'neutral counted attention also anchors (work is not only "productive")');
+
+  // A drift does NOT move the thread — that is the entire point: the way back survives the wander.
+  const during = nextThread(t, { counting: true, category: 'distraction', domain: 'youtube.com', tabId: 3, windowId: 2, now: t0 + 120_000 });
+  assert.equal(during, t, 'distraction leaves the thread untouched');
+  // Neither do blur/idle (not counting) nor a tab we can't identify.
+  assert.equal(nextThread(t, { counting: false, category: 'neutral', domain: 'github.com', tabId: 7, windowId: 2, now: t0 }), t);
+  assert.equal(nextThread(t, { counting: true, category: 'productive', domain: 'github.com', tabId: null, windowId: null, now: t0 }), t);
+  // And with no history at all, nothing is invented.
+  assert.equal(nextThread(null, { counting: false, category: 'neutral', domain: null, tabId: null, windowId: null, now: t0 }), null);
+});
+
+test('threadIsWarm: fresh within the TTL, cold past it, null-safe', () => {
+  const now = 10_000_000;
+  const t = { domain: 'github.com', tabId: 1, windowId: 1, at: now - 10 * 60_000 };
+  assert.equal(threadIsWarm(t, now), true);
+  assert.equal(threadIsWarm({ ...t, at: now - (THREAD_TTL_MIN * 60_000 + 1) }, now), false, 'past the TTL the context is cold');
+  assert.equal(threadIsWarm(null, now), false);
+  assert.equal(threadIsWarm({ domain: 'x.com' }, now), false, 'no timestamp -> never warm');
+});
+
+test('shouldOfferThread: offered during a drift, never while working, never on the thread tab itself', () => {
+  const now = 10_000_000;
+  const t = { domain: 'github.com', tabId: 7, windowId: 1, at: now - 5 * 60_000 };
+  // On a distraction: offer the way back.
+  assert.equal(shouldOfferThread(t, { counting: true, category: 'distraction', tabId: 3, now }), true);
+  // Not counting (new tab, blur, idle): offer — this is the "sat back down after lunch" case.
+  assert.equal(shouldOfferThread(t, { counting: false, category: 'neutral', tabId: null, now }), true);
+  // Already working somewhere non-distracting: stay quiet (the thread will re-anchor there anyway).
+  assert.equal(shouldOfferThread(t, { counting: true, category: 'productive', tabId: 3, now }), false);
+  assert.equal(shouldOfferThread(t, { counting: true, category: 'neutral', tabId: 3, now }), false);
+  // Standing in the doorway: never offer the tab they're already on.
+  assert.equal(shouldOfferThread(t, { counting: true, category: 'distraction', tabId: 7, now }), false);
+  // Cold or missing threads are never offered.
+  assert.equal(shouldOfferThread({ ...t, at: now - 2 * THREAD_TTL_MIN * 60_000 }, { counting: false, category: 'neutral', tabId: null, now }), false);
+  assert.equal(shouldOfferThread(null, { counting: true, category: 'distraction', tabId: 3, now }), false);
+});
+
+test('threadLine: quiet ledger register — domain + age, no push, no shame', () => {
+  const now = 10_000_000;
+  assert.equal(threadLine({ domain: 'github.com', at: now - 14 * 60_000 }, now), 'Your thread: github.com · 14 min ago');
+  assert.equal(threadLine({ domain: 'overleaf.com', at: now - 20_000 }, now), 'Your thread: overleaf.com · moments ago');
+  assert.match(threadLine({ domain: 'github.com', at: now - 90 * 60_000 }, now), /1h 30m ago/);
+  assert.doesNotMatch(threadLine({ domain: 'github.com', at: now }, now), /should|hurry|back to work|wasting/i);
 });

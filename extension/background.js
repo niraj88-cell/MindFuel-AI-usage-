@@ -21,6 +21,7 @@ import {
   capDuration, parseSupabaseSession, selectAuthCookie, tokenExpiresSoon,
   nextNudge, nudgeCopy, gateAllowsCounting, nextWelcome, NUDGE_AFTER_MIN, NUDGE_COOLDOWN_MIN,
   emptyNudgeProfile, updateNudgeOutcome, nudgeCooldownMultiplier, nudgeRegister,
+  nextThread, threadIsWarm, shouldOfferThread, threadLine,
 } from './core.js';
 
 const PRODUCTION_URL = 'https://satyashift.vercel.app';
@@ -54,6 +55,9 @@ const POPUP_OPEN_KEY = 'popup_open';       // true while the action popup is on-
 const WELCOME_STATE_KEY = 'welcome_state'; // { ackedNudgeAt } — nudges already welcomed/expired
 const WELCOME_PENDING_KEY = 'welcome_pending'; // one-shot: next popup open says "Welcome back."
 const PRESENCE_CACHE_KEY = 'presence_cache';   // { at, data } — circle presence, cached briefly
+const THREAD_KEY = 'thread';               // Sutra: { domain, tabId, windowId, at } — the last
+                                           // attended WORK tab. Domain + integer ids only, NO URL,
+                                           // session-scoped, never transmitted (see core.js).
 
 // Web Locks (available in service workers) serialize concurrent handlers.
 const LOCK_STATE = 'satyashift_state';     // guards active-tab state + queue writes
@@ -76,7 +80,7 @@ async function getBaseUrl() {
 // ---------------------------------------------------------------------------
 async function getActive() {
   const { [ACTIVE_KEY]: a } = await chrome.storage.session.get(ACTIVE_KEY);
-  return a || { domain: null, segmentStart: null, accumulatedMs: 0, audible: false };
+  return a || { domain: null, segmentStart: null, accumulatedMs: 0, audible: false, tabId: null, windowId: null };
 }
 async function setActive(a) { await chrome.storage.session.set({ [ACTIVE_KEY]: a }); }
 
@@ -118,15 +122,16 @@ async function finalizeActive() {
   const now = Date.now();
   await enqueue(a.domain, elapsedMs(a, now) / 1000);
   await setActive({
-    domain: a.domain,
+    ...a,
     accumulatedMs: 0,
     segmentStart: a.segmentStart != null ? now : null, // preserve running/paused state
-    audible: !!a.audible,
   });
 }
 
-async function startTiming(domain, audible = false) {
-  const a = { domain, accumulatedMs: 0, segmentStart: null, audible: !!audible };
+// tabId/windowId ride along for Sutra (the thread): re-entry means focusing the exact tab
+// the work lived in. Integer Chrome ids only — never a URL (see core.js thread notes).
+async function startTiming(domain, audible = false, tabId = null, windowId = null) {
+  const a = { domain, accumulatedMs: 0, segmentStart: null, audible: !!audible, tabId, windowId };
   a.segmentStart = (await shouldCount(a)) ? Date.now() : null;
   await setActive(a);
 }
@@ -141,10 +146,9 @@ async function applyGate() {
     await setActive({ ...a, segmentStart: now });
   } else if (!counting && a.segmentStart != null) {
     await setActive({
-      domain: a.domain,
+      ...a,
       accumulatedMs: (a.accumulatedMs || 0) + (now - a.segmentStart),
       segmentStart: null,
-      audible: !!a.audible,
     });
   }
 }
@@ -160,10 +164,10 @@ async function handleTab(tabId) {
   await withStateLock(async () => {
     await finalizeActive(); // bank whatever we were timing before the context switch
     if (!h || tab.incognito || isSensitive(h) || isOwnApp(h)) {
-      await setActive({ domain: null, segmentStart: null, accumulatedMs: 0, audible: false });
+      await setActive({ domain: null, segmentStart: null, accumulatedMs: 0, audible: false, tabId: null, windowId: null });
       return;
     }
-    await startTiming(h, tab.audible);
+    await startTiming(h, tab.audible, tab.id ?? null, tab.windowId ?? null);
   });
 }
 
@@ -388,6 +392,12 @@ async function checkNudge() {
   const cfg = { cooldownMin: NUDGE_COOLDOWN_MIN * nudgeCooldownMultiplier(nudgeProfile) };
   const { state, fire, decision, domain, minutes, distinctDomains, switches } = nextNudge(await getNudgeState(), ctx, cfg);
   await chrome.storage.session.set({ [NUDGE_STATE_KEY]: state });
+  // Sutra: attention on counted, non-distraction ground re-anchors the thread to THIS tab;
+  // a drift/blur/idle leaves it untouched, so the way back survives the wander. Domain +
+  // integer tab ids only — never a URL — and it never leaves chrome.storage.session.
+  const { [THREAD_KEY]: prevThread } = await chrome.storage.session.get(THREAD_KEY);
+  const thread = nextThread(prevThread || null, { ...ctx, tabId: a.tabId ?? null, windowId: a.windowId ?? null });
+  if (thread !== (prevThread || null)) await chrome.storage.session.set({ [THREAD_KEY]: thread });
   // Liveness + decision trace: one record per tick makes the whole pipeline auditable in the
   // field (chrome.storage.local.get('nudge_diag')). It answers, deterministically, WHY this tick
   // did or did not intervene — the block minutes vs the threshold, how fragmented it was, and the
@@ -404,13 +414,19 @@ async function checkNudge() {
     distinctDomains: distinctDomains ?? (state.domains ? state.domains.length : 0),
     switches: switches ?? (state.switches ?? 0),
     decision,                       // building | fire | cooldown | grace | reset | idle
+    // Sutra observability: where the way back currently points (domain only, like everything here).
+    thread: thread ? { domain: thread.domain, agoMin: Math.floor((ctx.now - thread.at) / 60_000) } : null,
     permission: await notificationPermission(),
     // Observability for the local learning layer (all local, never sent).
     responsiveness: Math.round((nudgeProfile.responsiveness ?? 0.5) * 100) / 100,
     cooldownX: Math.round(nudgeCooldownMultiplier(nudgeProfile) * 100) / 100,
   });
-  // HOW the check-in speaks is chosen from the local profile + the block's shape.
-  if (fire) await fireNudge(domain, minutes, distinctDomains, nudgeRegister(nudgeProfile, { distinctDomains }));
+  // HOW the check-in speaks is chosen from the local profile + the block's shape. A warm
+  // thread rides along so the notification can offer the way BACK, not just a way out.
+  if (fire) {
+    await fireNudge(domain, minutes, distinctDomains, nudgeRegister(nudgeProfile, { distinctDomains }),
+      threadIsWarm(thread, ctx.now) ? thread : null);
+  }
 
   // Welcome-back + outcome learning. nextWelcome resolves each nudge exactly once: fire=true
   // means it was HEEDED (attention returned within the window); an advance of ackedNudgeAt
@@ -434,7 +450,7 @@ async function checkNudge() {
   }
 }
 
-async function fireNudge(domain, minutes, distinctDomains = 1, register = 'curious') {
+async function fireNudge(domain, minutes, distinctDomains = 1, register = 'curious', thread = null) {
   const level = await notificationPermission();
   if (level !== 'granted') {
     // The user (or a missing API) muted us. Don't pretend we nudged — record it so the
@@ -443,7 +459,9 @@ async function fireNudge(domain, minutes, distinctDomains = 1, register = 'curio
     return;
   }
   const id = `${NUDGE_TARGET_PREFIX}${Date.now()}`;
-  await chrome.storage.session.set({ [id]: domain }); // remember where to send them on click
+  // Remember where to send them on click: the nudged domain, plus (Sutra) the warm thread —
+  // the exact tab their work lives in — so "return" means the work, not a generic dashboard.
+  await chrome.storage.session.set({ [id]: { domain, thread } });
   // Seed the rotation with the block minutes; hand the scatter count so the copy names a
   // fragmented block ("a few different places") instead of over-claiming one domain.
   const { title, message } = nudgeCopy(domain, minutes, minutes, { distinctDomains, register });
@@ -455,22 +473,48 @@ async function fireNudge(domain, minutes, distinctDomains = 1, register = 'curio
       iconUrl: chrome.runtime.getURL('icon128.png'),
       title,
       message,
-      // "Return to focus" opens the intercept flow; "Stay, on purpose" honors their choice and closes.
-      buttons: [{ title: 'Return to focus' }, { title: 'Stay, on purpose' }],
+      // With a warm thread the first button IS the way back ("Back to github.com" — one click,
+      // straight to the tab the work lives in). Without one, it opens the app's Today page.
+      // "Stay, on purpose" honors their choice and closes.
+      buttons: [{ title: thread ? `Back to ${thread.domain}` : 'Return to focus' }, { title: 'Stay, on purpose' }],
       priority: 2,
     });
-    await noteNudgeDiag({ lastFire: { at: Date.now(), domain, minutes, distinctDomains, result: 'fired' } });
+    await noteNudgeDiag({ lastFire: { at: Date.now(), domain, minutes, distinctDomains, thread: thread ? thread.domain : null, result: 'fired' } });
   } catch (e) {
     await noteNudgeDiag({ lastFire: { at: Date.now(), domain, result: 'error', error: String((e && e.message) || e) } });
   }
 }
 
-// "Return to focus" opens the app's Today page (the old /intercept flow was retired; its
-// route now just redirects there anyway). We deliberately pass nothing in the URL.
+// Sutra re-entry: focus the exact tab the thread points at. The tab is verified live at click
+// time — it must still exist and still be ON the thread's domain (tab.url is read transiently,
+// exactly like handleTab does; nothing is stored). Returns false when the thread has gone cold
+// (closed / navigated away), so callers fall back honestly instead of restoring stale context.
+async function returnToThread(thread) {
+  if (!thread || thread.tabId == null) return false;
+  let tab;
+  try { tab = await chrome.tabs.get(thread.tabId); } catch { return false; }
+  if (hostnameOf(tab.url || '') !== thread.domain) return false;
+  try {
+    await chrome.tabs.update(thread.tabId, { active: true });
+    if (tab.windowId != null) {
+      try { await chrome.windows.update(tab.windowId, { focused: true }); } catch { /* window gone */ }
+    }
+    return true;
+  } catch { return false; }
+}
+
+// Nudge click-through. With a warm thread we return the user to the exact tab their work
+// lives in (Sutra); otherwise — or when the thread went cold — open the app's Today page
+// (the old /intercept flow was retired). We deliberately pass nothing in the URL.
 async function openIntercept(notificationId) {
-  await chrome.storage.session.remove(notificationId); // drop the remembered domain
-  const base = await getBaseUrl();
-  try { await chrome.tabs.create({ url: `${base}/dashboard` }); } catch { /* ignore */ }
+  const { [notificationId]: target } = await chrome.storage.session.get(notificationId);
+  await chrome.storage.session.remove(notificationId); // drop the remembered target
+  const thread = target && typeof target === 'object' ? target.thread : null;
+  const returned = threadIsWarm(thread, Date.now()) && await returnToThread(thread);
+  if (!returned) {
+    const base = await getBaseUrl();
+    try { await chrome.tabs.create({ url: `${base}/dashboard` }); } catch { /* ignore */ }
+  }
   try { await chrome.notifications.clear(notificationId); } catch { /* ignore */ }
 }
 if (chrome.notifications) {
@@ -745,6 +789,26 @@ async function getPresence() {
   return data;
 }
 
+// Sutra: the thread the popup may offer right now, or null. Pure restraint rules live in
+// shouldOfferThread (warm only, never while already working, never on the thread tab itself);
+// on top of those we verify the tab is genuinely still there and still on the thread's domain,
+// so the popup never offers a door that no longer leads anywhere.
+async function offeredThread(active) {
+  const { [THREAD_KEY]: t } = await chrome.storage.session.get(THREAD_KEY);
+  const now = Date.now();
+  const ctx = {
+    counting: active.domain != null && active.segmentStart != null,
+    category: active.domain ? categoryFor(active.domain) : 'neutral',
+    tabId: active.tabId ?? null,
+    now,
+  };
+  if (!shouldOfferThread(t, ctx)) return null;
+  let tab;
+  try { tab = await chrome.tabs.get(t.tabId); } catch { return null; }
+  if (hostnameOf(tab.url || '') !== t.domain) return null;
+  return { domain: t.domain, line: threadLine(t, now) };
+}
+
 async function buildStatus() {
   const store = await chrome.storage.local.get(
     [QUEUE_KEY, ENV_KEY, LAST_SYNC_KEY, LAST_ERROR_KEY, PAUSED_KEY, NUDGE_DIAG_KEY],
@@ -756,6 +820,8 @@ async function buildStatus() {
   const { [WELCOME_PENDING_KEY]: welcomePending } = await chrome.storage.session.get(WELCOME_PENDING_KEY);
   return {
     welcomePending: !!welcomePending,
+    // Sutra: a warm, verified way back ({ domain, line }) — or null, which is most of the time.
+    thread: await offeredThread(active),
     // The one silent-delivery failure we can detect: the user muted this extension's Chrome
     // notifications, so nudges would render nothing. The popup says so instead of staying quiet.
     nudgesMuted: store[NUDGE_DIAG_KEY]?.permission === 'denied',
@@ -823,6 +889,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   if (msg?.type === 'GET_PRESENCE') {
     getPresence().then(sendResponse);
+    return true;
+  }
+  // Sutra: the popup's "Pick it back up" — focus the tab the thread points at. Cold threads
+  // return ok:false and the popup simply closes; we never open a stale substitute.
+  if (msg?.type === 'OPEN_THREAD') {
+    (async () => {
+      const { [THREAD_KEY]: t } = await chrome.storage.session.get(THREAD_KEY);
+      const ok = threadIsWarm(t, Date.now()) && await returnToThread(t);
+      sendResponse({ ok });
+    })();
     return true;
   }
   if (msg?.type === 'FLUSH_NOW') {

@@ -72,6 +72,20 @@ never over-claim a single domain it barely visited. Firing stays strictly determ
 5-minute block; fragmentation signals are recorded/observable but do NOT lower the threshold (keep
 it high-confidence — adaptive threshold-lowering is a deliberate future layer, not a silent one).
 
+## Sutra — the re-entry thread (2026-07-08 — locked; full rationale in docs/DECISIONS.md)
+The thread remembers WHICH TAB holds the work so a drift's end is one click from re-entry,
+not minutes of "where was I?". Invariants:
+- Thread = `{ domain, tabId, windowId, at }` in `chrome.storage.session`. NO url/title, not
+  even locally; cleared by browser restart; NEVER transmitted. Don't "improve" re-entry by
+  persisting URLs — a cold thread falls back to the dashboard, honestly.
+- Anchoring is pure (`nextThread` in core.js, ticked by the same 1-min alarm as the nudge):
+  counted non-distraction attention re-anchors; distraction/blur/idle leave it untouched.
+- Re-entry is verified LIVE at click time: the tab must exist and still be on the thread's
+  domain (`returnToThread` reads tab.url transiently, like handleTab — nothing stored).
+- Offering is restrained (`shouldOfferThread`): warm only (THREAD_TTL_MIN=60), never while
+  already working, never for the tab the user is on. The nudge's WHETHER/WHEN policy is
+  untouched — Sutra only changes where its first button LANDS ("Back to <domain>").
+
 ## Nudge reliability + observability (2026-07-02 hardening — keep all three)
 The pipeline must never fail silently. Three invariants:
 - **Alarm self-heal:** `ensureAlarm()` runs at worker top level on EVERY wake (it checks

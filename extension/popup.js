@@ -90,6 +90,16 @@ function render(s) {
   if (s && s.welcomePending) welcomed = true;
   $('welcome').style.display = welcomed ? 'block' : 'none';
 
+  // Sutra — the thread. The worker only offers it when it's warm and verified (the work tab
+  // still exists, still on that domain, and attention is currently elsewhere). One quiet line,
+  // one button: the way back costs a single click instead of a reconstruction.
+  if (s && s.thread) {
+    $('threadline').textContent = s.thread.line;
+    $('thread').style.display = 'block';
+  } else {
+    $('thread').style.display = 'none';
+  }
+
   // Keep the elapsed time fresh while a session runs; stop the ticker otherwise.
   if (tick) { clearInterval(tick); tick = null; }
   if (inSession) tick = setInterval(paintSession, 20000);
@@ -201,6 +211,13 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch {
       btn.disabled = false;
     }
+  });
+
+  $('threadbtn').addEventListener('click', async () => {
+    const btn = $('threadbtn');
+    btn.disabled = true;
+    try { await chrome.runtime.sendMessage({ type: 'OPEN_THREAD' }); } catch { /* worker asleep */ }
+    window.close(); // the work tab now has focus; the popup's job here is done
   });
 
   $('pause').addEventListener('click', async () => {

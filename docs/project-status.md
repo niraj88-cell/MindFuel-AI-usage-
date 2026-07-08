@@ -5,6 +5,42 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-08 — Sutra v1: the re-entry thread (extension 2.8.0)
+
+Strategy investigation → one defining capability: **own the moment of RETURN, not the moment
+of leaving**. Interruption research (Mark, Leroy, Parnin, Iqbal/Horvitz) converges on the same
+root cause: people keep drifting because RESUMING is expensive (minutes of "where was I?"),
+while leaving is one click. Every existing tool attacks the leaving (blockers, trackers,
+prompts); nothing lowers the ramp back. Sutra is that ramp. Full rationale:
+`docs/DECISIONS.md` "Sutra — the re-entry thread".
+
+Shipped (fully local, extension only):
+- `core.js`: pure thread state machine — `nextThread` (counted non-distraction attention
+  anchors the thread to the CURRENT TAB; drift/blur/idle leave it untouched), `threadIsWarm`
+  (60-min TTL), `shouldOfferThread` (restraint: warm only, never while already working, never
+  on the thread tab itself), `threadLine` (ledger register).
+- **Privacy is structural**: the thread is `{ domain, tabId, windowId, at }` — a bare domain
+  plus Chrome's own integer ids. NO url, no title, not even locally; session-scoped (browser
+  restart clears it); never transmitted. Re-entry verifies the tab live at click time (still
+  exists AND still on the thread's domain) or falls back honestly.
+- `background.js`: active state carries tabId/windowId; the 1-min nudge alarm also ticks the
+  thread; the nudge's first button becomes **"Back to github.com"** and the click focuses the
+  exact work tab (dashboard only as fallback); `nudge_diag` gains a `thread` field.
+- Popup: quiet thread card — "Your thread: github.com · 14 min ago" + "Pick it back up"
+  (OPEN_THREAD message → focus the tab, popup closes). Shown only when warm + verified +
+  attention is elsewhere.
+- Tests: 57/57 (`node --test`) — 4 new unit tests for the pure rules, 4 new integration
+  tests through the real worker (nudge→click→tab focus; closed tab fallback; navigated-away
+  tab never restored; popup offer/deny + OPEN_THREAD), plus the no-thread click-through
+  updated for the new target shape `{ domain, thread }`.
+
+NOT yet built (deliberate, phased): resumption-latency as a reflection line (the server can
+already derive it from domain_logs — zero new transmission), precursor-gated pinning, circle
+"returned" events. Founder verify: load-unpacked → work on a real tab ≥1 min → drift 5 min on
+YouTube → the nudge should read "Back to <domain>" and the click should land on the work tab.
+
+---
+
 ## 2026-07-08 — Full production-readiness audit (verification only, no code changes)
 
 Independent end-to-end audit against live prod + DB. Evidence: extension tests 49/49,

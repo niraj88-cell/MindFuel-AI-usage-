@@ -4,6 +4,32 @@ Newest first. Each entry is a decision that should not be silently reversed. For
 change log see `docs/project-status.md`; for the full security reference see
 `docs/security-review-2026-07-02.md`.
 
+## Sutra — the re-entry thread (2026-07-08)
+
+**The defining-capability bet: SatyaShift owns the moment of RETURN.** Root cause (interruption
+research: Mark, Leroy, Parnin & Rugaber, Iqbal & Horvitz): people keep drifting not because the
+distraction is attractive but because RESUMING is expensive — leaving is one click, returning is
+minutes of reconstruction. Every competitor attacks the leaving (blockers, prompts, analytics);
+Sutra lowers the ramp back. It builds ON the existing drift detection and nudge — never replaces
+them. The moat is the pairing nobody else has: shape-aware knowledge of WHEN attention truly left
++ the trust earned by domain-only privacy. Rules that must hold:
+
+- **The thread stores `{ domain, tabId, windowId, at }` and nothing more.** A bare domain plus
+  Chrome's integer ids. NO url, no title — not even in local storage (the extension invariant
+  "never store full URLs" stands). Re-entry works by focusing the still-open tab, verified live
+  at click time (tab exists AND still on the thread's domain); anything else is a cold thread
+  and falls back to the dashboard. Never "fix" a cold thread by storing the URL.
+- **Session-scoped, never transmitted.** `chrome.storage.session`; a browser restart clears it
+  (by then the context is stale anyway). No server call, no sync, no squad visibility.
+- **The thread anchors only to counted, non-distraction attention**, and a drift/blur/idle
+  leaves it untouched — persistence THROUGH the drift is the entire feature.
+- **Restraint is the UX.** Offer only a warm thread (60-min TTL), never while the user is
+  already working, never for the tab they're standing on. The nudge policy (thresholds,
+  cooldown, registers) is completely unchanged — Sutra only changes where "return" LANDS.
+- Phasing: v1 = capture + nudge button + popup card (shipped, extension 2.8.0). v2 candidates,
+  each a deliberate decision: resumption-latency reflection line (derive server-side from
+  domain_logs — zero new transmission), precursor-gated pinning, circle "returned" events.
+
 ## Launch readiness — the four gates (2026-07-07)
 
 Durable strategic decisions from the pre-launch review (full record: `docs/project-status.md`

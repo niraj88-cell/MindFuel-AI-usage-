@@ -352,6 +352,62 @@ export function nextWelcome(prev, ctx, cfg = {}) {
   return { state: { ackedNudgeAt: acked }, fire: false };
 }
 
+// ---------------------------------------------------------------------------
+// Sutra — the thread (re-entry layer). सूत्र / thread.
+//
+// Interruption research says the real cost of a drift isn't the minutes away — it's the
+// re-entry: leaving is one click, returning is minutes of "where was I?". Every tool attacks
+// the leaving; Sutra attacks the return. While attention sits on non-distraction ground, we
+// remember WHICH TAB holds the work — the thread. When a drift ends (via the nudge or the
+// popup), we hand the thread back: one click, straight to the tab you left.
+//
+// Privacy is structural, same as everything else here: the thread is
+// { domain, tabId, windowId, at } — a bare domain plus Chrome's own integer ids. NO URL, no
+// title, not even locally. Re-entry works by focusing the still-open tab; if the tab is gone
+// or navigated elsewhere, the thread is cold and we fall back to the dashboard. The thread
+// lives in chrome.storage.session (a browser restart clears it — by then it's stale anyway)
+// and is NEVER transmitted.
+// ---------------------------------------------------------------------------
+export const THREAD_TTL_MIN = 60; // older than this, the context is cold — don't offer it
+
+// Pure, ticked by the same 1-minute alarm as nextNudge.
+//   prev: { domain, tabId, windowId, at } | null
+//   ctx:  { counting, category, domain, tabId, windowId, now }
+// Attention on a counted, non-distraction domain re-anchors the thread there; anything else
+// (a drift, a blur, idle, a new tab) leaves the thread untouched — it persists THROUGH the
+// drift, which is the whole point.
+export function nextThread(prev, ctx) {
+  if (ctx.counting && ctx.domain && ctx.category !== 'distraction' && ctx.tabId != null) {
+    return { domain: ctx.domain, tabId: ctx.tabId, windowId: ctx.windowId ?? null, at: ctx.now };
+  }
+  return prev || null;
+}
+
+export function threadIsWarm(thread, now, ttlMin = THREAD_TTL_MIN) {
+  return !!(thread && thread.at && now - thread.at <= ttlMin * 60_000);
+}
+
+// Whether the popup should offer the thread right now. Restraint rules:
+//   - only a warm thread (a cold offer would restore stale context — worse than nothing)
+//   - never while attention is already counted on non-distraction ground (they're working;
+//     the thread will re-anchor to wherever they are within a minute anyway)
+//   - never when they're already ON the thread tab (offering a door they're standing in)
+// ctx: { counting, category, tabId, now }
+export function shouldOfferThread(thread, ctx) {
+  if (!threadIsWarm(thread, ctx.now)) return false;
+  if (ctx.counting && ctx.category !== 'distraction') return false;
+  if (ctx.tabId != null && ctx.tabId === thread.tabId) return false;
+  return true;
+}
+
+// The quiet ledger line for the popup: "Your thread: github.com · 14 min ago".
+// Same register as the rest of the product — a statement of what's true, no push.
+export function threadLine(thread, now) {
+  const m = Math.max(0, Math.floor((now - thread.at) / 60_000));
+  const ago = m < 1 ? 'moments ago' : m < 60 ? `${m} min ago` : `${Math.floor(m / 60)}h ${m % 60}m ago`;
+  return `Your thread: ${thread.domain} · ${ago}`;
+}
+
 // expires_at is unix SECONDS. True if the token is missing or within `skewS` of expiry,
 // so we refresh proactively instead of waiting for a 401 (H3).
 export function tokenExpiresSoon(session, skewS = 60, now = Date.now()) {
