@@ -43,7 +43,7 @@ export function WaitlistForm() {
           <Check className="h-4 w-4" />
           <span className="text-sm font-semibold">You&rsquo;re on the list.</span>
         </div>
-        <p className="mt-1 text-[13px] text-green">We&rsquo;ll email you once, when it&rsquo;s ready. Nothing else.</p>
+        <p className="mt-1 text-[13px] text-green">We&rsquo;ll email you your invite. Nothing else.</p>
       </div>
     )
   }
@@ -78,7 +78,7 @@ export function WaitlistForm() {
         {status === 'submitting' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
         Notify me
       </button>
-      <p className="mt-3 text-center text-xs text-ghost">We&rsquo;ll email you once, when it&rsquo;s ready. Nothing else.</p>
+      <p className="mt-3 text-center text-xs text-ghost">We&rsquo;ll email you your invite. Nothing else.</p>
     </form>
   )
 }

@@ -96,8 +96,8 @@ export default function LandingPage() {
           .
         </p>
 
-        {/* Pricing on the front door — the price is part of the honesty. */}
-        <div className="mt-10 rounded-xl border border-line bg-card p-5">
+        {/* Pricing hidden during invite-only soft launch (remove `hidden` to restore). */}
+        <div className="mt-10 hidden rounded-xl border border-line bg-card p-5">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Pricing</span>
             <span className="rounded-full bg-green px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-wide text-white">
