@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { SatyaMark } from '@/components/brand/SatyaMark'
 import { VerifiedMark } from '@/components/brand/VerifiedMark'
 import { SiteFooter } from '@/components/site/SiteFooter'
+import { WaitlistForm } from '@/components/landing/WaitlistForm'
 import { PLANS, TRIAL_DAYS } from '@/lib/subscription'
 
 // Price on the front door, derived from the same constants the app bills from —
@@ -81,26 +82,16 @@ export default function LandingPage() {
           .
         </p>
 
-        {/* Straight to the product — no email gate. The demo is the trust argument:
-            show a whole session (and its complete record) before asking for anything. */}
-        <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-          <Link
-            href="/signup"
-            className="flex items-center justify-center gap-2 rounded-lg bg-green px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-green-deep"
-          >
-            Start focusing
-          </Link>
-          <Link
-            href="/demo"
-            className="flex items-center justify-center gap-2 rounded-lg border border-line bg-card px-6 py-3.5 text-sm font-semibold text-ink transition-colors hover:bg-green-wash"
-          >
+        {/* Soft-launch (TEMPORARY): access is invite-only, so instead of pushing signup
+            we collect interest — an email and, if they want, a thought. The signup CTA and
+            the "Sign in" link are intentionally removed while signups are paused in Supabase;
+            /login still exists (unlinked) for early accounts. To reopen, revert this block to
+            the signup/demo CTAs. */}
+        <WaitlistForm />
+        <p className="mt-4 text-[13px] text-faint">
+          Curious first?{' '}
+          <Link href="/demo" className="font-medium text-ink underline decoration-line underline-offset-4 transition-colors hover:decoration-ink">
             See it working &mdash; no account
-          </Link>
-        </div>
-        <p className="mt-3 text-[13px] text-faint">
-          Already here?{' '}
-          <Link href="/login" className="font-medium text-ink underline decoration-line underline-offset-4 transition-colors hover:decoration-ink">
-            Sign in
           </Link>
           .
         </p>
