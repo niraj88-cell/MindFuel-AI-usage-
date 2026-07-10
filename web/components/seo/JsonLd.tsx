@@ -1,7 +1,7 @@
 import { PLANS } from '@/lib/subscription'
 
 export function JsonLd() {
-  const baseUrl = 'https://satyashift.vercel.app'
+  const baseUrl = 'https://satyashift.com'
 
   const structuredData = {
     '@context': 'https://schema.org',

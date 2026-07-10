@@ -5,6 +5,34 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-10 — satyashift.com is canonical (domain cutover, ext 2.9.3)
+
+The custom domain **satyashift.com** (bought 2026-07-09, already aliased to the Vercel
+project) is now the canonical address everywhere; satyashift.vercel.app remains a live
+alias and a TRUSTED legacy origin — nothing breaks for anyone signed in there.
+
+- **Extension 2.9.3** (the risky half — sign-in handoff from satyashift.com was silently
+  impossible before this): `manifest.json` adds `https://satyashift.com/*` to
+  host_permissions AND the bridge content-script matches (vercel.app kept);
+  `background.js` PRODUCTION_URL → satyashift.com with a new LEGACY_PRODUCTION_URL kept in
+  TRUSTED_MESSAGE_ORIGINS (bridge accepts both) and fetchCookieSession unions cookies from
+  BOTH prod origins; `core.js` OWN_DOMAINS adds satyashift.com (+ test). welcome.html CTA →
+  satyashift.com. background.test.js dashboard-open expectations updated. 62/62 green.
+  NOTE for the user's load-unpacked copy: a HOST-PERMISSION change — Chrome may require
+  re-accepting the extension after reload.
+- **Web**: layout.tsx metadataBase/canonical/OG, JsonLd, sitemap.ts, robots.ts,
+  opengraph-image text, /week canvas footer, terms copy, forgot-password fallback origin —
+  all → satyashift.com. `NEXT_PUBLIC_APP_URL` prod env was set-but-EMPTY (fallback always
+  won); re-set to https://satyashift.com.
+- **Docs**: STORE_LISTING.md + webstore-submission.md (privacy-policy URL, permission
+  justifications) → satyashift.com; CLAUDE.md deploy line updated. Historical log entries
+  left untouched (append-only).
+- **FOUNDER TODO (cannot be done from the harness): Supabase Auth → URL configuration —
+  add `https://satyashift.com/**` to the redirect allowlist (and consider making it the
+  Site URL). Until then Google OAuth + password-reset emails initiated FROM satyashift.com
+  may bounce to the old domain or fail.** Email/password login works regardless.
+- Verified: tsc + next build clean, web tests 10/10, ext 62/62, zip repackaged (2.9.3).
+
 ## 2026-07-10 — Product-design audit, implemented (comprehension pass, evolution not redesign)
 
 Ran a full first-time-comprehension audit (landing, app, extension) → `scratchpad` artifact,

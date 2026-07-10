@@ -60,7 +60,7 @@ stay yours. Export or delete everything anytime from Settings.
 
 सत्य · truth. The honest record of your focus.
 
-Privacy policy: https://satyashift.vercel.app/privacy
+Privacy policy: https://satyashift.com/privacy
 ```
 
 - **Category:** Productivity → Workflow & Planning
@@ -84,8 +84,8 @@ Privacy policy: https://satyashift.vercel.app/privacy
   - `alarms` — A 1-minute alarm drives the attention timer, sync flushes, and the nudge policy while the service worker sleeps.
   - `idle` — To stop counting time when the user is away or the screen is locked, so focus time is honest.
   - `notifications` — One gentle nudge notification after sustained time on a distracting site; also used for session-end confirmation.
-  - `cookies` — Reads the user's own auth session cookie for satyashift.vercel.app so the extension signs in with the account already logged in; no other cookies are accessed.
-  - **Host permission `https://satyashift.vercel.app/*`** — Sending the user's own domain-duration batches to their account on our server, and a small bridge script on our own site for sign-in handoff. No other sites are accessed.
+  - `cookies` — Reads the user's own auth session cookie for satyashift.com so the extension signs in with the account already logged in; no other cookies are accessed.
+  - **Host permission `https://satyashift.com/*`** — Sending the user's own domain-duration batches to their account on our server, and a small bridge script on our own site for sign-in handoff. No other sites are accessed.
   - `remote code` — select **No, I am not using remote code** (all code ships in the package).
 
 - **Data usage disclosures** (tick exactly these):
@@ -95,7 +95,7 @@ Privacy policy: https://satyashift.vercel.app/privacy
   - Everything else: not collected.
   - Certify all three statements (no sale, no unrelated use, no creditworthiness use). All true.
 
-- **Privacy policy URL:** `https://satyashift.vercel.app/privacy` (live, public).
+- **Privacy policy URL:** `https://satyashift.com/privacy` (live, public).
 
 ## Step 5 — Distribution tab
 

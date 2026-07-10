@@ -88,7 +88,8 @@ test('isSensitive: precise suffixes, no false drops (riverbank, menshealth)', ()
 });
 
 test('isOwnApp: never times our own dashboard', () => {
-  assert.equal(isOwnApp('satyashift.vercel.app'), true);
+  assert.equal(isOwnApp('satyashift.com'), true);           // canonical domain
+  assert.equal(isOwnApp('satyashift.vercel.app'), true);    // legacy production origin
   assert.equal(isOwnApp('localhost'), true);
   assert.equal(isOwnApp('github.com'), false);
 });

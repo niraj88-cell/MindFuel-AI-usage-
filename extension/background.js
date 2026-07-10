@@ -25,7 +25,10 @@ import {
   emptyDomainPrefs, recordStay, pendingWorkOffer, resolveWorkOffer,
 } from './core.js';
 
-const PRODUCTION_URL = 'https://satyashift.vercel.app';
+const PRODUCTION_URL = 'https://satyashift.com';
+// The pre-domain production origin. Still trusted (bridge + cookies) so a user signed in
+// there keeps verifying without re-auth; the canonical origin above is what we open and POST to.
+const LEGACY_PRODUCTION_URL = 'https://satyashift.vercel.app';
 const DEV_URL = 'http://localhost:3000';
 
 const FLUSH_MINUTES = 5;
@@ -247,11 +250,13 @@ chrome.idle.onStateChanged.addListener((state) => {
 // sibling cookies.
 async function fetchCookieSession() {
   const baseUrl = await getBaseUrl();
-  const domain = new URL(baseUrl).hostname;
-  const lists = await Promise.all([
-    chrome.cookies.getAll({ url: baseUrl }).catch(() => []),
-    chrome.cookies.getAll({ domain }).catch(() => []),
-  ]);
+  // In production, check the legacy origin too: a session signed in at the old
+  // satyashift.vercel.app address is just as much ours as one at satyashift.com.
+  const urls = baseUrl === PRODUCTION_URL ? [PRODUCTION_URL, LEGACY_PRODUCTION_URL] : [baseUrl];
+  const lists = (await Promise.all(urls.flatMap((u) => [
+    chrome.cookies.getAll({ url: u }).catch(() => []),
+    chrome.cookies.getAll({ domain: new URL(u).hostname }).catch(() => []),
+  ])));
   const byName = new Map();
   for (const list of lists) for (const c of list) byName.set(c.name, c);
   const raw = selectAuthCookie([...byName.values()], PROJECT_REF);
@@ -870,8 +875,9 @@ async function buildStatus() {
   };
 }
 
-// Origins allowed to hand us a session via SESSION_FROM_PAGE. Only our own app.
-const TRUSTED_MESSAGE_ORIGINS = new Set([PRODUCTION_URL, DEV_URL]);
+// Origins allowed to hand us a session via SESSION_FROM_PAGE. Only our own app
+// (both production addresses during the domain transition).
+const TRUSTED_MESSAGE_ORIGINS = new Set([PRODUCTION_URL, LEGACY_PRODUCTION_URL, DEV_URL]);
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   // Defense in depth: onMessage (unlike onMessageExternal) is only reachable by this

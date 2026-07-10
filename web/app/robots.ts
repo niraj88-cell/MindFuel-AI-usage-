@@ -17,6 +17,6 @@ export default function robots(): MetadataRoute.Robots {
         '/auth/',
       ],
     },
-    sitemap: 'https://satyashift.vercel.app/sitemap.xml',
+    sitemap: 'https://satyashift.com/sitemap.xml',
   }
 }

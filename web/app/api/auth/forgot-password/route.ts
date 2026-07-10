@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createClient()
 
-    const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://satyashift.vercel.app'
+    const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://satyashift.com'
 
     // Supabase sends the password reset email. The link lands on our callback,
     // which exchanges the code for a session server-side, then forwards to the

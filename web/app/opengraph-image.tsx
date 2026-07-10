@@ -73,7 +73,7 @@ export default function OpengraphImage() {
             width: '100%',
           }}
         >
-          <div style={{ display: 'flex' }}>satyashift.vercel.app</div>
+          <div style={{ display: 'flex' }}>satyashift.com</div>
           <div style={{ display: 'flex', color: '#2D6A3F' }}>See it working — no account needed</div>
         </div>
       </div>

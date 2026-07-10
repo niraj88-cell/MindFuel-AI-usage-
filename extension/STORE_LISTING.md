@@ -40,7 +40,7 @@ WHAT IT NEVER DOES
 • Never tracks which video, post, or document you're on — only the site
 • Never blocks anything. You stay in charge.
 
-SatyaShift works with your account at satyashift.vercel.app, where your week
+SatyaShift works with your account at satyashift.com, where your week
 of attention is reflected back to you in plain words: how your focus held,
 where it drifted, and how you found your way back. Your data is yours: only
 you can see your sites, and you can export or delete everything at any time.
@@ -49,7 +49,7 @@ Built for developers, students, and anyone who does their real work in a
 browser and wants an honest picture of it — without being spied on to get it.
 ```
 
-**Privacy policy URL:** https://satyashift.vercel.app/privacy
+**Privacy policy URL:** https://satyashift.com/privacy
 
 ---
 
@@ -59,7 +59,7 @@ browser and wants an honest picture of it — without being spied on to get it.
   per site. The extension reads the tab's address only to extract the bare domain
   (e.g. "github.com"); the full address, page title, and content are never stored or
   transmitted.
-- **cookies** — Used only to read the sign-in session for satyashift.vercel.app (the
+- **cookies** — Used only to read the sign-in session for satyashift.com (the
   extension's own companion app), so your focus time syncs to your own account. Host
   access is limited to that one site; the extension cannot read cookies from any
   other website.
@@ -73,7 +73,7 @@ browser and wants an honest picture of it — without being spied on to get it.
   you're gone.
 - **notifications** — Shows the one gentle check-in when attention has drifted for
   several minutes. Nothing else is ever shown.
-- **Host permission (satyashift.vercel.app)** — The extension's only network peer:
+- **Host permission (satyashift.com)** — The extension's only network peer:
   it syncs your per-domain time to your account and connects your sign-in. It talks
   to no other site.
 
@@ -95,7 +95,7 @@ attention drifts.
 
 - Screenshots, 1280×800 PNG, at least one, ideally three:
   1. The popup during a running session (calm state, timer visible)
-  2. The session reflection page on satyashift.vercel.app (the payoff)
+  2. The session reflection page on satyashift.com (the payoff)
   3. /week — "A week of attention" (the shareable proof)
 - Small promo tile 440×280 (optional but helps): ink tile + bindu + "Proof you did
   the work." on paper background.

@@ -14,7 +14,7 @@ const SECTIONS: TrustSection[] = [
   {
     heading: '1. Who we are',
     body: [
-      'SatyaShift ("SatyaShift", "we", "us") is an independent software product operated by its founder as a sole proprietorship. It consists of a browser extension and a web application at satyashift.vercel.app that together help you maintain deep work through verified focus sessions and gentle accountability.',
+      'SatyaShift ("SatyaShift", "we", "us") is an independent software product operated by its founder as a sole proprietorship. It consists of a browser extension and a web application at satyashift.com that together help you maintain deep work through verified focus sessions and gentle accountability.',
       'By creating an account or using SatyaShift you agree to these terms. If you do not agree, please do not use the service.',
     ],
   },

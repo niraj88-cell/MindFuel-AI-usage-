@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SatyaShift — Verified Focus",
-  "version": "2.9.2",
+  "version": "2.9.3",
   "description": "Proof you did the work. Counts time per site — only the domain, never the page — and gently checks in when attention drifts.",
   "permissions": [
     "storage",
@@ -13,6 +13,7 @@
   ],
   "host_permissions": [
     "http://localhost:3000/*",
+    "https://satyashift.com/*",
     "https://satyashift.vercel.app/*"
   ],
   "background": {
@@ -22,6 +23,7 @@
   "content_scripts": [
     {
       "matches": [
+        "https://satyashift.com/*",
         "https://satyashift.vercel.app/*",
         "http://localhost:3000/*"
       ],

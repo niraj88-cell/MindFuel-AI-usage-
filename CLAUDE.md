@@ -2,7 +2,7 @@
 
 SatyaShift is a privacy-first accountability platform. The Chrome extension
 (`extension/`) IS the product: a passive, domain-only attention tracker. The web app
-(`web/`, Next.js + Supabase, deployed to satyashift.vercel.app) supports it: deep-session
+(`web/`, Next.js + Supabase, deployed to satyashift.com (canonical; satyashift.vercel.app still aliases)) supports it: deep-session
 verification, squads, insights.
 
 Principles: effortless deep work · quiet accountability · privacy by design (bare domains

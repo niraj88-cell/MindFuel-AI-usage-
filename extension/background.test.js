@@ -428,7 +428,7 @@ test('clicking the nudge with no thread opens the dashboard and clears the store
 
   await env.chrome.notifications.onClicked.emit(id);
   await settle();
-  assert.deepEqual(env.openedTabs, ['https://satyashift.vercel.app/dashboard']);
+  assert.deepEqual(env.openedTabs, ['https://satyashift.com/dashboard']);
   assert.equal(await getSessionValue(env, id), undefined, 'target cleaned up');
 });
 
@@ -481,7 +481,7 @@ test('sutra: a closed work tab means a cold thread — the click falls back to t
   await env.chrome.notifications.onButtonClicked.emit(id, 0);
   await settle();
   assert.deepEqual(env.focusedTabs, [], 'never "returns" to a tab that no longer exists');
-  assert.deepEqual(env.openedTabs, ['https://satyashift.vercel.app/dashboard'], 'honest fallback');
+  assert.deepEqual(env.openedTabs, ['https://satyashift.com/dashboard'], 'honest fallback');
 });
 
 test('sutra: a work tab that navigated to another domain is not offered as the way back', async () => {
@@ -494,7 +494,7 @@ test('sutra: a work tab that navigated to another domain is not offered as the w
   await env.chrome.notifications.onButtonClicked.emit(id, 0);
   await settle();
   assert.deepEqual(env.focusedTabs, [], 'domain re-verified at click time — stale context never restored');
-  assert.deepEqual(env.openedTabs, ['https://satyashift.vercel.app/dashboard']);
+  assert.deepEqual(env.openedTabs, ['https://satyashift.com/dashboard']);
 });
 
 test('domain correction: two deliberate stays → one popup question → "It\'s work" ends the nudging', async () => {

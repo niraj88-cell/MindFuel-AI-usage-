@@ -178,7 +178,7 @@ export default function WeekPage() {
       ctx.fill()
       ctx.fillStyle = C.faint
       ctx.font = `400 24px ${sans}`
-      ctx.fillText('Verified focus · domains only, never content · satyashift.vercel.app', M + 28, S - M + 2)
+      ctx.fillText('Verified focus · domains only, never content · satyashift.com', M + 28, S - M + 2)
 
       const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
       if (!blob) return

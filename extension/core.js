@@ -48,7 +48,7 @@ export function isSensitive(host) {
   return !!host && SENSITIVE_DOMAINS.some((d) => matchesDomain(host, d));
 }
 
-const OWN_DOMAINS = ['satyashift.vercel.app', 'localhost'];
+const OWN_DOMAINS = ['satyashift.com', 'satyashift.vercel.app', 'localhost'];
 export function isOwnApp(host) {
   return !!host && OWN_DOMAINS.some((d) => matchesDomain(host, d));
 }

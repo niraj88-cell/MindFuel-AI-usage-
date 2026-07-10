@@ -28,7 +28,7 @@ const plexMono = IBM_Plex_Mono({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://satyashift.vercel.app'),
+  metadataBase: new URL('https://satyashift.com'),
   title: 'SatyaShift — Proof you did the work',
   description:
     'SatyaShift verifies your focus sessions in the background — no self-reporting, no manual logging. Your domains stay private to you; your circle sees only verified focus.',
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   creator: 'SatyaShift',
   publisher: 'SatyaShift',
   alternates: {
-    canonical: 'https://satyashift.vercel.app',
+    canonical: 'https://satyashift.com',
   },
   // og:image / twitter:image come from the app/opengraph-image.tsx file convention —
   // one generated card, one strapline, nothing static to drift out of date.
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
       'Verified focus, not self-reported. Sessions are confirmed in the background, your domains stay private, and your circle sees only that you showed up.',
     type: 'website',
     siteName: 'SatyaShift',
-    url: 'https://satyashift.vercel.app',
+    url: 'https://satyashift.com',
   },
   twitter: {
     card: 'summary_large_image',
