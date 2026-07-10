@@ -26,6 +26,15 @@ export function SiteFooter() {
               {l.label}
             </Link>
           ))}
+          {/* Soft-launch member entrance: sign-up is hidden on the front door, so an invited
+              early user who didn't bookmark /login still has one quiet way back in. Slightly
+              emphasized (ink, not green — nav is never green). Remove at public launch. */}
+          <Link
+            href="/login"
+            className="text-[13px] font-medium text-ink transition-colors hover:text-soft"
+          >
+            Sign in
+          </Link>
         </nav>
         <p className="mt-4 text-xs leading-relaxed text-faint">
           SatyaShift · सत्य · truth — proof you did the work.{' '}

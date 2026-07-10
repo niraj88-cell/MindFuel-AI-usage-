@@ -41,6 +41,9 @@ export default function SettingsPage() {
   const [exporting, setExporting] = useState<'json' | 'csv' | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [confirmText, setConfirmText] = useState('')
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [managing, setManaging] = useState(false)
   const [manageError, setManageError] = useState<string | null>(null)
 
@@ -137,18 +140,33 @@ export default function SettingsPage() {
     window.location.href = '/login'
   }
 
+  function closeDelete() {
+    if (deleting) return
+    setDeleteOpen(false)
+    setConfirmText('')
+    setDeleteError(null)
+  }
+
   async function handleDelete() {
-    if (!window.confirm('This permanently deletes your SatyaShift account and data. Continue?')) return
-    setDeleting(true)
+    setDeleting(true); setDeleteError(null)
     try {
       const res = await fetch('/api/export/delete', { method: 'DELETE' })
       if (!res.ok) throw new Error('Could not delete account')
       window.location.href = '/login'
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : 'Could not delete account')
+      setDeleteError(err instanceof Error ? err.message : 'Could not delete account. Please try again.')
       setDeleting(false)
     }
   }
+
+  // Escape closes the delete dialog, unless a deletion is already in flight.
+  useEffect(() => {
+    if (!deleteOpen) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeDelete() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deleteOpen, deleting])
 
   if (loading) {
     return (
@@ -165,7 +183,7 @@ export default function SettingsPage() {
     <div className="mx-auto max-w-2xl space-y-6 py-2">
       {/* Identity */}
       <div className="flex items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-ink text-lg font-semibold text-white">{initials}</div>
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-card text-lg font-semibold text-ink ring-1 ring-line">{initials}</div>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-xl font-semibold tracking-tight text-ink">{data?.fullName}</h1>
           <p className="flex items-center gap-1.5 text-sm text-faint"><Mail className="h-3.5 w-3.5" /> {data?.email}</p>
@@ -298,17 +316,70 @@ export default function SettingsPage() {
           <PushNotificationManager />
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
-          <Link href="/forgot-password" className="flex h-11 items-center justify-center gap-2 rounded-lg border border-line bg-paper text-sm font-semibold text-ink transition-colors hover:bg-green-wash">
-            <Lock className="h-4 w-4" /> Change password
+          <Link href="/forgot-password" className="focus-ring press flex h-11 items-center justify-center gap-2 rounded-lg border border-line bg-paper text-sm font-semibold text-ink transition-colors hover:bg-green-wash">
+            <Lock className="h-4 w-4" /> Reset password by email
           </Link>
-          <button onClick={handleSignOut} disabled={signingOut} className="flex h-11 items-center justify-center gap-2 rounded-lg border border-line bg-paper text-sm font-semibold text-ink transition-colors hover:bg-green-wash disabled:opacity-60">
+          <button onClick={handleSignOut} disabled={signingOut} className="focus-ring press flex h-11 items-center justify-center gap-2 rounded-lg border border-line bg-paper text-sm font-semibold text-ink transition-colors hover:bg-green-wash disabled:opacity-60">
             {signingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />} Sign out
           </button>
         </div>
-        <button onClick={handleDelete} disabled={deleting} className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-rust-tint text-sm font-semibold text-rust transition-colors hover:bg-rust hover:text-white disabled:opacity-60">
-          {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Delete account
+        <button onClick={() => setDeleteOpen(true)} className="focus-ring press mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-rust-tint text-sm font-semibold text-rust transition-colors hover:bg-rust hover:text-white">
+          <Trash2 className="h-4 w-4" /> Delete account
         </button>
       </section>
+
+      {/* Delete confirmation — the product's most irreversible action, kept in the product's
+          own voice instead of the browser's grey box. Type-to-confirm guards against a stray
+          click; the dark scrim + border give depth without a shadow (design rule). */}
+      {deleteOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-title"
+        >
+          <button className="absolute inset-0 bg-ink/40" aria-label="Cancel" onClick={closeDelete} />
+          <div className="relative w-full max-w-md rounded-xl border border-line bg-card p-6">
+            <h2 id="delete-title" className="font-serif text-[1.4rem] leading-tight tracking-[-0.01em] text-ink">
+              Delete your account?
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-soft">
+              This permanently removes your account, every focus session, and all of your data.
+              It can&rsquo;t be undone, and we keep no backup to restore it from.
+            </p>
+            <label htmlFor="confirm-delete" className="mt-4 block text-xs font-medium text-faint">
+              Type <span className="font-mono font-semibold text-ink">DELETE</span> to confirm
+            </label>
+            <input
+              id="confirm-delete"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              autoFocus
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="DELETE"
+              className="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 font-mono text-sm uppercase tracking-widest text-ink outline-none transition-colors placeholder:tracking-normal placeholder:text-ghost focus:border-rust"
+            />
+            {deleteError && <p className="mt-3 text-sm font-medium text-rust">{deleteError}</p>}
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={closeDelete}
+                disabled={deleting}
+                className="focus-ring press h-11 flex-1 rounded-lg border border-line bg-paper text-sm font-semibold text-ink transition-colors hover:bg-green-wash disabled:opacity-60"
+              >
+                Keep my account
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting || confirmText.trim().toUpperCase() !== 'DELETE'}
+                className="focus-ring press flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-rust text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+              >
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Delete forever
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

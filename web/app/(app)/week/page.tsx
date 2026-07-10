@@ -15,7 +15,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { format, subDays } from 'date-fns'
-import { ChevronLeft, Download, Loader2 } from 'lucide-react'
+import { ChevronLeft, Download, Share2, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { buildWeek, humanDurationS, type WeekSessionRow, type WeekSummary } from '@/lib/week'
 import { weeklyInsight } from '@/lib/intelligence/insights'
@@ -39,6 +39,7 @@ export default function WeekPage() {
   const [week, setWeek] = useState<WeekSummary | null>(null)
   const [insightText, setInsightText] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [canShare, setCanShare] = useState(false)
   // Read the real (hashed) next/font family names off rendered elements, so the canvas
   // draws with the same three typefaces the page does.
   const serifRef = useRef<HTMLHeadingElement>(null)
@@ -74,6 +75,11 @@ export default function WeekPage() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  // The OS share sheet is a mobile affordance; detect it once for the button's label + icon.
+  useEffect(() => {
+    setCanShare(typeof navigator !== 'undefined' && typeof navigator.canShare === 'function')
+  }, [])
 
   // Draw the artifact: 1080×1080, same ledger, nothing that isn't on the page.
   async function saveImage() {
@@ -176,10 +182,26 @@ export default function WeekPage() {
 
       const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
       if (!blob) return
+      const filename = `satyashift-week-${format(new Date(), 'yyyy-MM-dd')}.png`
+
+      // On a phone, "save it, then go find it in Files" loses most people — and this artifact
+      // was built to be shown. Where the OS share sheet can take a file, offer it; a cancelled
+      // sheet just returns quietly. Everywhere else (and if a share fails for a real reason),
+      // fall back to the normal download.
+      const file = new File([blob], filename, { type: 'image/png' })
+      if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: 'A week of attention' })
+          return
+        } catch (err) {
+          if ((err as Error)?.name === 'AbortError') return // user closed the sheet — do nothing
+          // otherwise fall through to a download
+        }
+      }
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `satyashift-week-${format(new Date(), 'yyyy-MM-dd')}.png`
+      a.download = filename
       a.click()
       URL.revokeObjectURL(url)
     } finally {
@@ -277,10 +299,10 @@ export default function WeekPage() {
           <button
             onClick={saveImage}
             disabled={saving}
-            className="mt-7 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white transition-colors hover:bg-green-deep disabled:opacity-60"
+            className="focus-ring press mt-7 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white transition-colors hover:bg-green-deep disabled:opacity-60"
           >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            Save as image
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : canShare ? <Share2 className="h-4 w-4" /> : <Download className="h-4 w-4" />}
+            {canShare ? 'Share this week' : 'Save as image'}
           </button>
           <p className="mt-2.5 text-center text-xs text-faint">
             No sites, no scores. Nothing here you couldn&rsquo;t show anyone.

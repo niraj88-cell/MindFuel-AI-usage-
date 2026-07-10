@@ -73,7 +73,7 @@ export function WaitlistForm() {
       <button
         type="submit"
         disabled={status === 'submitting'}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-ink py-3.5 text-sm font-semibold text-paper transition-colors hover:bg-ink-hover disabled:opacity-60"
+        className="focus-ring press mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-ink py-3.5 text-sm font-semibold text-paper transition-colors hover:bg-ink-hover disabled:opacity-60"
       >
         {status === 'submitting' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
         Notify me

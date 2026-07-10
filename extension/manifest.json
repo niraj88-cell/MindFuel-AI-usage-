@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SatyaShift — Verified Focus",
-  "version": "2.9.1",
+  "version": "2.9.2",
   "description": "Proof you did the work. Counts time per site — only the domain, never the page — and gently checks in when attention drifts.",
   "permissions": [
     "storage",

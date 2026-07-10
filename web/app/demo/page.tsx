@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { ChevronLeft, Lock, EyeOff, Users, X } from 'lucide-react'
 import { VerifiedMark } from '@/components/brand/VerifiedMark'
 import { SiteFooter } from '@/components/site/SiteFooter'
+import { human as humanDuration, clock } from '@/lib/duration'
 import {
   analyzeSession, qualityOf, reflectionFor, type AttentionEvent,
 } from '@/lib/behavior'
@@ -41,20 +42,6 @@ const SAMPLE: AttentionEvent[] = [
   { domain: 'youtube.com', category: 'distraction', duration_s: 5 * 60 },
   { domain: 'docs.google.com', category: 'productive', duration_s: 41 * 60 },
 ]
-
-function clock(totalSeconds: number) {
-  const m = Math.round(totalSeconds / 60)
-  const h = Math.floor(m / 60)
-  const mm = String(m % 60).padStart(2, '0')
-  return `${h}:${mm}`
-}
-
-function humanDuration(totalSeconds: number) {
-  const m = Math.round(totalSeconds / 60)
-  const h = Math.floor(m / 60)
-  const mm = m % 60
-  return h === 0 ? `${mm}m` : `${h}h ${mm}m`
-}
 
 export default function DemoPage() {
   // The real engine, at render time. Nothing on this page is hand-written praise.

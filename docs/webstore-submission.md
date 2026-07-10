@@ -38,7 +38,7 @@ powershell -Command "Compress-Archive -Path C:\MindFuel\dist\webstore-staging\* 
 ```
 SatyaShift turns real focus into proof you can trust — quietly, in the background.
 
-Start a deep session from the popup (or just work; tracking is ambient). The extension
+Start a focus session from the popup (or just work; tracking is ambient). The extension
 verifies your focus by watching one thing only: the bare domain of your active tab.
 "github.com". Never the page, never the address, never what you type.
 
@@ -68,8 +68,8 @@ Privacy policy: https://satyashift.vercel.app/privacy
 - **Store icon:** upload `extension/icon128.png`
 - **Screenshots (at least 1, 1280×800 PNG):** take these on your machine (the agent
   harness cannot screenshot the extension):
-  1. The popup in idle state over a work site (status card + "Start deep session").
-  2. The popup in-session ("In deep work" + End session).
+  1. The popup in idle state over a work site (status card + "Start focus session").
+  2. The popup in-session ("Focusing" + End session).
   3. The web dashboard "Today" after a verified session.
   Resize/crop to 1280×800 (Win+Shift+S, then paste into any editor and export).
 

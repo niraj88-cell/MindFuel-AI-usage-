@@ -30,7 +30,7 @@ function sessionElapsed(ts) {
   return `${Math.floor(m / 60)}h ${m % 60}m`;
 }
 function sessionDetail(s) {
-  return `${sessionElapsed(s.session.startedAt)} of deep work. We're verifying it quietly.`;
+  return `${sessionElapsed(s.session.startedAt)} of focus. We're verifying it quietly.`;
 }
 function paintSession() {
   if (current && current.session) $('detail').textContent = sessionDetail(current);
@@ -122,7 +122,7 @@ function render(s) {
   if (!s) {
     dot = 'off'; state = 'Not connected'; detail = 'The tracker is starting up. Reopen in a moment.';
   } else if (inSession) {
-    dot = 'ok'; state = 'In deep work'; detail = sessionDetail(s);
+    dot = 'ok'; state = 'Focusing'; detail = sessionDetail(s);
   } else if (s.sessionExpired) {
     dot = 'warn'; state = 'Session expired';
     detail = `Sign in again at ${hostOf(s.baseUrl)} to resume verifying your focus.`;
@@ -137,7 +137,7 @@ function render(s) {
     detail = `Timing ${s.activeDomain}.`;
   } else {
     dot = 'ok'; state = 'Connected';
-    detail = 'Waiting for a focused tab.';
+    detail = 'Timing starts when you\'re on a site.';
   }
   $('dot').className = 'dot ' + dot;
   $('state').textContent = state;
@@ -147,6 +147,13 @@ function render(s) {
   const showSynced = s && s.signedIn && !s.paused && !s.sessionExpired && !inSession && s.lastSync && !transientNote(s);
   $('synced').textContent = showSynced ? `Synced ${timeAgo(s.lastSync)}` : '';
   if (s) $('open').href = s.baseUrl;
+
+  // Open / sign-in link. When there's no session we can attribute (signed out or expired),
+  // the green primary slot is empty — so this link takes it and states the one next action.
+  const openBtn = $('open');
+  const needsSignIn = !!(s && (!s.signedIn || s.sessionExpired));
+  openBtn.textContent = needsSignIn ? 'Sign in to SatyaShift' : 'Open SatyaShift';
+  openBtn.className = 'btn ' + (needsSignIn ? 'primary' : 'ghost');
 
   // Note: a transient sync problem, or (right after a click) why a start/end didn't take.
   // Lowest priority: nudges muted at the Chrome level (notifications off for this extension) —
@@ -172,7 +179,7 @@ function render(s) {
     seal.style.display = 'none';
     const canSession = !!(s && s.signedIn && !s.sessionExpired);
     sessBtn.style.display = canSession ? 'block' : 'none';
-    sessBtn.textContent = inSession ? 'End session' : 'Start deep session';
+    sessBtn.textContent = inSession ? 'End session' : 'Start focus session';
     sessBtn.className = 'btn ' + (inSession ? 'ghost' : 'primary');
     sessBtn.disabled = false;
   }

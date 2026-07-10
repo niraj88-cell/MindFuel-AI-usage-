@@ -20,7 +20,7 @@ function humanElapsed(totalSeconds: number) {
   const m = Math.floor(Math.max(0, totalSeconds) / 60)
   if (m < 1) return 'just started'
   const h = Math.floor(m / 60)
-  return h === 0 ? `${m} min` : `${h}h ${String(m % 60).padStart(2, '0')}m`
+  return h === 0 ? `${m} min` : `${h}h ${m % 60}m`
 }
 
 // A cheer someone in the circle sent for THIS session (their name + a fixed phrase).

@@ -17,7 +17,7 @@ test('a running session always wins, in coarse bands — never a ticking timer',
   const at = (elapsedMin) =>
     widgetMessage({ ...base, active: true, startedAtMs: NOW - min(elapsedMin) }, NOW)
 
-  assert.equal(at(3).overline, 'Deep session')
+  assert.equal(at(3).overline, 'Focus session')
   assert.equal(at(3).primary, 'You’re in a session.')
   assert.equal(at(29).primary, 'You’re in a session.', 'same line for 3 and 29 min — no countable number')
   assert.match(at(45).primary, /half an hour/)

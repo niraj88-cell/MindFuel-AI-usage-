@@ -5,6 +5,64 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-10 — Product-design audit, implemented (comprehension pass, evolution not redesign)
+
+Ran a full first-time-comprehension audit (landing, app, extension) → `scratchpad` artifact,
+then shipped the ranked fix list. Every change is copy/interaction-layer; the ledger design
+language is untouched. Ten items:
+
+1. **One vocabulary.** The extension said "deep session"/"in deep work" while the whole web app
+   says "focus session"/"focusing" — the two surfaces a new user compares in hour one disagreed.
+   Unified on **focus session** everywhere: `popup.html`/`popup.js` (button + status +
+   session-detail line), `lib/widget.ts` overline ("Deep session"→"Focus session") + its test.
+   NOTE this supersedes `docs/experience-audit-2026-07-02.md`'s "keep deep session" on
+   comprehension grounds (web copy standardized on "focus" since; data model is `focus_sessions`).
+2. **Landing states the category + surfaces the demo.** Added a mono eyebrow "A Chrome extension
+   & a quiet companion app" above the thesis headline (the page never said *what it is*), and
+   promoted the `/demo` link from 13px fine print to a full-width ghost secondary under the
+   waitlist — the one thing a visitor can DO while signups are paused. Verified live in preview.
+3. **One loading state (perceived speed).** Removed the blocking full-screen "Opening SatyaShift"
+   auth splash in `app/(app)/layout.tsx`; the shell now paints immediately and each page's own
+   skeleton is the only wait. Middleware (`proxy.ts`, default-deny) is the real gate; the client
+   `getUser()` stays as confirmation + redirect. Sidebar identity shows a quiet skeleton until
+   loaded (no "Member" flash).
+4. **Signed-out popup gets a primary action.** When `!signedIn`/`sessionExpired`, the "Open
+   SatyaShift" link becomes primary "Sign in to SatyaShift" (the green slot was empty exactly
+   when a next action was needed). Also idle copy "Waiting for a focused tab" → "Timing starts
+   when you're on a site."
+5. **One duration formatter + focus-ring sweep.** New `lib/duration.ts` (`human`/`clock`); deleted
+   the four page-level copies (dashboard, session, squads, demo) and delegated `week.ts`'s
+   `humanDurationS` to it; de-padded the running screen (`1h 05m`→`1h 5m`). Added `.focus-ring
+   .press` to buttons that lacked them (squads create/join/copy/encourage, profile account +
+   modal, notifications delete, week share, onboarding CTAs, waitlist submit).
+6. **Invite by link.** `/squads` copy button now copies `…/squads?join=CODE`; the page (now
+   Suspense-wrapped for `useSearchParams`) pre-fills the join field from `?join=` and shows an
+   "invited" hint. No transcription of a 6-char code. Join API unchanged.
+7. **Week door on session detail + native share.** Session page now offers the quiet "Your week
+   of attention" row (gated to sessions within 7 days, so `/week` is never empty). `/week` "Save
+   as image" prefers `navigator.share({files})` on mobile (label→"Share this week"), download
+   fallback; cancel is a no-op.
+8. **Designed delete-account dialog.** Replaced `window.confirm`/`window.alert` in `profile` with
+   an in-voice modal: type `DELETE` to confirm, rust "Delete forever", Escape/scrim to cancel,
+   errors inline. No shadow (design rule) — depth from scrim + border.
+9. **Footer "Sign in" link** for the soft launch (front door hides sign-up AND sign-in). Ink, not
+   green (nav is never green). Commented as removable at public launch.
+10. Polish: session mobile seam (left rail → top hairline when stacked), Settings identity avatar
+    (brand square → round card-ring — a person isn't the brand), "Change password"→"Reset password
+    by email", Activity delete hover rust→neutral (rust reserved for account deletion), header
+    invite chip hidden when circle is solo (code was shown twice).
+
+DELIBERATE HOLD: the green unread badge — left green. Strongest convention for an unread signal;
+changing to ink risks legibility for a debatable P3. Noted, not applied.
+
+Verified: `tsc --noEmit` clean, `next build` clean (all routes incl. Suspense `/squads`), web
+`node --test` 10/10 + extension `node --test` 62/62, landing + `/demo` rendered in preview with
+zero console errors (duration formatter confirmed: "2h 13m" + "1:40/0:09/0:03"). Not yet
+committed or deployed. Extension popup/widget changes need the user's load-unpacked check (the
+harness can't click the popup).
+
+---
+
 ## 2026-07-08 (late night) — Interaction craft pass: five micro-interactions, in-law
 
 Evolution not redesign — every change lives in the interaction layer and obeys the design

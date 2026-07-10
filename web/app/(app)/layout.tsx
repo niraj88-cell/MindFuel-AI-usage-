@@ -32,7 +32,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [authChecked, setAuthChecked] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const [user, setUser] = useState<{ email?: string; name?: string; tier?: string } | null>(null)
 
@@ -41,7 +40,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const { data: { user: activeUser } } = await supabase.auth.getUser()
 
     if (!activeUser) {
-      setAuthChecked(true)
+      // The middleware (proxy.ts, default-deny) is the real gate, so reaching here without
+      // a user is the rare client-side-expiry case — send them to /login. We don't block the
+      // shell on this check; it's confirmation, not the gate.
       router.replace('/login')
       return
     }
@@ -65,7 +66,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       tier: profileRes.data?.subscription_tier || 'free',
     })
     setUnreadCount(notifRes.count || 0)
-    setAuthChecked(true)
   }, [router])
 
   useEffect(() => {
@@ -132,19 +132,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (!authChecked) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-paper text-ink">
-        <div className="text-center">
-          <div className="mx-auto mb-5 flex h-11 w-11 animate-pulse items-center justify-center rounded-lg bg-ink text-white">
-            <SatyaMark size={20} />
-          </div>
-          <p className="font-mono text-xs uppercase tracking-[0.16em] text-faint">Opening SatyaShift</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-paper text-ink">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-line bg-paper px-4 py-6 lg:flex">
@@ -170,13 +157,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         <div className="mt-auto">
           <div className="mb-3 flex items-center gap-3 px-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-card text-sm font-semibold text-ink ring-1 ring-line">
-              {user?.name?.[0] || user?.email?.[0]?.toUpperCase() || '?'}
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-card text-sm font-semibold text-ink ring-1 ring-line">
+              {user?.name?.[0] || user?.email?.[0]?.toUpperCase() || ''}
             </div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium">{user?.name || 'Member'}</p>
-              <p className="truncate text-xs text-faint">{user?.email || ''}</p>
-            </div>
+            {/* Identity fills in a beat after the shell paints; a quiet skeleton holds its
+                place so the name never flashes a placeholder like "Member" first. */}
+            {user ? (
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{user.name || 'Member'}</p>
+                <p className="truncate text-xs text-faint">{user.email || ''}</p>
+              </div>
+            ) : (
+              <div className="min-w-0 space-y-1.5 py-0.5" aria-hidden="true">
+                <div className="h-3 w-24 rounded bg-hairline" />
+                <div className="h-2.5 w-32 rounded bg-hairline" />
+              </div>
+            )}
           </div>
           <div className="mb-2 flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-faint">
             <Lock className="h-3.5 w-3.5 text-green" />

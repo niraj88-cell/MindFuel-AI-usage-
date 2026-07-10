@@ -17,6 +17,7 @@ import { EXTENSION_PUBLISHED, EXTENSION_STORE_URL } from '@/lib/extension'
 import { weeklyInsight } from '@/lib/intelligence/insights'
 import { recommendSquadSupport } from '@/lib/intelligence/squad'
 import { deriveContinuation, workingSet, type ContinuationInvite, type DomainStay } from '@/lib/continuation'
+import { human as humanDuration } from '@/lib/duration'
 import { InstallGuide } from '@/components/extension/InstallGuide'
 import type { BehavioralProfile } from '@/lib/intelligence/types'
 
@@ -34,15 +35,6 @@ interface SessionRow {
   duration_s: number | null
   session_quality: string | null
   intention: string | null
-}
-
-// 8040s -> "2h 14m", 0 -> "0m"
-function humanDuration(totalSeconds: number) {
-  const m = Math.round(totalSeconds / 60)
-  const h = Math.floor(m / 60)
-  const mm = m % 60
-  if (h === 0) return `${mm}m`
-  return `${h}h ${mm}m`
 }
 
 function greeting() {

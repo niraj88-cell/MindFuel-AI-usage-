@@ -41,6 +41,9 @@ export default function LandingPage() {
           </span>
         </div>
 
+        <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
+          A Chrome extension &amp; a quiet companion app
+        </p>
         <h1 className="font-serif text-[2.6rem] leading-[1.08] tracking-[-0.01em] text-ink sm:text-[3rem]">
           Deep work is easier when you&rsquo;re not doing it alone.
         </h1>
@@ -88,13 +91,15 @@ export default function LandingPage() {
             /login still exists (unlinked) for early accounts. To reopen, revert this block to
             the signup/demo CTAs. */}
         <WaitlistForm />
-        <p className="mt-4 text-[13px] text-faint">
-          Curious first?{' '}
-          <Link href="/demo" className="font-medium text-ink underline decoration-line underline-offset-4 transition-colors hover:decoration-ink">
-            See it working &mdash; no account
-          </Link>
-          .
-        </p>
+        {/* The one thing a visitor can DO right now (signups are paused): see a real
+            finished session, run through the actual engine. A visible secondary action,
+            not fine print — it's the proof the front door is otherwise only claiming. */}
+        <Link
+          href="/demo"
+          className="focus-ring press mt-4 flex w-full items-center justify-center rounded-lg border border-line bg-card py-3 text-sm font-semibold text-ink transition-colors hover:bg-green-wash"
+        >
+          See it working &mdash; no account needed
+        </Link>
 
         {/* Pricing hidden during invite-only soft launch (remove `hidden` to restore). */}
         <div className="mt-10 hidden rounded-xl border border-line bg-card p-5">

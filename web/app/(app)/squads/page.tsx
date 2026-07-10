@@ -6,7 +6,8 @@
 // and never a domain — the feed shows verified TIME plus each person's own words (intention).
 // Data: GET /api/squads (members + checked_in/quiet) and /api/squads/[id]/feed (proof feed).
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
   Copy,
   Loader2,
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react'
 import { VerifiedMark } from '@/components/brand/VerifiedMark'
 import { ENCOURAGEMENT_PHRASES } from '@/lib/squad/encouragement'
+import { human as humanDuration } from '@/lib/duration'
 
 interface Member {
   id: string
@@ -43,11 +45,6 @@ interface FeedItem {
   member: { id: string; name: string; avatar: string | null }
 }
 
-function humanDuration(totalSeconds: number) {
-  const m = Math.round(totalSeconds / 60)
-  const h = Math.floor(m / 60)
-  return h === 0 ? `${m % 60}m` : `${h}h ${m % 60}m`
-}
 function minutesSince(iso: string) {
   return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000))
 }
@@ -61,7 +58,17 @@ function avatarColor(id: string) {
   return AVATAR_COLORS[h % AVATAR_COLORS.length]
 }
 
+// useSearchParams needs a Suspense boundary at build time; the page proper is below.
 export default function SquadsPage() {
+  return (
+    <Suspense fallback={null}>
+      <SquadsInner />
+    </Suspense>
+  )
+}
+
+function SquadsInner() {
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [squad, setSquad] = useState<Squad | null>(null)
   const [feed, setFeed] = useState<FeedItem[]>([])
@@ -70,6 +77,14 @@ export default function SquadsPage() {
   const [busy, setBusy] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [copied, setCopied] = useState(false)
+
+  // Arrived via an invite link (/squads?join=CODE): drop the code into the join field, ready
+  // to submit. No transcription, no typos — the inviter shares a link, not six characters.
+  const invited = !!searchParams.get('join')
+  useEffect(() => {
+    const j = searchParams.get('join')
+    if (j) setCode(j.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))
+  }, [searchParams])
 
   const loadSquads = useCallback(async () => {
     try {
@@ -158,7 +173,10 @@ export default function SquadsPage() {
 
   async function copyInvite() {
     if (!squad) return
-    await navigator.clipboard.writeText(squad.invite_code)
+    // Copy a join LINK, not the bare code: the recipient opens it and the code is already in
+    // the field. The button still shows the short code as a readable token.
+    const link = `${window.location.origin}/squads?join=${squad.invite_code}`
+    await navigator.clipboard.writeText(link)
     setCopied(true)
     setTimeout(() => setCopied(false), 1800)
   }
@@ -204,6 +222,13 @@ export default function SquadsPage() {
           </p>
         </div>
 
+        {invited && (
+          <div className="mt-6 flex items-center gap-2 rounded-lg border border-green-line bg-green-tint px-4 py-3 text-sm text-green-deep">
+            <UserPlus className="h-4 w-4 shrink-0 text-green" />
+            You&rsquo;ve been invited to a circle — the code&rsquo;s ready below, just press Join.
+          </div>
+        )}
+
         {message && (
           <div className="mt-6 rounded-lg bg-rust-tint p-3 text-sm font-medium text-rust">{message.text}</div>
         )}
@@ -222,7 +247,7 @@ export default function SquadsPage() {
           <button
             type="submit"
             disabled={newName.trim().length < 3 || busy === 'create'}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white transition-colors hover:bg-green-deep disabled:opacity-50"
+            className="focus-ring press mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3 text-sm font-semibold text-white transition-colors hover:bg-green-deep disabled:opacity-50"
           >
             {busy === 'create' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
             Create circle
@@ -244,7 +269,7 @@ export default function SquadsPage() {
           <button
             type="submit"
             disabled={!code.trim() || busy === 'join'}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-line bg-card py-3 text-sm font-semibold text-ink transition-colors hover:bg-green-wash disabled:opacity-50"
+            className="focus-ring press mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-line bg-card py-3 text-sm font-semibold text-ink transition-colors hover:bg-green-wash disabled:opacity-50"
           >
             {busy === 'join' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
             Join circle
@@ -261,12 +286,16 @@ export default function SquadsPage() {
     <div className="mx-auto max-w-2xl py-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-serif text-[1.9rem] leading-tight tracking-[-0.01em] text-ink">{squad.name}</h1>
-        <button
-          onClick={copyInvite}
-          className="inline-flex items-center gap-2 rounded-lg border border-line bg-card px-3.5 py-2 font-mono text-xs font-medium tracking-wider text-ink transition-colors hover:bg-green-wash"
-        >
-          {copied ? <><Check className="h-3.5 w-3.5 text-green" /> copied</> : <>{squad.invite_code} <Copy className="h-3.5 w-3.5" /></>}
-        </button>
+        {/* When it's just you, the big solo card below carries the invite — no need to show
+            the code twice, so the header chip yields until there's a second member. */}
+        {!soloSquad && (
+          <button
+            onClick={copyInvite}
+            className="focus-ring press inline-flex items-center gap-2 rounded-lg border border-line bg-card px-3.5 py-2 font-mono text-xs font-medium tracking-wider text-ink transition-colors hover:bg-green-wash"
+          >
+            {copied ? <><Check className="h-3.5 w-3.5 text-green" /> copied</> : <>{squad.invite_code} <Copy className="h-3.5 w-3.5" /></>}
+          </button>
+        )}
       </div>
 
       {/* Members row */}
@@ -286,7 +315,7 @@ export default function SquadsPage() {
           <p className="mx-auto mt-1.5 max-w-sm text-xs leading-relaxed text-green">
             Share your code with someone who&rsquo;ll keep you company. They&rsquo;ll only ever see your verified time — never your sites.
           </p>
-          <button onClick={copyInvite} className="mt-3 inline-flex items-center gap-2 rounded-full bg-green px-4 py-2 font-mono text-xs font-medium tracking-wider text-white transition-colors hover:bg-green-deep">
+          <button onClick={copyInvite} className="focus-ring press mt-3 inline-flex items-center gap-2 rounded-full bg-green px-4 py-2 font-mono text-xs font-medium tracking-wider text-white transition-colors hover:bg-green-deep">
             {copied ? 'copied' : squad.invite_code} <Copy className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -321,7 +350,7 @@ export default function SquadsPage() {
                         key={phrase}
                         onClick={() => encourage(f.id, i)}
                         disabled={cheered[f.id] === 'sending'}
-                        className="rounded-full border border-line bg-card px-2.5 py-1 text-[11px] font-medium text-soft transition-colors hover:border-green-line hover:bg-green-wash hover:text-green disabled:opacity-50"
+                        className="focus-ring press rounded-full border border-line bg-card px-2.5 py-1 text-[11px] font-medium text-soft transition-colors hover:border-green-line hover:bg-green-wash hover:text-green disabled:opacity-50"
                       >
                         {phrase}
                       </button>

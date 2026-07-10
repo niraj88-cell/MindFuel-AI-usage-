@@ -57,7 +57,7 @@ export function widgetMessage(s: WidgetState, now = Date.now()): WidgetMessage {
   if (s.active && s.startedAtMs != null) {
     const elapsedMin = Math.max(0, Math.floor((now - s.startedAtMs) / 60_000))
     return {
-      overline: 'Deep session',
+      overline: 'Focus session',
       primary: presenceLine(elapsedMin),
       support: s.intention ? `“${s.intention}”` : null,
     }

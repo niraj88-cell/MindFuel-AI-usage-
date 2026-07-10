@@ -77,7 +77,7 @@ export default function OnboardingPage() {
 
           <button
             onClick={() => setStep(2)}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3.5 text-sm font-semibold text-white transition-colors hover:bg-green-deep"
+            className="focus-ring press mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3.5 text-sm font-semibold text-white transition-colors hover:bg-green-deep"
           >
             Sounds right <ArrowRight className="h-4 w-4" />
           </button>
@@ -98,7 +98,7 @@ export default function OnboardingPage() {
                 href={EXTENSION_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3.5 text-sm font-semibold text-white transition-colors hover:bg-green-deep"
+                className="focus-ring press mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-green py-3.5 text-sm font-semibold text-white transition-colors hover:bg-green-deep"
               >
                 <Puzzle className="h-4 w-4" /> Add to Chrome
               </a>
@@ -132,11 +132,11 @@ export default function OnboardingPage() {
           <button
             onClick={finish}
             disabled={saving}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-ink py-3.5 text-sm font-semibold text-paper transition-colors hover:bg-ink-hover disabled:opacity-60"
+            className="focus-ring press mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-ink py-3.5 text-sm font-semibold text-paper transition-colors hover:bg-ink-hover disabled:opacity-60"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Take me to Today <ArrowRight className="h-4 w-4" /></>}
           </button>
-          <button onClick={() => setStep(1)} className="mt-2 w-full py-2 text-center text-xs font-medium text-faint transition-colors hover:text-ink">
+          <button onClick={() => setStep(1)} className="focus-ring mt-2 w-full py-2 text-center text-xs font-medium text-faint transition-colors hover:text-ink">
             Back
           </button>
         </div>

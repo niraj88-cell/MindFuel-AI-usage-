@@ -21,9 +21,11 @@ import {
   EyeOff,
   Users,
   ChevronLeft,
+  ChevronRight,
   X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { human as humanDuration, clock } from '@/lib/duration'
 import { VerifiedMark } from '@/components/brand/VerifiedMark'
 import {
   analyzeSession, reflectionFor,
@@ -50,23 +52,6 @@ interface DomainLog {
   duration_s: number
   category: string
   created_at: string
-}
-
-// h:mm clock, e.g. 8040s -> "2:14", 480s -> "0:08"
-function clock(totalSeconds: number) {
-  const m = Math.round(totalSeconds / 60)
-  const h = Math.floor(m / 60)
-  const mm = String(m % 60).padStart(2, '0')
-  return `${h}:${mm}`
-}
-
-// Humanized duration for headline numbers, e.g. 8040s -> "2h 14m", 2700s -> "45m".
-// Matches the dashboard's format so one concept reads one way across the app.
-function humanDuration(totalSeconds: number) {
-  const m = Math.round(totalSeconds / 60)
-  const h = Math.floor(m / 60)
-  const mm = m % 60
-  return h === 0 ? `${mm}m` : `${h}h ${mm}m`
 }
 
 // The DB constraint allows category IN ('distraction','productive','neutral').
@@ -182,6 +167,9 @@ export default function SessionDetailPage() {
 
   const durationS = session.duration_s ?? 0
   const verified = !!session.session_quality && session.session_quality !== 'unverified'
+  // Offer the week door only when this session falls inside the last seven days, so /week
+  // (which shows exactly that window) is never an empty room behind the link.
+  const sessionWithinWeek = Date.now() - new Date(session.created_at).getTime() < 7 * 86_400_000
   const start = new Date(session.created_at)
   const end = new Date(start.getTime() + durationS * 1000)
   const quality = session.session_quality ?? 'unverified'
@@ -309,8 +297,10 @@ export default function SessionDetailPage() {
           </div>
         </div>
 
-        {/* Shared with your circle */}
-        <div className="mt-6 border-l border-line pl-7 sm:mt-0">
+        {/* Shared with your circle. The seam is a LEFT border between two columns on sm+,
+            but a TOP hairline between two stacked halves on mobile — otherwise the left rail
+            reads as an accidental indent on a phone. */}
+        <div className="mt-6 border-t border-hairline pt-6 sm:mt-0 sm:border-t-0 sm:border-l sm:border-line sm:pl-7 sm:pt-0">
           <div className="mb-3 flex items-center gap-1.5">
             <Users className="h-3.5 w-3.5 text-green" />
             <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-green">Shared with your circle</span>
@@ -357,6 +347,19 @@ export default function SessionDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* A quiet door to the week. The session page is a moment of earned attention, and the
+          week artifact was otherwise reachable only from Today — this gives it a second door
+          at the exact moment a person is looking back. */}
+      {sessionWithinWeek && (
+        <Link
+          href="/week"
+          className="focus-ring group mt-8 flex items-center gap-3 rounded-xl border border-line bg-card px-5 py-4 transition-colors hover:bg-green-wash"
+        >
+          <span className="flex-1 text-sm font-medium text-ink">Your week of attention</span>
+          <ChevronRight className="row-arrow h-4 w-4 text-ghost group-hover:text-faint" />
+        </Link>
+      )}
     </div>
   )
 }

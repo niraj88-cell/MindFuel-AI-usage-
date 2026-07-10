@@ -8,6 +8,8 @@
 // (node --test lib/week.test.mjs). Dates are handled with local Date methods because
 // this runs client-side in the user's own timezone.
 
+import { human } from './duration.ts'
+
 export interface WeekSessionRow {
   created_at: string
   duration_s: number | null
@@ -122,9 +124,7 @@ export function buildWeek(rows: WeekSessionRow[], now: Date = new Date()): WeekS
 }
 
 /** 8040 → "2h 14m", 0 → "0m" — the app's one duration voice. */
+// The week module's public name for the shared formatter (used by the page and the canvas).
 export function humanDurationS(totalSeconds: number): string {
-  const m = Math.round(totalSeconds / 60)
-  const h = Math.floor(m / 60)
-  const mm = m % 60
-  return h === 0 ? `${mm}m` : `${h}h ${mm}m`
+  return human(totalSeconds)
 }

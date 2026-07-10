@@ -109,7 +109,7 @@ export default function NotificationsPage() {
                 <button
                   onClick={() => deleteNotification(item.id)}
                   aria-label="Delete"
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-faint transition-colors hover:bg-rust-tint hover:text-rust"
+                  className="focus-ring press flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-faint transition-colors hover:bg-hairline hover:text-ink"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
