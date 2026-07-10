@@ -5,6 +5,36 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-10 — Technical SEO + GEO foundation (deployed + live-verified)
+
+Full SEO/GEO engagement (audit → implementation → roadmap artifact). Three CRITICAL
+defects found and fixed, plus the GEO groundwork:
+
+1. **Canonical bug (severity: the whole public site).** Root layout hardcoded
+   `alternates.canonical = 'https://satyashift.com'`, which child pages inherit VERBATIM —
+   /pricing, /how-it-works, /privacy etc. all declared themselves duplicates of the
+   homepage (verified live pre-fix). Fixed: root uses `canonical: './'` (self-referencing
+   per route) AND each public page sets an explicit path canonical. LESSON: never put an
+   absolute canonical in a root layout.
+2. **Duplicate host.** satyashift.vercel.app served the full site at 200. proxy.ts now
+   301s any *.vercel.app host → satyashift.com for GET/HEAD, EXEMPTING /api/* so
+   pre-2.9.3 extensions that still POST to the old host keep working (verified: page 301
+   with path preserved; API POST untouched).
+3. **FAQPage schema with no visible FAQ** (guideline violation, rich-result risk). Removed
+   from the global JsonLd graph. New public **/faq** page (13 honest Q&As, TrustPage shell,
+   added to proxy.ts isPublicRoute + sitemap + footer): ONE array renders both the visible
+   page and the FAQPage JSON-LD so they can never drift.
+4. GEO: **/llms.txt** (key facts + page map, all claims code-checked); JsonLd
+   SoftwareApplication enriched (featureList, browserRequirements, screenshot, slogan) —
+   explicitly NO aggregateRating until real reviews exist. sitemap.ts: /login dropped,
+   /faq added, honest hand-bumped lastModified (was new Date() every build). robots.ts:
+   added /week /widget /reset-password disallows.
+Google Search Console verification meta was ALREADY present in layout.tsx.
+Verified live post-deploy: all six public canonicals self-referencing, 301 + API
+exemption, /faq 200 + schema, llms.txt 200, sitemap correct, FAQPage absent from landing.
+Strategy/roadmap delivered as an artifact (session 2026-07-10); founder actions listed there
+(GSC property for satyashift.com domain, Clarity, socials for Organization sameAs).
+
 ## 2026-07-10 — satyashift.com is canonical (domain cutover, ext 2.9.3)
 
 The custom domain **satyashift.com** (bought 2026-07-09, already aliased to the Vercel

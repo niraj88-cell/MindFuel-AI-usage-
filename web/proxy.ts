@@ -9,13 +9,26 @@ export async function proxy(request: NextRequest) {
       return NextResponse.rewrite(new URL('/maintenance', request.url))
     }
   }
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
+
+  // Canonical-host redirect (SEO): satyashift.com is the one address. The *.vercel.app
+  // aliases serve identical content at 200, which splits ranking signals across hosts —
+  // 301 every browser/crawler GET to the canonical domain. API routes are exempt so
+  // pre-2.9.3 extension installs that still POST to satyashift.vercel.app keep working.
+  const reqHost = request.headers.get('host') || ''
+  if (reqHost.endsWith('.vercel.app') && !isApiRoute && ['GET', 'HEAD'].includes(request.method)) {
+    const url = request.nextUrl.clone()
+    url.protocol = 'https'
+    url.host = 'satyashift.com'
+    url.port = ''
+    return NextResponse.redirect(url, 301)
+  }
+
   let supabaseResponse = NextResponse.next({
     request: {
       headers: request.headers,
     },
   })
-
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
 
   // Global Edge Rate Limiting for API routes (WAF layer)
   if (isApiRoute) {
@@ -91,7 +104,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isPublicRoute = [
     '/', '/login', '/signup', '/forgot-password',
-    '/privacy', '/terms', '/refund', '/pricing', '/how-it-works', '/demo',
+    '/privacy', '/terms', '/refund', '/pricing', '/how-it-works', '/demo', '/faq',
     '/sitemap.xml', '/robots.txt',
   ].includes(pathname)
   // Metadata file conventions (opengraph-image etc.) serve extensionless URLs — social

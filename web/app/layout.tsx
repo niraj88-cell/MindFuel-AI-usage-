@@ -46,8 +46,13 @@ export const metadata: Metadata = {
   category: 'productivity',
   creator: 'SatyaShift',
   publisher: 'SatyaShift',
+  // Self-referencing canonical for EVERY route ('./' resolves against metadataBase +
+  // the current path). The old absolute value here was inherited verbatim by child
+  // pages, so /pricing, /how-it-works etc. all declared themselves duplicates of the
+  // homepage — one line quietly de-indexing the whole public site. Key public pages
+  // also set an explicit canonical in their own metadata as belt-and-braces.
   alternates: {
-    canonical: 'https://satyashift.com',
+    canonical: './',
   },
   // og:image / twitter:image come from the app/opengraph-image.tsx file convention —
   // one generated card, one strapline, nothing static to drift out of date.

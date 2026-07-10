@@ -9,6 +9,7 @@ import { TrustPage, TrustSections, type TrustSection } from '@/components/site/T
 export const metadata: Metadata = {
   title: 'Refund Policy — SatyaShift',
   description: '30-day money-back guarantee on every purchase, a free trial with no payment method, and one-click cancellation.',
+  alternates: { canonical: '/refund' },
 }
 
 const SECTIONS: TrustSection[] = [

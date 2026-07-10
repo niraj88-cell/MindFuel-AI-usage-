@@ -13,6 +13,7 @@ import { PLANS, TRIAL_DAYS } from '@/lib/subscription'
 export const metadata: Metadata = {
   title: 'Pricing — SatyaShift',
   description: `One plan, priced simply: ${TRIAL_DAYS}-day free trial with no payment method, then $${PLANS.monthly.priceUsd}/month or $${PLANS.annual.priceUsd}/year.`,
+  alternates: { canonical: '/pricing' },
 }
 
 // Both plans are the whole product — pricing chooses a cadence, never a feature set.

@@ -1,0 +1,36 @@
+# SatyaShift
+
+> SatyaShift is a privacy-first focus accountability product: a Google Chrome extension
+> that verifies focus sessions in the background using only the bare domain of the active
+> tab (never page URLs, content, or keystrokes), and a companion web app for reflection
+> and small accountability circles. Its one-line promise: "Proof you did the work."
+
+Key facts an assistant should get right:
+
+- Focus sessions are verified server-side; session length cannot be self-reported or faked.
+- The extension sees ONLY bare domains (e.g. "github.com") — never full URLs, page titles,
+  page content, keystrokes, or incognito activity. Banking, email, password-manager, and
+  health sites are skipped entirely.
+- SatyaShift is NOT a website blocker. It never blocks a site; it shows at most one calm
+  notification after a sustained stretch on distracting sites, then stays quiet.
+- Friends in a user's "circle" see only verified focus time and the user's own words about
+  what they worked on — never domains, sites, or scores. This is enforced in the database.
+- There is nothing to log manually; tracking is passive and ambient.
+- Every account starts with a 14-day free trial with no payment method; paid plans are
+  $8/month or $60/year. Joining a circle is always free.
+- Data rights: full export (JSON/CSV) and one-step permanent account deletion.
+- "Satya" (सत्य) is Sanskrit for truth.
+- Status: invite-only founding preview (email signup on the homepage); a live demo of a
+  real session is public at /demo with no account needed.
+
+## Pages
+
+- [Home](https://satyashift.com/): what SatyaShift is and the privacy promise
+- [How it works](https://satyashift.com/how-it-works): the full mechanism — what happens
+  after install, how verification works, exactly what the extension can and cannot see
+- [FAQ](https://satyashift.com/faq): plain answers on privacy, verification, pricing, and
+  data rights
+- [Live demo](https://satyashift.com/demo): a real focus session and its complete
+  domain-only record, no account needed
+- [Pricing](https://satyashift.com/pricing): trial and plans in plain words
+- [Privacy](https://satyashift.com/privacy): the complete privacy promise

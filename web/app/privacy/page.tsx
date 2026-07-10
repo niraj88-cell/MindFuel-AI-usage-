@@ -11,6 +11,7 @@ import { TrustPage, TrustSections, type TrustSection } from '@/components/site/T
 export const metadata: Metadata = {
   title: 'Privacy — SatyaShift',
   description: 'What SatyaShift sees, what it never sees, and the control you keep.',
+  alternates: { canonical: '/privacy' },
 }
 
 const SECTIONS: TrustSection[] = [

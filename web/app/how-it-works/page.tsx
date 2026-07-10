@@ -9,6 +9,7 @@ import { TrustPage, TrustSections, type TrustSection } from '@/components/site/T
 export const metadata: Metadata = {
   title: 'How it works — SatyaShift',
   description: 'What happens after you install SatyaShift, how focus verification works, and exactly what the extension can and cannot see.',
+  alternates: { canonical: '/how-it-works' },
 }
 
 const SECTIONS: TrustSection[] = [

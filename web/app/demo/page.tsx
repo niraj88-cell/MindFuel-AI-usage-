@@ -23,6 +23,7 @@ export const metadata: Metadata = {
   title: 'See a session — SatyaShift demo',
   description:
     'A real focus session, exactly as SatyaShift sees it: the honest reflection, and the complete domain-only record behind it. No account needed.',
+  alternates: { canonical: '/demo' },
   openGraph: {
     title: 'See a session — SatyaShift demo',
     description: 'The reflection, and the complete domain-only record behind it. No account needed.',

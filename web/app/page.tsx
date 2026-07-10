@@ -20,6 +20,7 @@ export const metadata: Metadata = {
   title: 'SatyaShift — Proof you did the work',
   description:
     'Deep work is easier when you are not doing it alone. SatyaShift keeps an honest, verified record of your focus, solo or with friends, and only ever sees the domains you visit, never your screen. Private by default.',
+  alternates: { canonical: '/' },
   openGraph: {
     title: 'SatyaShift — Proof you did the work',
     description: 'Deep work is easier when you are not doing it alone. Verified focus, solo or with friends. Private by default.',

@@ -1,5 +1,15 @@
 import { PLANS } from '@/lib/subscription'
 
+// Site-wide entity graph: Organization + WebSite + SoftwareApplication.
+// Rules that keep this trustworthy (and safe from structured-data penalties):
+//  - Everything here must be TRUE and visible somewhere on the public site. Prices come
+//    from lib/subscription.ts (the same constants the app bills from).
+//  - No aggregateRating / review markup until real users leave real reviews. Faking
+//    social proof in schema is the classic spam signal — never add it speculatively.
+//  - FAQPage schema lives on /faq (where the questions are actually visible), NOT here:
+//    Google requires FAQ markup to mirror on-page content.
+//  - sameAs stays absent until the brand's social profiles exist; an empty array says
+//    nothing and a wrong link poisons entity resolution in AI search.
 export function JsonLd() {
   const baseUrl = 'https://satyashift.com'
 
@@ -17,7 +27,9 @@ export function JsonLd() {
           width: 512,
           height: 512,
         },
-        sameAs: [],
+        slogan: 'Proof you did the work.',
+        description:
+          'SatyaShift is an independent, privacy-first accountability product: a Chrome extension that verifies focus sessions using only bare domains, and a companion web app for reflection and small accountability circles.',
       },
       {
         '@type': 'WebSite',
@@ -32,10 +44,21 @@ export function JsonLd() {
         '@type': 'SoftwareApplication',
         '@id': `${baseUrl}/#app`,
         name: 'SatyaShift',
-        operatingSystem: 'Web',
+        url: baseUrl,
+        operatingSystem: 'Chrome (browser extension) + any modern browser (web app)',
+        browserRequirements: 'Requires Google Chrome for focus verification',
         applicationCategory: 'ProductivityApplication',
         description:
-          'SatyaShift confirms your focus sessions ambiently — no manual logging and no self-reporting. Your browsing domains stay private to you, while your circle sees only verified focus.',
+          'SatyaShift confirms your focus sessions ambiently — no manual logging and no self-reporting. It sees only the bare domain of the active tab, never pages or keystrokes. Your domains stay private to you, while your circle sees only verified focus time.',
+        featureList: [
+          'Verified focus sessions (server-anchored, cannot be self-reported)',
+          'Domain-only tracking — never page URLs, content, or keystrokes',
+          'One gentle drift nudge, never a website blocker',
+          'Small accountability circles that see verified time, never your sites',
+          'A shareable, domain-free week-of-attention picture',
+          'Full data export (JSON/CSV) and one-step account deletion',
+        ],
+        screenshot: `${baseUrl}/opengraph-image`,
         // Must match the real pricing (lib/subscription.ts). A structured-data "Free"
         // that search engines surface next to an $8/mo pricing page is a trust breach.
         offers: [
@@ -53,44 +76,6 @@ export function JsonLd() {
           },
         ],
         author: { '@id': `${baseUrl}/#organization` },
-      },
-      {
-        '@type': 'FAQPage',
-        '@id': `${baseUrl}/#faq`,
-        mainEntity: [
-          {
-            '@type': 'Question',
-            name: 'What is SatyaShift?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'SatyaShift is an ambient focus tracker. It verifies your focus sessions in the background so they can’t be faked, while keeping the sites you visit private to you.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'How does SatyaShift protect my privacy?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'The specific sites you visit are owner-only. Your circle never sees which domains you focused on — only that you completed a verified session.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'Do I have to log anything manually?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'No. SatyaShift runs ambiently through a browser extension. Focus sessions appear on their own — there is nothing to start or log.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'What does “verified focus” mean?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'A session is confirmed in the background rather than self-reported, so the focus your circle sees is real and cannot be gamed.',
-            },
-          },
-        ],
       },
     ],
   }

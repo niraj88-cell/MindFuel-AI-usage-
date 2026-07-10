@@ -8,6 +8,7 @@ import { TrustPage, TrustSections, type TrustSection } from '@/components/site/T
 export const metadata: Metadata = {
   title: 'Terms of Service — SatyaShift',
   description: 'The agreement between you and SatyaShift: the service, subscriptions, acceptable use, cancellation, and your rights.',
+  alternates: { canonical: '/terms' },
 }
 
 const SECTIONS: TrustSection[] = [
