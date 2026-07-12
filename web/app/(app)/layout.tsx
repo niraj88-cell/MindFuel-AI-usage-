@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { unsubscribeBrowserPush } from '@/lib/push/browser'
 import { SatyaMark } from '@/components/brand/SatyaMark'
 
 // Focus is an ACTION (started from Today), not a destination — the nav stays four items.
@@ -91,6 +92,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [pathname])
 
   async function handleLogout() {
+    // Turn off push for this browser BEFORE we drop the session, so it stops receiving this
+    // account's circle notifications the moment you leave (see lib/push/browser.ts).
+    await unsubscribeBrowserPush()
     const supabase = createClient()
     await supabase.auth.signOut()
     window.location.href = '/login'

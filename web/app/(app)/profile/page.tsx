@@ -20,6 +20,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { unsubscribeBrowserPush } from '@/lib/push/browser'
 import { PushNotificationManager } from '@/components/PushNotificationManager'
 import { CheckoutButtons } from '@/components/billing/CheckoutButtons'
 import { DevCheckout } from '@/components/billing/DevCheckout'
@@ -135,6 +136,8 @@ export default function SettingsPage() {
 
   async function handleSignOut() {
     setSigningOut(true)
+    // Turn off push for this browser BEFORE we drop the session (see lib/push/browser.ts).
+    await unsubscribeBrowserPush()
     const supabase = createClient()
     await supabase.auth.signOut()
     window.location.href = '/login'
