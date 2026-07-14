@@ -53,7 +53,7 @@ export default function SettingsPage() {
   const load = useCallback(async () => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
+    if (!user) { setLoading(false); return null }
 
     const { data: profile } = await supabase
       .from('profiles')
@@ -61,14 +61,16 @@ export default function SettingsPage() {
       .eq('id', user.id)
       .maybeSingle()
 
-    setData({
+    const next = {
       id: user.id,
       email: user.email || '',
       fullName: user.user_metadata?.full_name || 'Member',
       joinedAt: new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
       subscription: getSubscriptionState(profile),
-    })
+    }
+    setData(next)
     setLoading(false)
+    return next
   }, [])
 
   // Open the Paddle customer portal (manage payment method / cancel).
@@ -93,13 +95,14 @@ export default function SettingsPage() {
 
   // Entitlement flips via the webhook a beat after checkout. When we return from a
   // successful checkout (?upgraded=1) or the overlay reports success, re-poll the profile
-  // a few times so "active" appears without a manual refresh, then stop.
+  // so "active" appears without a manual refresh. Poll for ~40s (webhooks are usually
+  // 1–3s but can lag under provider retries); stop early the moment the plan goes active.
   const pollForActivation = useCallback(() => {
     let tries = 0
     const t = setInterval(async () => {
       tries += 1
-      await load()
-      if (tries >= 5) clearInterval(t)
+      const p = await load()
+      if (p?.subscription?.status === 'active' || tries >= 20) clearInterval(t)
     }, 2000)
   }, [load])
 
