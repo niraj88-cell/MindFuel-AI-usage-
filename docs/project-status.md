@@ -5,6 +5,55 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-15 — Pre-submission full-system verification + store zip built (no defects found)
+
+Final pass before the Chrome Web Store submission. Every layer tested; ZERO defects found —
+no code changes were needed, so this entry is evidence, not fixes.
+
+**Automated suites (all green):**
+- Extension: `node --test` → 62/62 (core policy logic + whole-pipeline chrome-stub tests).
+- Web: `node --test lib/*.test.mjs lib/billing/*.test.mjs lib/intelligence/*.test.mjs`
+  → 124/124 (behavior, entitlement 16, paddle, continuation, environments, week, widget,
+  all 9 intelligence modules).
+- `npx tsc --noEmit` clean; `npx next build` compiles with all routes.
+
+**Live production probes (satyashift.com):**
+- All public pages 200 (/, /login, /pricing, /privacy, /faq, /how-it-works, /demo,
+  /sitemap.xml, /robots.txt, /manifest.json).
+- Security headers intact: HSTS preload, full CSP (self + paddle only), X-Frame-Options
+  DENY, nosniff, strict referrer, locked-down Permissions-Policy.
+- Fail-closed checks: /api/billing/webhook 405 GET / 401 unsigned POST;
+  /api/billing/health and /api/billing/dev-checkout 404 to non-owner;
+  /api/ingest, /api/focus/start, /api/focus/stop all 403 unauthenticated.
+- Browser pass (real Chrome): landing (strapline hero + invite gate), /demo (live-generated
+  reflection), /login — all render correctly, zero console errors on each.
+
+**Database (Supabase MCP):** 0 stuck active sessions, 0 unprocessed billing events,
+40 sessions / 546 domain_logs / 45 profiles / 2 squads / 2 behavioral_profiles. Security
+advisors show ONLY the known-accepted list (security review doc) plus two by-design
+entries: billing_events RLS-no-policy (deny-all is the design) and waitlist_notes anon
+INSERT (same accepted pattern as waitlist).
+
+**Chrome Web Store audit (extension/, v2.9.3) — passes every rule checked:**
+- MV3, module SW, icons 16/32/48/128 verified as real PNGs at exact sizes.
+- Manifest description 124/132 chars. No inline JS in any HTML (welcome.html has zero
+  script tags; popup loads external popup.js). No eval/new Function/importScripts/dynamic
+  script injection anywhere. No third-party origins referenced at all.
+- Every declared permission verified as actually used in code (cookies 5 uses, tabs 13,
+  alarms 5, idle 3, notifications 9, storage 64); justifications ready in STORE_LISTING.md.
+- SESSION_FROM_PAGE stays hard origin-verified (sender.id + TRUSTED_MESSAGE_ORIGINS).
+- API base defaults to production; localhost only via explicit local dev flag.
+
+**Store zip BUILT + verified:** `satyashift-store-2.9.3.zip` at the repo root (gitignored),
+per STORE_LISTING.md step 5 — exactly the 11 runtime files (no tests, no CLAUDE.md, no
+package.json), manifest stripped of ALL localhost entries (host_permissions + content_scripts
+are HTTPS satyashift.com/satyashift.vercel.app only). Ready to upload as-is.
+
+**Founder-only items still open (unchanged, from STORE_LISTING.md §4/§6/§7):** capture
+screenshots (1280×800), register the $5 dev account + upload, after approval set
+EXTENSION_STORE_URL + flip EXTENSION_PUBLISHED + deploy, rotate the VAPID keypair,
+add satyashift.com/** to the Supabase Auth redirect allowlist.
+
 ## 2026-07-14 (4) — Landing clarity pass (audit → items 1–5 shipped, live-verified)
 
 Evidence-based landing audit (first-time-visitor comprehension; the "some get it instantly,

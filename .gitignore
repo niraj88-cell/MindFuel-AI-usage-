@@ -11,6 +11,9 @@
 .DS_Store
 Thumbs.db
 
+# Store packaging output (built from extension/ by STORE_LISTING.md step 5)
+satyashift-store-*.zip
+
 # Misc
 **/npm-debug.log*
 **/yarn-error.log*
