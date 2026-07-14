@@ -49,14 +49,20 @@ export default function LandingPage() {
           </span>
         </div>
 
-        <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
+        <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.16em] text-soft">
           A Chrome extension &amp; a quiet companion app
         </p>
+        {/* The hero leads with the ONE strapline (landing audit 2026-07-14): the H1 gets the
+            fixation, so it carries WHAT this is; the belief line follows as the subheadline.
+            Tab title, OG card, and hero now repeat one message instead of splitting two. */}
         <h1 className="font-serif text-[2.6rem] leading-[1.08] tracking-[-0.01em] text-ink sm:text-[3rem]">
-          Deep work is easier when you&rsquo;re not doing it alone.
+          Proof you did the work.
         </h1>
 
-        <p className="mt-6 max-w-lg text-[16px] leading-relaxed text-soft">
+        <p className="mt-5 text-[17px] leading-relaxed text-ink">
+          Deep work is easier when you&rsquo;re not doing it alone.
+        </p>
+        <p className="mt-3 max-w-lg text-[16px] leading-relaxed text-soft">
           SatyaShift keeps an honest record of your focus, verified quietly in your browser
           so it can&rsquo;t be faked. On your own, it&rsquo;s a witness you can&rsquo;t fool.
           With friends, you keep each other going.
@@ -66,7 +72,7 @@ export default function LandingPage() {
             mockup for flourish — it is the privacy promise, made concrete. */}
         <figure className="mt-10 rounded-xl border border-line bg-card p-4">
           <figcaption className="mb-3 font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-            What your circle sees
+            What a friend in your circle sees
           </figcaption>
           <div className="flex items-center gap-3">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green text-[13px] font-semibold text-white">

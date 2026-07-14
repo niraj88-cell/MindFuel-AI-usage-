@@ -5,6 +5,68 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-14 (4) — Landing clarity pass (audit → items 1–5 shipped, live-verified)
+
+Evidence-based landing audit (first-time-visitor comprehension; the "some get it instantly,
+some leave confused" split). Diagnosis: the two highest-attention slots (H1, primary button)
+carried the least product information — the H1 was the belief line while the ONE strapline
+lived only in the tab title/footer, and "Notify me" appeared with no prior mention that
+access is invite-only. Shipped (roadmap items 1–5; item 6 demo-position was test-only, not shipped):
+1. **Hero swap:** H1 = "Proof you did the work." (the ONE strapline — tab title, OG and hero
+   now repeat one message); belief line ("Deep work is easier when you're not doing it
+   alone.") became the 17px ink subheadline; mechanism paragraph unchanged.
+2. **Invite gate said out loud:** status line above the form ("SatyaShift is in invite-only
+   early access…") + button renamed "Notify me" → "Request an invite".
+3. **Friction out of the form:** the optional "what makes focus hard for you?" field moved
+   OUT of the pre-submit form into the success card (post-commit answers arrive at a higher
+   rate). New INSERT-only table `waitlist_notes` (migration 025, applied + repo file):
+   waitlist has a unique lower(email) index and anon deliberately has no UPDATE policy, so
+   the answer is its own insert. Same deny-read posture as waitlist; adds the same accepted
+   "always-true INSERT" advisor WARN. `lib/supabase/types.ts` got the table added by hand
+   (full regen from live schema is still the older pending task).
+4. Category overline text-faint → text-soft (the only above-fold "what is this" was 11px faint).
+5. Card caption "What your circle sees" → "What a friend in your circle sees" (introduces
+   the "circle" term instead of assuming it).
+Explicitly KEPT (audit found them working): the artifact card, privacy line, demo CTA, no
+testimonials/feature-grids, the narrative order, the visual system.
+Live-verified end-to-end post-deploy: new hero + copy render, zero console errors, and the
+full form flow exercised in the real browser (request → success card → question → "Noted —
+thank you"), both rows confirmed in waitlist/waitlist_notes, then the test rows deleted
+(DB left clean).
+
+## 2026-07-14 (3) — Payment infrastructure audit (report: docs/payment-readiness-2026-07-14.md)
+
+End-to-end audit of the Paddle stack ahead of a paid launch. Full report is the new doc;
+headline: **backend + code are production-ready; go-live gated on two items only the founder
+can clear.**
+
+Verified by me (code read + live probes + unit tests + DB inspection):
+- Webhook HMAC-SHA256 constant-time, replay window checked after authenticity, event_id-PK
+  idempotency, crash-recovery re-apply, occurred_at out-of-order guard. Live probes: 401 for
+  every bad-signature/malformed/replay/prototype-pollution case, 405 GET, 401 on old host
+  (no 301 bypass), 403 CSRF on origin-less portal POST, 404 owner-gated dev-checkout.
+- Entitlement state machine 16/16 tests, fail-closed on unknown status.
+- RLS: billing_events deny-all (service-role only; the advisor INFO is intentional),
+  billing_subscriptions owner-read-only, apply_billing_update EXECUTE-revoked from
+  anon/authenticated. Live DB clean slate: 0 events, 0 subs, 45 active trials (armed
+  host-gate locks nobody out).
+- Secrets server-only, prod API base = api.paddle.com, HTTPS/HSTS preload.
+
+BLOCKERS (founder):
+- **B1: no `paddle-live` MCP connected** → could not run the live transaction/lifecycle test
+  (steps 2/4/5/6 of Paddle's script). Connect it or drive those in the dashboard.
+- **B2: prod `NEXT_PUBLIC_PADDLE_*` client vars unreadable from every tool** (`vercel env pull`
+  blank = classic Sensitive-var behavior; Vercel MCP get_project has no env values; build
+  chunks are auth-gated). MUST confirm populated. 10-sec check: log in → /profile shows the
+  plan-chooser buttons (checkoutEnabled true) vs the greyed "billing not switched on" cards.
+- Dashboard-only: identity verification passed, satyashift.com checkout domain approved, live
+  (not sandbox) API/webhook keys, webhook destination registered to the 7 subscription.* events.
+
+Extension Chrome-store compliance checked as part of this: MV3 ✓, no remote code ✓ (all fetch =
+Supabase auth or own API; no eval/new Function/CDN script), least-privilege permissions ✓.
+Remaining founder tasks: sensitive-permission justification copy (tabs, cookies) + privacy
+disclosure for the store listing. I will NOT run the refund/adjustment path (real money).
+
 ## 2026-07-14 (2) — SEO + security hardening pass (deployed + live-verified, Lighthouse 93/100/100/100)
 
 Same-day second pass: full-stack audit against Search Essentials + OWASP. Most of the brief
