@@ -6,10 +6,15 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { TrustPage, TrustSections, type TrustSection } from '@/components/site/TrustPage'
 
+const TITLE = 'How it works — SatyaShift'
+const DESCRIPTION = 'What happens after you install SatyaShift, how focus verification works, and exactly what the extension can and cannot see.'
+
 export const metadata: Metadata = {
-  title: 'How it works — SatyaShift',
-  description: 'What happens after you install SatyaShift, how focus verification works, and exactly what the extension can and cannot see.',
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: '/how-it-works' },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: '/how-it-works', siteName: 'SatyaShift', type: 'website' },
+  twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION },
 }
 
 const SECTIONS: TrustSection[] = [

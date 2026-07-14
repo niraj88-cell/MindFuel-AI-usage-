@@ -6,10 +6,15 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { TrustPage, TrustSections, type TrustSection } from '@/components/site/TrustPage'
 
+const TITLE = 'Refund Policy — SatyaShift'
+const DESCRIPTION = '30-day money-back guarantee on every purchase, a free trial with no payment method, and one-click cancellation.'
+
 export const metadata: Metadata = {
-  title: 'Refund Policy — SatyaShift',
-  description: '30-day money-back guarantee on every purchase, a free trial with no payment method, and one-click cancellation.',
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: '/refund' },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: '/refund', siteName: 'SatyaShift', type: 'website' },
+  twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION },
 }
 
 const SECTIONS: TrustSection[] = [

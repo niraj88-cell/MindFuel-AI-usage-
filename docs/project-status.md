@@ -5,6 +5,75 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-14 (2) — SEO + security hardening pass (deployed + live-verified, Lighthouse 93/100/100/100)
+
+Same-day second pass: full-stack audit against Search Essentials + OWASP. Most of the brief
+was ALREADY covered by the 07-02 security review and the 07-10 SEO pass — this session fixed
+the residuals and measured the result. Live Lighthouse (mobile, homepage): performance 93,
+accessibility 100, best-practices 100, SEO 100 (LCP 2.3s, CLS 0.013, TBT 280ms).
+
+Fixed:
+1. **Middleware was silently downgrading HSTS.** proxy.ts re-set Strict-Transport-Security
+   WITHOUT `preload` on every pass-through response, overriding next.config's preload-ready
+   value (verified live pre-fix). Removed the middleware duplicates — next.config headers()
+   is now the single source (it provably applies to middleware short-circuits too; the host
+   301 carries the full set). LESSON: never set the same header in two layers.
+2. **CSP tightened** (next.config.ts): dropped Google Fonts origins (fonts are self-hosted
+   via next/font), dropped `avatars.githubusercontent.com` from img-src + images.remotePatterns
+   (Google is the only OAuth provider), Permissions-Policy microphone=(self)→() (no
+   getUserMedia anywhere), X-XSS-Protection 1;mode=block→0 (legacy auditor = XS-Leaks vector).
+3. **Per-page Open Graph + Twitter metadata** on all 8 public pages (TITLE/DESCRIPTION consts,
+   og url/siteName/type + twitter card/title/description). Root twitter.title otherwise
+   overrode per-page og:title in X unfurls; child openGraph replaces parent wholesale in Next.
+4. **Landing fine print text-ghost→text-faint** (ghost ≈2.5:1 on paper, below WCAG AA; faint
+   ≈5.0:1). Rule: ghost is never body/readable text. → a11y 96→100.
+
+Audited clean, no change: forgot-password (rate-limited, enumeration-proof), CSRF origin
+checks, edge rate limits, RLS advisors (all WARNs are the documented known-accepted set;
+billing_events no-policy INFO = intended deny-all), dev-checkout KEPT deliberately (owner-
+gated 404-invisible; removal happens post-proven-checkout as its header says). Browser-
+verified zero console errors on /, /login, /demo, /pricing under the tightened CSP.
+
+Known-accepted / founder items: npm audit 3 moderates = Next's bundled postcss<8.5.10
+(build-time only, no untrusted CSS; no fixed Next stable yet — re-check on next Next bump).
+Mixpanel is DEAD CODE (initMixpanel never called) though NEXT_PUBLIC_MIXPANEL_TOKEN is set in
+prod — founder decision: wire it + add mixpanel origins to CSP connect-src + disclose in
+/privacy, or delete lib/mixpanel.ts + the env var (privacy-first default). Leaked-password
+protection toggle still off (Supabase dashboard action). VAPID rotation still pending.
+Unused-index INFOs left alone at current traffic.
+
+## 2026-07-14 — Google branding fix: real favicon package (deployed + live-verified)
+
+Google Search was showing the **default Vercel/Next.js triangle** as the site icon. Root
+cause: `web/app/favicon.ico` was still the untouched create-next-app default (25,931
+bytes) — `app/favicon.ico` wins for `/favicon.ico`, which is exactly the file Google
+reads. Compounding it, `public/icon-192x192.png` / `icon-512x512.png` were 120-byte
+placeholder stubs, so the PWA manifest, the manual apple-touch-icon link, AND the JSON-LD
+Organization `logo` all pointed at broken images.
+
+Fixed (all rasterized from the same bindu-seal geometry as `app/icon.svg`):
+1. **`web/scripts/generate-icons.mjs`** — reproducible generator (sharp, already in
+   node_modules; zero new deps). Renders two variants: rounded ink tile (favicon, manifest
+   "any", Org logo) and full-bleed square (apple-touch — iOS rounds corners itself — and
+   maskable). Assembles a real multi-size BMP-encoded .ico by hand (16/32/48). Re-run it
+   after any change to the mark.
+2. Replaced `app/favicon.ico` (now 15,086 bytes, validated with System.Drawing); added
+   `app/apple-icon.png` (180×180, Next file convention emits the link tag — the manual
+   broken `<link rel="apple-touch-icon">` in layout.tsx was removed); real
+   `public/icon-192x192.png`, `icon-512x512.png`, new `icon-512x512-maskable.png`.
+3. `manifest.json`: icons carry `purpose: any` + a `maskable` entry.
+4. **`app/(auth)/layout.tsx`** (new): `robots: noindex, follow` for login/signup/
+   forgot-password/reset-password — they're client components with no metadata of their
+   own, so they inherited the homepage title and surfaced as thin duplicates.
+
+Audited, already correct (2026-07-10 pass): per-page titles/descriptions/canonicals,
+robots.ts, sitemap.ts, JSON-LD graph (its `logo` URL is now a real image), GSC
+verification meta, host 301. No `<img>` exists anywhere in the app → no alt-text gaps.
+Verified live post-deploy: all six icon URLs 200 with correct bytes (incl. as Googlebot
+UA), head has favicon.ico 48x48 + icon.svg any + apple-touch-icon 180x180, /login renders
+noindex, vercel.app root still 301s. FOUNDER: in GSC, URL-Inspect `/` and request
+indexing to speed up the favicon re-crawl (icon refresh can otherwise take days–weeks).
+
 ## 2026-07-10 — Technical SEO + GEO foundation (deployed + live-verified)
 
 Full SEO/GEO engagement (audit → implementation → roadmap artifact). Three CRITICAL

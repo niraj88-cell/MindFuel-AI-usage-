@@ -27,7 +27,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'See a session — SatyaShift demo',
     description: 'The reflection, and the complete domain-only record behind it. No account needed.',
+    url: '/demo',
+    siteName: 'SatyaShift',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'See a session — SatyaShift demo',
+    description: 'The reflection, and the complete domain-only record behind it. No account needed.',
   },
 }
 

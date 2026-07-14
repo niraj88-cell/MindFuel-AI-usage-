@@ -7,13 +7,13 @@ const CSP = [
   "default-src 'self'",
   // Scripts: self + Next.js inline scripts (hashes preferred over 'unsafe-inline' in prod)
   // Paddle.js (overlay checkout) loads from cdn.paddle.com; *.paddle.com covers sandbox + live.
-  `script-src 'self' 'unsafe-inline' https://*.paddle.com ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"}`,
-  // Styles: self + Google Fonts
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  // Fonts
-  "font-src 'self' https://fonts.gstatic.com",
-  // Images: self + Supabase storage + data URIs for avatars
-  "img-src 'self' data: blob: https://*.supabase.co https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://*.paddle.com",
+  `script-src 'self' 'unsafe-inline' https://*.paddle.com${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"}`,
+  // Styles: self + inline (framer-motion/Radix set style attributes). Fonts are self-hosted
+  // via next/font, so no Google Fonts origins — don't re-add them.
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self'",
+  // Images: self + Supabase storage + Google OAuth avatars (the only OAuth provider) + Paddle.
+  "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://*.paddle.com",
   // API connections: self + Supabase (realtime WebSocket + REST) + Paddle checkout API
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.paddle.com",
   // No plugins, no object embeds
@@ -59,7 +59,9 @@ const nextConfig: NextConfig = {
           // ── Anti-Clickjacking ──
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          // '0' is the modern value: the legacy XSS auditor this header enabled is gone
+          // from every current browser and enabling it created XS-Leaks side channels.
+          { key: 'X-XSS-Protection', value: '0' },
 
           // ── Referrer Policy ──
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
@@ -78,7 +80,7 @@ const nextConfig: NextConfig = {
             key: 'Permissions-Policy',
             value: [
               'camera=()',
-              'microphone=(self)',
+              'microphone=()',
               'geolocation=()',
               'payment=()',
               'usb=()',
@@ -128,7 +130,6 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co' },
-      { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
     ],
   },

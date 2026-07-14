@@ -10,10 +10,15 @@ import { TrustPage } from '@/components/site/TrustPage'
 import { readPaddlePublicEnv } from '@/lib/billing/public-config'
 import { PLANS, TRIAL_DAYS } from '@/lib/subscription'
 
+const TITLE = 'Pricing — SatyaShift'
+const DESCRIPTION = `One plan, priced simply: ${TRIAL_DAYS}-day free trial with no payment method, then $${PLANS.monthly.priceUsd}/month or $${PLANS.annual.priceUsd}/year.`
+
 export const metadata: Metadata = {
-  title: 'Pricing — SatyaShift',
-  description: `One plan, priced simply: ${TRIAL_DAYS}-day free trial with no payment method, then $${PLANS.monthly.priceUsd}/month or $${PLANS.annual.priceUsd}/year.`,
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: '/pricing' },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: '/pricing', siteName: 'SatyaShift', type: 'website' },
+  twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION },
 }
 
 // Both plans are the whole product — pricing chooses a cadence, never a feature set.

@@ -11,11 +11,19 @@ import Link from 'next/link'
 import { TrustPage } from '@/components/site/TrustPage'
 import { PLANS, TRIAL_DAYS } from '@/lib/subscription'
 
+const TITLE = 'FAQ — SatyaShift'
+const DESCRIPTION =
+  'Plain answers about SatyaShift: what the extension can and cannot see, how focus verification works, what your circle sees, pricing, and your data rights.'
+
 export const metadata: Metadata = {
-  title: 'FAQ — SatyaShift',
-  description:
-    'Plain answers about SatyaShift: what the extension can and cannot see, how focus verification works, what your circle sees, pricing, and your data rights.',
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: '/faq' },
+  // Child openGraph/twitter REPLACE the root layout's (Next merges per level, not deep),
+  // so each carries its full shape — otherwise the root twitter.title would override
+  // this page's og:title in X unfurls.
+  openGraph: { title: TITLE, description: DESCRIPTION, url: '/faq', siteName: 'SatyaShift', type: 'website' },
+  twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION },
 }
 
 type Faq = { q: string; a: string; link?: { href: string; label: string } }

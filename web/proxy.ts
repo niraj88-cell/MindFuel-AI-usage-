@@ -119,11 +119,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Inject additional safety headers into the response
-  supabaseResponse.headers.set('X-Content-Type-Options', 'nosniff')
-  if (process.env.NODE_ENV === 'production') {
-    supabaseResponse.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
-  }
+  // Security headers come from next.config.ts headers() ONLY — they apply to every
+  // response including middleware short-circuits (verified live on the host 301).
+  // Setting them here too OVERRODE the config values: pages were shipping this file's
+  // weaker HSTS (no `preload`) instead of the preload-ready one. One source of truth.
 
   return supabaseResponse
 }

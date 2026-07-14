@@ -78,7 +78,8 @@ export function WaitlistForm() {
         {status === 'submitting' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
         Notify me
       </button>
-      <p className="mt-3 text-center text-xs text-ghost">We&rsquo;ll email you your invite. Nothing else.</p>
+      {/* faint, not ghost: ghost is ~2.5:1 on paper — below WCAG AA for readable text. */}
+      <p className="mt-3 text-center text-xs text-faint">We&rsquo;ll email you your invite. Nothing else.</p>
     </form>
   )
 }

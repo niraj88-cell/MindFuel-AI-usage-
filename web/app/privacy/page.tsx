@@ -8,10 +8,15 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { TrustPage, TrustSections, type TrustSection } from '@/components/site/TrustPage'
 
+const TITLE = 'Privacy — SatyaShift'
+const DESCRIPTION = 'What SatyaShift sees, what it never sees, and the control you keep.'
+
 export const metadata: Metadata = {
-  title: 'Privacy — SatyaShift',
-  description: 'What SatyaShift sees, what it never sees, and the control you keep.',
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: '/privacy' },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: '/privacy', siteName: 'SatyaShift', type: 'website' },
+  twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION },
 }
 
 const SECTIONS: TrustSection[] = [

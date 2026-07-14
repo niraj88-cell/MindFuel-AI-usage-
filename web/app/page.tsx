@@ -24,7 +24,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'SatyaShift — Proof you did the work',
     description: 'Deep work is easier when you are not doing it alone. Verified focus, solo or with friends. Private by default.',
+    url: '/',
+    siteName: 'SatyaShift',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SatyaShift — Proof you did the work',
+    description: 'Deep work is easier when you are not doing it alone. Verified focus, solo or with friends. Private by default.',
   },
 }
 
