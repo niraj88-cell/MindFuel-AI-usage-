@@ -91,7 +91,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#FAF8F4" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        {/* apple-touch-icon comes from the app/apple-icon.png file convention. */}
         <JsonLd />
       </head>
       <body className="font-sans antialiased" suppressHydrationWarning>
