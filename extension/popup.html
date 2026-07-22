@@ -46,9 +46,6 @@
         --clay: #CE9B60;
         --clay-tint: #2A2216;
       }
-      .tile { background: #0F0E0B; }
-      .primary { color: #FFFFFF; }
-      .primary:hover { background: #4C9A5C; } /* hover moves toward light, never toward mud */
     }
     * { box-sizing: border-box; }
     body { margin: 0; width: 300px; background: var(--paper); color: var(--ink);
@@ -109,6 +106,20 @@
     .toggle:hover { color: var(--ink); }
     .priv { margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--hairline);
       font-size: 11px; color: var(--faint); display: flex; align-items: center; gap: 6px; }
+
+    /* Night ledger, component layer. This MUST sit after the base component rules: an
+       earlier @media block loses the cascade to a later same-specificity rule, which is
+       exactly how the brand tile ended up painting itself --ink (off-white at night) with
+       a #fff mark on top — an invisible seal in a white box. Keep these last. */
+    @media (prefers-color-scheme: dark) {
+      /* The one deliberate dark surface (see design language): the ink brand tile stays
+         ink at night, so the seal reads white against it instead of vanishing. */
+      .tile { background: #0F0E0B; color: #FFFFFF; }
+      .primary { color: #FFFFFF; }
+      /* Hover moves toward light, never toward mud: --green-deep flips role at night
+         (readable green TEXT), so reusing it as a hover FILL would put white on pale moss. */
+      .primary:hover { background: #4C9A5C; }
+    }
   </style>
 </head>
 <body>
