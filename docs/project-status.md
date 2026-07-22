@@ -5,6 +5,49 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-22 — Final submission pass: four real defects found and fixed (founder's eye)
+
+The 07-15 pass found zero defects because it exercised code, not surfaces. Preparing
+STORE SCREENSHOTS put human eyes on the running product and immediately surfaced four
+genuine bugs — three of them invisible to every test and to `tsc`, because they live in
+CSS cascade order and sentence composition. Lesson: automated verification proves logic;
+only looking at the thing proves the thing.
+
+1. **`"Just started of focus."` — not a sentence** (bc7f8db). `sessionElapsed` returned the
+   PHRASE `'Just started'` under one minute and the caller suffixed `' of focus.'`. Past a
+   minute it read fine (`'5 min of focus'`), which is why it survived everything — but it is
+   the first sentence of every user's FIRST session. `sessionElapsed` now returns null when
+   there is no duration to name; `sessionDetail` phrases that case itself.
+2. **Night-mode brand tile painted itself invisible — popup** (3dd5f11). The dark-mode
+   component rules (`.tile`, `.primary`, `.primary:hover`) sat in an `@media` block ABOVE the
+   base rules. Same specificity → the later base rule won → at night the ink tile took
+   `background: var(--ink)` (off-white) under its `#fff` seal: a white mark in a white box.
+   `.primary:hover` lost the same way, falling through to `--green-deep` (#8FC49A at night,
+   the readable-TEXT green) as a FILL under white text. Component-layer dark rules moved to
+   the END of the stylesheet.
+3. **Same defect in `welcome.html`** (81712b7) — worse, because it is the 42px tile on the
+   FIRST page a new install opens. Fixed identically; the two night-ledger blocks stay in
+   step as `extension/CLAUDE.md` requires. Seal-on-tile contrast at night: 19.3:1.
+4. **The popup buried its own headline** (491cccd, improvement not defect). `4 min of focus`
+   sat at 12px in `--faint` as a clause, while the web session page headlines the same
+   measurement large. The elapsed time is now the anchor: 26px, system mono stack with
+   tabular numerals (no webfont — the popup must open instantly), in `--green-deep`.
+   Detail drops the duplicated duration. Nothing added: no ring, gauge, gradient, or motion.
+   Hidden under the first minute, so the sentence still carries that case alone.
+
+**Verified after all four:** extension 62/62, web 124/124, `tsc` clean. In-browser in BOTH
+schemes: elapsed 26px ui-monospace tabular, contrast 10.13:1 (paper) / 8.33:1 (night), every
+duration through `10h 30m` holds one line; tiles correct in both files. Staged build re-checked:
+zero inline scripts, zero eval/Function/importScripts, zero localhost in the manifest, no
+third-party origins. Store-listing claims re-verified against reality (export AND account
+delete both exist and are auth-protected: `/api/export/delete` → 405 GET / 403 unauth POST).
+
+**`satyashift-store-2.9.3.zip` rebuilt** with all four changes (11 runtime files, 46 KB).
+
+Also found but NOT fixed (deliberate, post-launch): `/week` is hardcoded to the last 7 days
+(`subDays(new Date(), 6)`) with no navigation, so a user can never see an earlier week — the
+reason the founder's good week card could not be regenerated for a screenshot.
+
 ## 2026-07-15 — Pre-submission full-system verification + store zip built (no defects found)
 
 Final pass before the Chrome Web Store submission. Every layer tested; ZERO defects found —
