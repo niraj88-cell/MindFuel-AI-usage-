@@ -23,14 +23,17 @@ function hostOf(url) {
 }
 
 // Calm, minute-level elapsed for a running deep session (no frantic ticking seconds).
+// Returns null under the first minute: there is no duration to name yet, and the caller
+// phrases that case itself ("Just started of focus." was not a sentence).
 function sessionElapsed(ts) {
   const m = Math.floor((Date.now() - ts) / 60000);
-  if (m < 1) return 'Just started';
+  if (m < 1) return null;
   if (m < 60) return `${m} min`;
   return `${Math.floor(m / 60)}h ${m % 60}m`;
 }
 function sessionDetail(s) {
-  return `${sessionElapsed(s.session.startedAt)} of focus. We're verifying it quietly.`;
+  const elapsed = sessionElapsed(s.session.startedAt);
+  return `${elapsed ? `${elapsed} of focus` : 'Just started'}. We're verifying it quietly.`;
 }
 function paintSession() {
   if (current && current.session) $('detail').textContent = sessionDetail(current);
