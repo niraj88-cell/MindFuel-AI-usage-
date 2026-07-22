@@ -209,7 +209,12 @@ export default function SettingsPage() {
             ? <>Everything is included in your trial — {sub.trialDaysLeft} day{sub.trialDaysLeft === 1 ? '' : 's'} left.</>
             : sub?.status === 'active'
               ? <>You&rsquo;re on the {sub.plan === 'annual' ? 'annual' : 'monthly'} plan. Thank you for keeping this independent.</>
-              : <>Your trial has ended, but nothing is locked while billing is being set up.</>}
+              /* Say exactly what the gate does. POST /api/squads runs requirePremium whenever
+                 checkout is configured, so "nothing is locked" became false the moment the
+                 Paddle env vars landed. Name the ONE thing that costs money, and name the
+                 things that never will — the host-pays boundary, out loud. */
+              : <>Your trial has ended. Your own sessions, your history, and joining a friend&rsquo;s
+                  circle stay free. A plan is only needed to host a circle of your own.</>}
         </p>
 
         {/* Active subscriber: manage / cancel through Paddle's portal. */}
