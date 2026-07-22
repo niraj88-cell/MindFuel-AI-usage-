@@ -27,7 +27,12 @@ const SECTIONS: TrustSection[] = [
       { list: [
         'We never collect page addresses (URLs), page titles, or page content.',
         'We never collect what you type, click, or read — no keystrokes, no messages, no passwords.',
-        'We never collect your browsing history or your other tabs.',
+        // Precise on purpose. The Chrome Web Store disclosure declares "web history: yes"
+        // (domains + time IS web history under Google's broad definition, and understating
+        // it would be the worse sin). A flat "we never collect your browsing history" read
+        // as a contradiction of our own store disclosure — so say exactly which part we
+        // never take: the browser's history list, and every tab that isn't the active one.
+        'We never read your browser history list, and never any tab except the one you are actively using.',
         'Incognito windows are never tracked.',
         'Banking, email, password manager, and health domains are skipped entirely — they are on a built-in never-track list.',
       ]},
