@@ -40,9 +40,6 @@
         --green-tint: #20291F;
         --green-line: #3A5240;
       }
-      .tile { background: #0F0E0B; }
-      .cta { color: #FFFFFF; }
-      .cta:hover { background: #4C9A5C; }
     }
     * { box-sizing: border-box; }
     body { margin: 0; background: var(--paper); color: var(--ink);
@@ -75,6 +72,19 @@
     .foot { margin-top: 22px; font-size: 12.5px; color: var(--faint); }
     code { background: var(--hairline); padding: 1px 6px; border-radius: 5px; font-size: 13px;
       font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; color: var(--ink); }
+
+    /* Night ledger, component layer — kept in step with popup.html. This MUST sit after the
+       base component rules: an earlier @media block loses the cascade to a later rule of the
+       same specificity, which is how the ink brand tile ended up painting itself --ink
+       (off-white at night) under a #fff seal — an invisible mark in a white box, on the very
+       first page a new install shows. Keep these last. */
+    @media (prefers-color-scheme: dark) {
+      .tile { background: #0F0E0B; color: #FFFFFF; }
+      .cta { color: #FFFFFF; }
+      /* Hover moves toward light, never toward mud: --green-deep flips role at night
+         (readable green TEXT), so reusing it as a hover FILL would put white on pale moss. */
+      .cta:hover { background: #4C9A5C; }
+    }
   </style>
 </head>
 <body>
