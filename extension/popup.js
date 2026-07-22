@@ -31,12 +31,27 @@ function sessionElapsed(ts) {
   if (m < 60) return `${m} min`;
   return `${Math.floor(m / 60)}h ${m % 60}m`;
 }
-function sessionDetail(s) {
+// The two lines a running session shows: the elapsed time is the measured value (rendered
+// large — it is what the session IS), and the detail is the quiet assurance beneath it.
+// Under the first minute there is no duration to render, so the sentence carries it alone.
+function sessionLines(s) {
   const elapsed = sessionElapsed(s.session.startedAt);
-  return `${elapsed ? `${elapsed} of focus` : 'Just started'}. We're verifying it quietly.`;
+  return {
+    elapsed,
+    detail: elapsed ? "We're verifying it quietly." : "Just started. We're verifying it quietly.",
+  };
+}
+// Paint the elapsed anchor. `lines` is null when no session is running, which hides it.
+function paintElapsed(lines) {
+  const el = $('elapsed');
+  el.textContent = lines?.elapsed || '';
+  el.style.display = lines?.elapsed ? 'block' : 'none';
 }
 function paintSession() {
-  if (current && current.session) $('detail').textContent = sessionDetail(current);
+  if (!current || !current.session) return;
+  const lines = sessionLines(current);
+  paintElapsed(lines);
+  $('detail').textContent = lines.detail;
 }
 
 // A calm, human line for a transient sync failure. Only shown when work is actually waiting.
@@ -125,7 +140,7 @@ function render(s) {
   if (!s) {
     dot = 'off'; state = 'Not connected'; detail = 'The tracker is starting up. Reopen in a moment.';
   } else if (inSession) {
-    dot = 'ok'; state = 'Focusing'; detail = sessionDetail(s);
+    dot = 'ok'; state = 'Focusing'; detail = sessionLines(s).detail;
   } else if (s.sessionExpired) {
     dot = 'warn'; state = 'Session expired';
     detail = `Sign in again at ${hostOf(s.baseUrl)} to resume verifying your focus.`;
@@ -145,6 +160,8 @@ function render(s) {
   $('dot').className = 'dot ' + dot;
   $('state').textContent = state;
   $('detail').textContent = detail;
+  // The elapsed anchor belongs to a running session only — every other state hides it.
+  paintElapsed(inSession ? sessionLines(s) : null);
 
   // Quiet sync reassurance — hidden during a session (the session view speaks for itself).
   const showSynced = s && s.signedIn && !s.paused && !s.sessionExpired && !inSession && s.lastSync && !transientNote(s);

@@ -64,6 +64,16 @@
     .dot.warn { background: var(--clay); }
     .dot.off { background: var(--ghost); }
     .state { font-size: 13px; font-weight: 600; }
+    /* A running session's elapsed time is the one measured value this popup exists to show,
+       so it is the largest thing in it — the same weight the web session page gives a
+       finished session's duration. Mono + tabular numerals so the digits hold their box as
+       minutes tick over, and --green-deep because that is this file's readable green TEXT
+       role in BOTH schemes (deep forest by day, light moss at night). Hidden until there is
+       a whole minute to name; the first minute is carried by the sentence alone. */
+    .elapsed { display: none; margin-top: 5px; font-size: 26px; line-height: 1.05; font-weight: 600;
+      color: var(--green-deep); letter-spacing: -0.015em;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-variant-numeric: tabular-nums; }
     .detail { font-size: 12px; color: var(--faint); margin-top: 3px; line-height: 1.5; }
     .presence { display: none; align-items: center; gap: 8px; margin-top: 11px; padding: 0 3px;
       font-size: 12px; color: var(--faint); }
@@ -142,6 +152,7 @@
       <span id="dot" class="dot off" aria-hidden="true"></span>
       <span aria-live="polite">
         <div id="state" class="state">Checking&hellip;</div>
+        <div id="elapsed" class="elapsed"></div>
         <div id="detail" class="detail">Reading your session.</div>
       </span>
     </div>
