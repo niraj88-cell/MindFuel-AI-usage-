@@ -7,15 +7,22 @@ const CSP = [
   "default-src 'self'",
   // Scripts: self + Next.js inline scripts (hashes preferred over 'unsafe-inline' in prod)
   // Paddle.js (overlay checkout) loads from cdn.paddle.com; *.paddle.com covers sandbox + live.
-  `script-src 'self' 'unsafe-inline' https://*.paddle.com${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"}`,
+  // public.profitwell.com is Paddle Retain, which paddle.js loads for itself (it appends
+  // ?auth=paddletoken_…). Paddle documents it as part of the required checkout allowlist, so
+  // it is here to keep the overlay whole — NOT for our own analytics. We ship no analytics.
+  `script-src 'self' 'unsafe-inline' https://*.paddle.com https://public.profitwell.com${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"}`,
   // Styles: self + inline (framer-motion/Radix set style attributes). Fonts are self-hosted
   // via next/font, so no Google Fonts origins — don't re-add them.
-  "style-src 'self' 'unsafe-inline'",
+  // Paddle's overlay pulls its own stylesheet from cdn.paddle.com: without this the checkout
+  // renders UNSTYLED. script-src had Paddle from the start and style-src did not, which is
+  // exactly the kind of gap only a real checkout attempt reveals.
+  "style-src 'self' 'unsafe-inline' https://*.paddle.com",
   "font-src 'self'",
   // Images: self + Supabase storage + Google OAuth avatars (the only OAuth provider) + Paddle.
   "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://*.paddle.com",
   // API connections: self + Supabase (realtime WebSocket + REST) + Paddle checkout API
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.paddle.com",
+  // (checkout-service.paddle.com is matched by the wildcard) + Paddle Retain's own endpoint.
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.paddle.com https://*.profitwell.com",
   // No plugins, no object embeds
   "object-src 'none'",
   // Media: self only
