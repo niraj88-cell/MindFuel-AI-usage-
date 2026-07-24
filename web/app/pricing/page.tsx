@@ -6,6 +6,7 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Check } from 'lucide-react'
 import { TrustPage } from '@/components/site/TrustPage'
 import { readPaddlePublicEnv } from '@/lib/billing/public-config'
 import { PLANS, TRIAL_DAYS } from '@/lib/subscription'
@@ -104,6 +105,10 @@ export default function PricingPage() {
             ${PLANS.annual.priceUsd}
             <span className="ml-1 text-base font-normal text-faint">/ year</span>
           </p>
+          {/* The per-month anchor: the small, true number people actually feel. */}
+          <p className="mt-1.5 font-mono text-[13px] text-green">
+            just ${ANNUAL_PER_MONTH} a month, billed once a year
+          </p>
           <p className="mt-4 text-[14px] leading-relaxed text-soft">
             {PLANS.annual.note} That&rsquo;s ${ANNUAL_PER_MONTH} a month instead of the
             ${YEAR_AT_MONTHLY} a year monthly adds up to. We email before any renewal,
@@ -123,16 +128,44 @@ export default function PricingPage() {
         </div>
       </div>
 
-      {/* Trust, stated as fact, next to the decision. */}
-      <p className="mt-5 text-center text-xs leading-relaxed text-faint">
-        No card for the trial &middot; Cancel in one click &middot; No hidden fees &middot;
-        30-day money-back guarantee &middot; Payments by Paddle — card details never touch
-        our servers
+      {/* Risk reversal, made visible. The honest conversion lever is removing fear, never
+          manufacturing urgency. Four true promises, next to the decision, each one a reason
+          you cannot lose by starting. */}
+      <ul className="mt-6 grid gap-x-7 gap-y-3.5 rounded-xl border border-line bg-card p-5 sm:grid-cols-2">
+        {[
+          ['14 days free, no card', 'Nothing is charged by surprise, and there is nothing to remember to cancel.'],
+          ['Cancel in one click', 'Access runs to the end of what you paid for. No email, no retention maze.'],
+          ['30-day money-back', 'Pay, change your mind, get all of it back. One page, plain words.'],
+          ['Leaving keeps your data', 'Export and deletion are free forever. Your record is never held hostage.'],
+        ].map(([lead, detail]) => (
+          <li key={lead} className="flex gap-2.5">
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-green" aria-hidden="true" />
+            <span className="text-[13px] leading-relaxed text-soft">
+              <span className="font-medium text-ink">{lead}.</span> {detail}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-center text-xs leading-relaxed text-faint">
+        Payments by Paddle, our merchant of record — card details never touch our servers.
+        Analysis uses domains and time only, never pages, content, or what you type.
       </p>
-      <p className="mt-1.5 text-center text-xs leading-relaxed text-faint">
-        And the product itself: analysis uses domains and time only — never pages,
-        content, or what you type.
-      </p>
+
+      {/* The honest "why it's paid": reframes the subscription as aligned incentives, not a
+          toll. Business-model transparency is a real, research-backed driver of willingness
+          to pay — and here it happens to be simply true. This is the one earned green voice. */}
+      <div className="mt-8 rounded-xl border border-green-line bg-green-tint p-6">
+        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-green">
+          Why it costs money
+        </p>
+        <p className="mt-2.5 text-[15px] leading-relaxed text-ink">
+          SatyaShift earns money one way: people pay for it. Not ads, not selling your
+          attention &mdash; the two things it exists to protect you from. The subscription{' '}
+          <span className="font-medium">is</span> the business model, and that is on purpose:
+          it is the only arrangement where the product&rsquo;s incentives and yours point the
+          same direction. Paying is what keeps it honest &mdash; that is the whole deal.
+        </p>
+      </div>
 
       {/* What the money buys — once, because both plans are the whole product. */}
       <section className="mt-12">
