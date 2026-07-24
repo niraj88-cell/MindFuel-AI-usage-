@@ -45,7 +45,7 @@ const SECTIONS: TrustSection[] = [
       'Focus activity: bare domains with time durations while tracking is on, and your focus sessions (start, end, the optional intention you write). You can pause tracking any time from the extension popup.',
       'Circle: the circles you join and the encouragements you send or receive (fixed phrases — there is no free-text messaging to collect).',
       'Web app analytics: the web app (not the extension) uses Mixpanel for basic product analytics such as page views tied to your account id. The extension contains no analytics, no trackers, and talks only to our own server.',
-      'Waitlist: if you join the waitlist on the homepage, we store that email address and use it for one thing — inviting you. Ask and it is deleted.',
+      'Invite requests (before launch): while access was invite-only the homepage collected an email address, and optionally a sentence about what makes focus hard for you. That form is gone now that signup is open to everyone. Emails left there are used for one thing — telling you it opened — and are deleted on request.',
     ],
   },
   {

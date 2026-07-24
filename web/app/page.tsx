@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import { SatyaMark } from '@/components/brand/SatyaMark'
 import { VerifiedMark } from '@/components/brand/VerifiedMark'
 import { SiteFooter } from '@/components/site/SiteFooter'
-import { WaitlistForm } from '@/components/landing/WaitlistForm'
 import { PLANS, TRIAL_DAYS } from '@/lib/subscription'
 
 // Price on the front door, derived from the same constants the app bills from —
@@ -14,7 +14,8 @@ const YEARLY_SAVING = YEAR_AT_MONTHLY - PLANS.annual.priceUsd
 // Public front door (a statement of belief, not a sales page). A visitor should understand in
 // seconds: what it is, why it exists, why it's private, why it can be trusted. One honest
 // artifact (exactly what a circle sees) carries the privacy promise better than any claim.
-// The waitlist EMAIL gate is retired — this converts straight to signup/login.
+// Both gates are retired as of launch (2026-07-24): no waitlist email, no invite — this
+// converts straight to signup, with the demo for anyone not ready to commit.
 
 export const metadata: Metadata = {
   title: 'SatyaShift — Proof you did the work',
@@ -99,15 +100,23 @@ export default function LandingPage() {
           .
         </p>
 
-        {/* Soft-launch (TEMPORARY): access is invite-only, so instead of pushing signup
-            we collect interest — an email and, if they want, a thought. The signup CTA and
-            the "Sign in" link are intentionally removed while signups are paused in Supabase;
-            /login still exists (unlinked) for early accounts. To reopen, revert this block to
-            the signup/demo CTAs. */}
-        <WaitlistForm />
-        {/* The one thing a visitor can DO right now (signups are paused): see a real
-            finished session, run through the actual engine. A visible secondary action,
-            not fine print — it's the proof the front door is otherwise only claiming. */}
+        {/* OPEN (launch 2026-07-24): the invite gate is retired — anyone can create an
+            account. This must stay in step with Supabase Auth "Allow new users to sign up"
+            being ON; if that toggle is off, this button leads to an error page. To close
+            access again, turn the toggle off AND drop '/signup' from proxy.ts. */}
+        <Link
+          href="/signup"
+          className="focus-ring press mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-ink py-3.5 text-sm font-semibold text-paper transition-colors hover:bg-ink-hover"
+        >
+          Create your account <ArrowRight className="h-4 w-4" />
+        </Link>
+        <p className="mt-3 text-center text-xs text-faint">
+          {TRIAL_DAYS} days free, no card. Chrome on desktop.
+        </p>
+
+        {/* The second thing a visitor can do: see a real finished session, run through the
+            actual engine. A visible secondary action, not fine print — it's the proof the
+            front door is otherwise only claiming. */}
         <Link
           href="/demo"
           className="focus-ring press mt-4 flex w-full items-center justify-center rounded-lg border border-line bg-card py-3 text-sm font-semibold text-ink transition-colors hover:bg-green-wash"
@@ -115,8 +124,14 @@ export default function LandingPage() {
           See it working &mdash; no account needed
         </Link>
 
-        {/* Pricing hidden during invite-only soft launch (remove `hidden` to restore). */}
-        <div className="mt-10 hidden rounded-xl border border-line bg-card p-5">
+        <p className="mt-5 text-center text-sm text-faint">
+          Already have an account?{' '}
+          <Link href="/login" className="font-medium text-ink underline decoration-line underline-offset-4 transition-colors hover:decoration-ink">
+            Sign in
+          </Link>
+        </p>
+
+        <div className="mt-10 rounded-xl border border-line bg-card p-5">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Pricing</span>
             <span className="rounded-full bg-green px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-wide text-white">

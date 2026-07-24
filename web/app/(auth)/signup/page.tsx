@@ -60,7 +60,12 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/onboarding`,
+        // The confirmation link must land on the CODE EXCHANGE, not on the destination.
+        // Pointing it straight at /onboarding sent every confirming user to a page the
+        // middleware guards, with no session yet — so their first click after signing up
+        // bounced them to /login and asked for the password they had just chosen. Same
+        // server-side exchange the password reset and Google sign-in already use.
+        emailRedirectTo: `${window.location.origin}/api/auth/callback?next=/onboarding`,
       },
     })
 

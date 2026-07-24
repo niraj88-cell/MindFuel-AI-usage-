@@ -5,6 +5,73 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-24 — PUBLIC LAUNCH: the invite gate is retired, and the store flip needs no code
+
+Written to survive the founder working alone. The goal of this pass was not new features:
+it was to remove every remaining step that required an engineer, so the product finishes
+launching whether or not anyone touches the code again.
+
+**1. The front door is open** (`app/page.tsx`). The waitlist/invite form is unmounted; the
+page now converts straight to `Create your account` → `/signup`, with `{TRIAL_DAYS} days
+free, no card. Chrome on desktop.` under it, the demo as the visible second action, and
+`Already have an account? Sign in`. The pricing block lost its `hidden` — $8/mo and $60/yr
+are on the front page, matching a paid launch. `WaitlistForm.tsx` is KEPT but unmounted
+(closing access again is a one-import change; its tables and migration 025 stay).
+
+**2. Every stale claim retired.** `/faq` "how do I get access" said invite-only founding
+preview — it now describes open signup, the 14-day cardless trial, and the desktop-Chrome
+requirement (the FAQ's JSON-LD derives from the same array, so the schema changed with it;
+verified in-browser that neither page text nor structured data still says "invite-only").
+`/privacy` claimed the homepage collects waitlist emails, which stopped being true the
+moment the form came down; it now describes those rows honestly in the past tense.
+
+**3. The Chrome Web Store flip is now a dashboard action, not a code change**
+(`lib/extension.ts`). `EXTENSION_STORE_URL` was a hardcoded `''`, so the day Google
+approved the listing, onboarding step 2 and the Today connect card would have kept shipping
+load-unpacked instructions until someone edited and redeployed the repo. It now reads
+`NEXT_PUBLIC_EXTENSION_STORE_URL`: paste the listing URL (or the bare 32-char extension id)
+into Vercel → Settings → Environment Variables → Production, redeploy, and both surfaces
+flip to one-click "Add to Chrome" on their own. A malformed or non-Chrome-Web-Store value
+resolves to `''` and leaves the honest download path up, because a typo'd link would send
+every new user to a dead page with nothing visible from the outside to say so. Guarded by
+`lib/extension.test.mjs` (6 tests: full URL, legacy host, bare id, pasted whitespace,
+non-store host, non-https, lookalike domain, out-of-range id).
+
+**4. Signup's confirmation email landed on the wrong page** (`(auth)/signup/page.tsx`).
+`emailRedirectTo` pointed at `${origin}/onboarding` — a middleware-guarded route, reached
+with no session yet — so the first click after signing up bounced the new user to `/login`
+and asked for the password they had just chosen. Now `/api/auth/callback?next=/onboarding`,
+the same server-side code exchange that password reset and Google sign-in already use.
+
+**Extension readiness, verified by reading rather than assuming:** a Web Store install works
+on day one with no change. The Store re-signs the package and the extension id CHANGES, but
+nothing depends on a fixed id — the token handshake checks `sender.id === chrome.runtime.id`
+(self-reference) AND `sender.origin ∈ TRUSTED_MESSAGE_ORIGINS`, and `getBaseUrl()` returns
+production unless `storage.local` explicitly holds `env === 'dev'`, which a fresh install
+never does. `manifest.json` 2.9.3 host permissions and content-script matches already cover
+`satyashift.com` (+ the vercel.app alias and localhost).
+
+**Verified:** `tsc --noEmit` clean; `next build` green (all 8 public routes prerendered);
+`node --test lib/extension.test.mjs` 6/6. In-browser on the dev server: landing renders the
+new CTA (computed `rgb(35,32,27)` ink on `rgb(250,248,244)` paper — tokens, no raw hex), no
+horizontal overflow, every link resolves (`/signup`, `/demo`, `/login`, `/pricing`); `/signup`
+renders its form and Google button with zero console errors; `/faq` confirmed clean of the
+old claim in both text and JSON-LD.
+
+**FOUNDER-ONLY, and the launch is not live without the first one:**
+- **Supabase → Authentication → Sign In / Providers → "Allow new users to sign up" is
+  currently OFF** (probed live: `/auth/v1/settings` returns `disable_signup: true`). Until
+  it is ON, the new front-door button leads to a form that errors. This is a dashboard
+  toggle; no MCP tool can flip it.
+- **Email confirmation is ON with Supabase's built-in SMTP** (`mailer_autoconfirm: false`),
+  which is rate-limited to a handful of messages per hour — enough to throttle a real launch
+  to a trickle of confirmable signups. Either wire custom SMTP (Resend/Brevo/SES) or turn
+  confirmation off; both are dashboard settings.
+- Redirect allowlist must contain `https://satyashift.com/**` for the callback above.
+- After Google approves: set `NEXT_PUBLIC_EXTENSION_STORE_URL` and redeploy (item 3).
+
+---
+
 ## 2026-07-22 — Final submission pass: four real defects found and fixed (founder's eye)
 
 The 07-15 pass found zero defects because it exercised code, not surfaces. Preparing

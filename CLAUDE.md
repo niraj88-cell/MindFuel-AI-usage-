@@ -8,7 +8,23 @@ verification, squads, insights.
 Principles: effortless deep work · quiet accountability · privacy by design (bare domains
 only, never URLs/content) · trust over engagement · calm, premium UX.
 
-## Launch readiness (verdict 2026-07-07 — NOT yet public-launch-ready; delay ~1 month)
+## Launch state (2026-07-24 — PUBLIC, open signup)
+The invite gate is retired. `/` converts straight to `/signup` (pricing block visible, demo as
+the second action); `WaitlistForm.tsx` still exists but is unmounted. Any copy claiming
+"invite-only", a waitlist, or a founding preview is now a DEFECT — except onboarding step 2's
+not-yet-published branch, which is true until the store URL is configured.
+- **The Chrome Web Store flip needs no code.** `lib/extension.ts` reads
+  `NEXT_PUBLIC_EXTENSION_STORE_URL` (full listing URL or bare 32-char id, https + Chrome Web
+  Store hosts only; anything else resolves to `''` and keeps the honest download path).
+  Set it in Vercel + redeploy and both install surfaces flip themselves. Don't re-hardcode it.
+- **Two things gate a working launch and live only in dashboards** (no MCP can set them):
+  Supabase "Allow new users to sign up" must be ON, and email confirmation needs custom SMTP
+  (built-in SMTP is rate-limited to a few per hour). Verify with
+  `GET {SUPABASE_URL}/auth/v1/settings` → `disable_signup` / `mailer_autoconfirm`.
+- Auth emails must land on `/api/auth/callback?next=…`, never a guarded page directly — the
+  code exchange happens there (signup confirm, password reset, and Google all use it).
+
+## Launch readiness (historical verdict 2026-07-07 — superseded by the launch state above)
 Foundation (security, privacy, intelligence architecture) is strong; a public PAID launch is
 blocked by distribution + activation + offer, not by code quality. Four blockers, in order:
 1. **Extension not on the Chrome Web Store.** `web/lib/extension.ts` `EXTENSION_STORE_URL=''`,

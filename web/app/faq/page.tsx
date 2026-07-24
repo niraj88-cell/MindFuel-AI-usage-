@@ -82,7 +82,7 @@ const FAQS: Faq[] = [
   },
   {
     q: 'How do I get access?',
-    a: 'SatyaShift is currently in an invite-only founding preview. Leave your email on the homepage and we’ll send you an invite; if you are curious first, the live demo shows a real session with no account needed.',
+    a: 'Create an account on the homepage — it is open to anyone, and every account starts with the full product free for 14 days, no card. You will also need desktop Chrome (or another Chromium browser) for the extension, since that is what verifies your sessions. If you are curious first, the live demo shows a real session with no account needed.',
     link: { href: '/demo', label: 'See a real session — no account' },
   },
 ]

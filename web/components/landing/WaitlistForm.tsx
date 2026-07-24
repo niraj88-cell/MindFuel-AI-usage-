@@ -1,5 +1,9 @@
 'use client'
 
+// NOT MOUNTED since launch (2026-07-24): signup is open, so the homepage converts straight
+// to /signup and nothing renders this. Kept — with its tables (waitlist, waitlist_notes,
+// migration 025) — because closing access again is a one-import change, not a rebuild.
+//
 // Invite-request form (soft launch). Two quiet steps, per the landing audit 2026-07-14:
 //   1. Say the gate out loud (invite-only early access), then take ONLY the email —
 //      a visible pre-commit field cuts completion, so the form asks nothing else.
