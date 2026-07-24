@@ -5,6 +5,53 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-24c — THE big pre-launch check (live, backend, tests, extension)
+
+Full go-live verification, done by exercising the real things, not assuming. Result:
+**green to launch**, with one honest reframe about payments and two founder-only dashboard
+switches (unchanged from 07-24b).
+
+- **Live site:** every public route 200 (`/`, `/login`, `/signup`, `/pricing`, `/faq`,
+  `/privacy`, `/terms`, `/refund`, `/how-it-works`, `/demo`, `/sitemap.xml`, `/robots.txt`,
+  `/opengraph-image`, `/manifest.json`); `/dashboard` correctly 307s logged-out. Landing
+  verified in a real browser: CTA "Create your account"→/signup, demo secondary, sign-in
+  present, waitlist form GONE, zero "invite/waitlist" words, pricing $8/$60 shown, strapline
+  intact, no console errors, no horizontal overflow, correct on mobile + dark (marketing
+  pages stay on paper by design). Security headers all present (HSTS preload, CSP, XFO DENY,
+  nosniff, referrer, permissions).
+- **Closed-signup path proven live:** auth logs show a real `422 signup_disabled` from the
+  homepage; the UI maps it to the calm "New accounts aren't open just yet" line (verified
+  rendering). `/login?error=` path also renders its calm line.
+- **Backend:** security advisors return ONLY the known-accepted set (vector-in-public,
+  waitlist anon-insert ×2, the SECURITY DEFINER squad/invite/membership fns with checks
+  inside, billing_events deny-all, leaked-password toggle) — zero new findings. DB healthy:
+  45 users = 45 profiles (signup→profile trigger sound, so new accounts will provision),
+  41 sessions, 613 domain_logs, 2 squads, 20 processed_batches.
+- **Tests/build:** web `node --test` 130/130, extension 62/62, `tsc` clean, `next build`
+  green (48/48 static).
+- **Extension store-flip:** `resolveStoreUrl` 6/6; a Web Store install works day one (no
+  fixed id depended on; production base URL by default). After approval = set
+  `NEXT_PUBLIC_EXTENSION_STORE_URL` in Vercel + redeploy (guide:
+  `docs/after-approval-steps-simple.md`).
+- **Fixed during the check:** the download zip `web/public/satyashift-extension.zip` was
+  stale (built Jul 10, missing the four Jul-22 extension fixes) though still labelled 2.9.3.
+  Rebuilt via `npm run package:extension`, contents now current, committed (`1e0c1c2`). The
+  LIVE copy refreshes on the next prod deploy — immaterial, since nobody can download it
+  while signups are off and the store button supersedes it.
+
+**PAYMENTS — honest reframe (does not block launch):** production has NO Paddle client env
+(`NEXT_PUBLIC_PADDLE_*` absent from live bundles) and `billing_events = 0`. So in prod today
+**checkout cannot open and NOTHING is gated** (the squad-hosting gate self-arms only when
+that env is present). This is the documented "launch free, enable billing later" posture and
+the safest state — no one hits a broken payment. Every pricing CTA routes to the free trial
+at /signup, and /pricing says "14 days free, no card", so a visitor is never misled. To
+actually collect money later: set the `NEXT_PUBLIC_PADDLE_*` env in Vercel, redeploy (checkout
+self-arms), and prove one checkout — see `docs/payment-readiness-2026-07-14.md`.
+
+**Still the only things standing between here and a real public launch (founder-only, both in
+dashboards):** (1) Supabase "Allow new users to sign up" ON when ready; (2) email confirmation
+is on built-in SMTP (few/hour) — wire custom SMTP or turn confirmation off before an influx.
+
 ## 2026-07-24b — Signups-OFF window made honest + a plain-words after-approval guide
 
 Follow-up to the launch pass, for the founder's chosen sequence: keep Supabase signups OFF
