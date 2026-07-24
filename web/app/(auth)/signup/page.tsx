@@ -126,10 +126,11 @@ export default function SignupPage() {
 
           <div className="max-w-xl">
             <h1 className="mb-6 font-serif text-[3.25rem] leading-[1.05] tracking-[-0.01em]">
-              Focus you can actually prove.
+              Proof you did the work.
             </h1>
             <p className="max-w-md text-lg leading-relaxed text-soft">
-              Create your account, add the extension, and your first verified focus session appears on its own.
+              Set it up once. After that there&rsquo;s nothing to start and nothing to log &mdash;
+              you do the work, and the proof takes care of itself.
             </p>
           </div>
 
