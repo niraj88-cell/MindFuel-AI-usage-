@@ -5,6 +5,33 @@ Related: `.agents/AGENTS.md` (project context + mentoring rules), `extension/CLA
 
 ---
 
+## 2026-07-24b — Signups-OFF window made honest + a plain-words after-approval guide
+
+Follow-up to the launch pass, for the founder's chosen sequence: keep Supabase signups OFF
+now, open them himself once the Web Store extension is live. That means the front door will
+invite people to "Create your account" while the backend still refuses new accounts — so the
+refusal had to read as a deliberate state, not a broken product.
+
+- **Closed-signup copy** (`lib/auth-errors.ts`). Supabase's `Signups not allowed for this
+  instance` now maps to "New accounts aren't open just yet. If you already have one, you can
+  sign in below." Matched both exactly and via a loose `SIGNUP_DISABLED` regex so a future
+  wording change can't leak the raw provider string. VERIFIED live: submitting the real
+  signup form against production (which has `disable_signup: true`) renders exactly this line
+  and stays on /signup.
+- **/login now reads `?error=`** (`(auth)/login/page.tsx`). `/api/auth/callback` can only
+  report failure by bouncing to `/login?error=…`, and nothing read it — a failed Google
+  sign-in (or a new Google account while signups are closed) left the user on a blank form.
+  A mount-time `URLSearchParams` read (not `useSearchParams`, which would force a Suspense
+  boundary on this prerendered page) shows a calm line. VERIFIED live rendering.
+- **`docs/after-approval-steps-simple.md`** — the click-by-click guide that replaces the old
+  "open a Claude session and say…" Part D. Copy store link → paste
+  `NEXT_PUBLIC_EXTENSION_STORE_URL` into Vercel (explicit "do NOT tick Sensitive", the Paddle
+  trap) → redeploy → verify, with a symptom/cause/fix table, an undo, and the Supabase
+  open-signups + SMTP-throttle steps. `launch-steps-simple.md` Part D now points at it.
+
+**Verified:** `tsc` clean; `next build` green (48/48 static); both auth messages confirmed in
+a real browser with zero console errors. No schema, API, or extension changes in this entry.
+
 ## 2026-07-24 — PUBLIC LAUNCH: the invite gate is retired, and the store flip needs no code
 
 Written to survive the founder working alone. The goal of this pass was not new features:

@@ -58,15 +58,13 @@ Google requires at least 1 screenshot, 1280×800 pixels. Three is better.
 
 ## Part D — The day Google approves (10 minutes)
 
-1. Copy your new store page link (it looks like
-   `https://chromewebstore.google.com/detail/...`).
-2. Open a Claude session and say: **"The extension is approved, here is the store
-   URL: <paste it>. Set EXTENSION_STORE_URL, flip EXTENSION_PUBLISHED, and deploy."**
-   (Or do it yourself: edit `web/lib/extension.ts`, paste the URL into
-   `EXTENSION_STORE_URL`, set `EXTENSION_PUBLISHED` to true, then run
-   `cd web` then `npx vercel --prod --yes`.)
-3. After deploy, onboarding and the dashboard automatically switch to a real
-   "Add to Chrome" button.
+**This no longer needs code or a Claude session** (changed 2026-07-24). Copy your store
+link, paste it into one Vercel setting, redeploy, and both install screens switch
+themselves from "download the zip" to a real **Add to Chrome** button.
+
+Exact clicks, screen by screen, with what to do when something looks wrong:
+**`docs/after-approval-steps-simple.md`**. That doc also covers Part E below and the
+Supabase switch that actually opens sign-ups.
 
 ## Part E — Prove it like a stranger would (15 minutes)
 

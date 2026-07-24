@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,6 +25,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // /api/auth/callback can only report failure by bouncing back here with ?error=… — and
+  // until now nothing read it, so a Google sign-in that failed (an expired link, or a new
+  // Google account while signups are closed) dropped the user on a blank form with no
+  // explanation at all. Read after mount rather than with useSearchParams, which would
+  // force this prerendered page behind a Suspense boundary for one query parameter.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('error')) {
+      setError('We couldn’t finish signing you in. That link may have expired or already been used — please try again below.')
+    }
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
