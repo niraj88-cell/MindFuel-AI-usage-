@@ -1,10 +1,28 @@
 # The day Google approves your extension — what to do
 
-Read this whole page once before you start. Then do it one step at a time, from the top.
-You cannot break anything. If a step goes wrong, there is a fix right underneath it.
-
 **You will NOT touch any code. You do NOT need Claude. You do NOT need to be a programmer.**
-The whole thing is copy, paste, and clicking buttons. About 10 minutes.
+The whole thing is copy, paste, and clicking buttons.
+
+---
+
+## Don't be scared by the length — here is the ENTIRE thing
+
+This page is long only because I explain every single click. But the real work is tiny.
+Here is literally all of it:
+
+> 1. **Copy** your extension's link from the Chrome store dashboard.
+> 2. **Paste** it into one box on Vercel (a setting called `NEXT_PUBLIC_EXTENSION_STORE_URL`).
+> 3. **Click Redeploy** on Vercel and wait for "Ready."
+>
+> That's the switch done. Your site now shows an "Add to Chrome" button instead of the
+> download steps. Everything below is just me holding your hand through those 3 things,
+> plus opening sign-ups (one Supabase switch) and a final test.
+
+**Time:** about **5 minutes** for the switch itself, then a **15-minute** test at the end to
+make sure a real stranger can use it. You cannot break anything — every step has a fix and an
+undo right underneath it.
+
+Now take it slow, one step at a time, from the top.
 
 ---
 
@@ -79,7 +97,8 @@ This is the main step. You're going to paste the address into one box on Vercel.
 
 1. Open a new tab and go to **`vercel.com`**.
 2. Log in (same Google account).
-3. You'll see your projects. Click the one for **SatyaShift** (it may be called `web`).
+3. You'll see your projects. Click the one called **`web`** (that's your SatyaShift site —
+   its exact name is `web`).
 4. Near the top you'll see a row of tabs: Overview, Deployments, Analytics, **Settings**…
    Click **Settings**.
 5. On the left side there's a menu. Click **Environment Variables**.
