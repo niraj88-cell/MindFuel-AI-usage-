@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { ChevronLeft, Lock, EyeOff, Users, X } from 'lucide-react'
 import { VerifiedMark } from '@/components/brand/VerifiedMark'
 import { SiteFooter } from '@/components/site/SiteFooter'
+import { ShareButton } from '@/components/site/ShareButton'
 import { human as humanDuration, clock } from '@/lib/duration'
 import {
   analyzeSession, qualityOf, reflectionFor, type AttentionEvent,
@@ -221,6 +222,22 @@ export default function DemoPage() {
           >
             How it works
           </Link>
+        </div>
+
+        {/* The honest growth loop: proof is meant to be shown. Placed AFTER the proof, where
+            conviction peaks — a quiet invitation, never the page's green action. Shares the
+            canonical demo link, so whoever receives it lands on this same proof, no account. */}
+        <div className="mt-8 border-t border-hairline pt-6 text-center">
+          <p className="text-[14px] leading-relaxed text-soft">
+            Know someone who wants their focus to be real, not performed?
+          </p>
+          <ShareButton
+            url="https://satyashift.com/demo"
+            title="SatyaShift — Proof you did the work"
+            text="See exactly what it tracks: a whole focus session, and the complete record behind it. No account needed."
+            label="Show a friend"
+            className="mt-3"
+          />
         </div>
       </div>
       <SiteFooter />

@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react'
 import { SatyaMark } from '@/components/brand/SatyaMark'
 import { VerifiedMark } from '@/components/brand/VerifiedMark'
 import { SiteFooter } from '@/components/site/SiteFooter'
+import { ShareButton } from '@/components/site/ShareButton'
 import { PLANS, TRIAL_DAYS } from '@/lib/subscription'
 
 // Price on the front door, derived from the same constants the app bills from —
@@ -165,6 +166,19 @@ export default function LandingPage() {
           </Link>
           .
         </p>
+
+        {/* Word of mouth is the only distribution this product can afford to be proud of.
+            One quiet share, at the bottom, for the person who already believes — never a
+            popup, never a bribe, never the page's green action. */}
+        <div className="mt-6 border-t border-hairline pt-6">
+          <ShareButton
+            url="https://satyashift.com"
+            title="SatyaShift — Proof you did the work"
+            text="An honest, verified record of your focus — that only ever sees the domains you visit, never your screen. Private by default."
+            label="Pass it on"
+            className="w-full"
+          />
+        </div>
       </div>
       <SiteFooter />
     </main>
